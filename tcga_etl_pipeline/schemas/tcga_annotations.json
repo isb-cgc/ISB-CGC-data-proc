@@ -1,0 +1,58 @@
+[
+    {
+        "type": "INTEGER",
+        "name": "annotationId"
+    },
+    {
+        "type": "INTEGER",
+        "name": "annotationCategoryId"
+    },
+    {
+        "type": "STRING",
+        "name": "annotationCategoryName"
+    },
+    {
+        "type": "STRING",
+        "name": "annotationClassification"
+    },
+    {
+        "type": "STRING",
+        "name": "annotationNoteText"
+    },
+    {
+        "type": "STRING",
+        "name": "Study"
+    },
+    {
+        "type": "STRING",
+        "name": "itemTypeName"
+    },
+    {
+        "type": "STRING",
+        "name": "itemBarcode"
+    },
+    {
+        "type": "STRING", 
+        "name": "AliquotBarcode"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "ParticipantBarcode"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "SampleBarcode"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "dateAdded"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "dateCreated"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "dateEdited"
+    }
+]

@@ -1,0 +1,42 @@
+[
+    {
+        "type": "STRING",
+        "name": "ParticipantBarcode"
+    },
+    {
+        "type": "STRING",
+        "name": "SampleBarcode"
+    },
+    {
+        "type": "STRING",
+        "name": "AliquotBarcode"
+    },
+    {
+        "type": "STRING",
+        "name": "Study"
+    },
+    {
+        "type": "STRING",
+        "name": "SampleTypeLetterCode"
+    },
+    {
+        "type": "STRING",
+        "name": "Platform"
+    },
+    {
+        "type": "STRING",
+        "name": "original_gene_symbol"
+    },
+    {
+        "type": "STRING", 
+        "name": "HGNC_gene_symbol"
+    }, 
+    {
+        "type": "INTEGER", 
+        "name": "gene_id"
+    }, 
+    {
+        "type": "FLOAT", 
+        "name": "normalized_count"
+    }
+]

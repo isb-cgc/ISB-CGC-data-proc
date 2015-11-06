@@ -1,0 +1,41 @@
+[
+    {
+        "type": "STRING",
+        "name": "ParticipantBarcode"
+    },
+    {
+        "type": "STRING",
+        "name": "SampleBarcode"
+    },
+    {
+        "type": "STRING",
+        "name": "SampleTypeLetterCode",
+        "description": "Refer: https://tcga-data.nci.nih.gov/datareports/codeTablesReport.htm"
+    },
+    {
+        "type": "STRING",
+        "name": "AliquotBarcode",
+        "description": "The Aliquot ID is an identifier/barcode of TCGA data. Refer: https://wiki.nci.nih.gov/display/TCGA/TCGA+barcode"
+    },
+    {
+        "type": "STRING",
+        "name": "Platform",
+        "description": "Refer: https://tcga-data.nci.nih.gov/datareports/codeTablesReport.htm"
+    },
+    {
+        "type": "STRING",
+        "name": "Study",
+        "description": "TCGA disease type"
+    },
+    {
+       "name": "Probe_Id",
+       "type": "STRING",
+       "description": "Illumina's CpG loci IDs. Refer: http://www.illumina.com/content/dam/illumina-marketing/documents/products/technotes/technote_cpg_loci_identification.pdf"
+    },
+    {
+       "name": "Beta_Value",
+       "type": "FLOAT",
+       "description": "The beta value (β) is used to estimate the methylation level of the CpG locus using the ratio of intensities between methylated and unmethylated alleles"
+    }
+]
+

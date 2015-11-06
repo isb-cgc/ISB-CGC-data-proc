@@ -1,0 +1,182 @@
+[
+    {
+        "type": "STRING", 
+        "name": "AliquotBarcode"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "AliquotUUID"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "AnnotationCategory"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "AnnotationClassification"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "DataArchiveName"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "DataArchiveURL"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "DataArchiveVersion"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "DataCGHubID"
+    }, 
+    {
+        "type": "FLOAT", 
+        "name": "DataCenterCode"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "DataCenterName"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "DataCenterType"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "DataLevel"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "DatafileMD5"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "DatafileName"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "DatafileUploaded"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "Datatype"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "GenomeReference"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "IncludeForAnalysis"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "MAGETabArchiveName"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "MAGETabArchiveURL"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "ParticipantBarcode"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "ParticipantUUID"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "Pipeline"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "Platform"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "Project"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "Repository"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "SDRFFileName"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "SDRFFileNameKey"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "SampleBarcode"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "SampleType"
+    }, 
+    {
+        "type": "INTEGER", 
+        "name": "SampleTypeCode"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "SampleUUID"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "SecurityProtocol"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "Species"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "Study"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "TSSCode"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "analysis_id"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "analyte_code"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "last_modified"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "library_strategy"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "platform_full_name"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "project_accession"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "reason_for_state"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "state"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "wasDerivedFrom"
+    }
+]

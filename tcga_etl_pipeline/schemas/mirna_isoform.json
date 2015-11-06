@@ -1,0 +1,54 @@
+[
+    {
+        "type": "STRING",
+        "name": "ParticipantBarcode"
+    },
+    {
+        "type": "STRING",
+        "name": "SampleBarcode"
+    },
+    {
+        "type": "STRING", 
+        "name": "AliquotBarcode"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "Study"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "SampleTypeLetterCode"
+    }, 
+    {
+        "type": "STRING",
+        "name": "Platform"
+    },
+    {
+        "type": "STRING", 
+        "name": "cross_mapped"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "isoform_coords"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "miRNA_ID"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "mirna_accession"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "mirna_transcript"
+    }, 
+    {
+        "type": "INTEGER", 
+        "name": "read_count"
+    }, 
+    {
+        "type": "FLOAT", 
+        "name": "reads_per_million_miRNA_mapped"
+    }
+]

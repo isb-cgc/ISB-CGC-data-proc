@@ -1,0 +1,38 @@
+[
+    {
+        "type": "STRING",
+        "name": "miRTarBaseID"
+    },
+    {
+        "type": "STRING",
+        "name": "miRNA"
+    },
+    {
+        "type": "STRING",
+        "name": "miRNA_Species"
+    },
+    {
+        "type": "STRING",
+        "name": "Target_Gene"
+    },
+    {
+        "type": "INTEGER",
+        "name": "Target_Gene_EntrezID"
+    },
+    {
+        "type": "STRING",
+        "name": "Target_Gene_Species"
+    },
+    {
+        "type": "STRING", 
+        "name": "Experiments"
+    },
+    {
+        "type": "STRING",
+        "name": "Support_Type"
+    },
+    {
+        "type": "INTEGER", 
+        "name": "References_PMID"
+    }
+]

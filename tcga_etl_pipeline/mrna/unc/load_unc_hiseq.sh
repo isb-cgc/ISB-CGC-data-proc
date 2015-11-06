@@ -1,0 +1,2 @@
+# this is hack: Bigquery allows only 10000 files to be loaded at a time. We are creating multiple jobs here by dividing files alphabetically
+gsutil ls gs://isb-cgc-open/tcga/intermediary/mrna/unc/bq_data_files/IlluminaHiSeq/* | awk 'BEGIN{FS="unc.edu."}{print $2}' | awk 'BEGIN{FS=""}{print $1}' | sort | uniq | xargs -L1 -I% sudo python ../bigquery_etl/load/load_data_from_file.py -t=NEWLINE_DELIMITED_JSON isb-cgc tcga_data_staging mRNA_UNC_HiSeq_RSEM schemas/mrna_unc.json gs://isb-cgc-open/tcga/intermediary/mrna/unc/bq_data_files/IlluminaHiSeq/unc.edu.%*

@@ -1,0 +1,47 @@
+[
+
+    {
+        "type": "STRING",
+        "name": "ParticipantBarcode"
+    },
+    {
+        "type": "STRING",
+        "name": "SampleBarcode"
+    },
+    {
+        "type": "STRING",
+        "name": "SampleTypeLetterCode"
+    },
+    {
+        "type": "STRING", 
+        "name": "AliquotBarcode"
+    }, 
+    {
+        "type": "STRING",
+        "name": "Study"
+    },
+    {
+        "type": "STRING",
+        "name": "Platform"
+    },
+    {
+        "type": "STRING", 
+        "name": "Chromosome"
+    },
+    {
+        "type": "INTEGER",
+        "name": "Start"
+    }, 
+    {
+        "type": "INTEGER", 
+        "name": "End"
+    }, 
+    {
+        "type": "INTEGER", 
+        "name": "Num_Probes"
+    }, 
+    {
+        "type": "FLOAT", 
+        "name": "Segment_Mean"
+    }
+]

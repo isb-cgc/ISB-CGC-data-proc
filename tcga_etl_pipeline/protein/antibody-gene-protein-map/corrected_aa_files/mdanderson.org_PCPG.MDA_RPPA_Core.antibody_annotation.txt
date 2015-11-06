@@ -1,0 +1,193 @@
+gene_name	array_data_file_names	composite_element_ref	protein_name	qc_score	antibody_validation_status	antibody_origin	antibody_source_company	catalog_number	website
+YWHAB	14-3-3_beta-R-V_GBL1112940.txt	14-3-3_beta-R-V	14-3-3_beta	0.9557842	Validated	Rabbit	Santa Cruz	sc-628	http://www.scbt.com/datasheet-628-14-3-3-beta-c-20-antibody.html
+YWHAE	14-3-3_epsilon-M-C_GBL1112915.txt	14-3-3_epsilon-M-C	14-3-3_epsilon	0.9491414	Use with Caution	Mouse	Santa Cruz	sc-23957	http://www.scbt.com/datasheet-23957-14-3-3-epsilon-8c3-antibody.html
+YWHAZ	14-3-3_zeta-R-V_GBL1112831.txt	14-3-3_zeta-R-V	14-3-3 zeta	0.9718176	Validated	Rabbit	Santa Cruz	sc-1019	http://www.scbt.com/datasheet-1019-14-3-3-zeta-c-16-antibody.html
+EIF4EBP1	4E-BP1-R-V_GBL1112735.txt	4E-BP1-R-V	4E-BP1	0.9621048	Validated	Rabbit	CST	9452	http://www.cellsignal.com/products/9452.html
+EIF4EBP1	4E-BP1_pS65-R-V_GBL1112736.txt	4E-BP1_pS65-R-V	4E-BP1_pS65	0.9547482	Validated	Rabbit	CST	9456	http://www.cellsignal.com/products/9456.html
+EIF4EBP1	4E-BP1_pT37_T46-R-V_GBL1112737.txt	4E-BP1_pT37_T46-R-V	4E-BP1_pT37	0.948616	Validated	Rabbit	CST	9459	http://www.cellsignal.com/products/9459.html
+EIF4EBP1	4E-BP1_pT70-R-V_GBL1112738.txt	4E-BP1_pT70-R-V	4E-BP1_pT70	0.96981	Use with Caution	Rabbit	CST	9455	http://www.cellsignal.com/products/9455.html
+TP53BP1	53BP1-R-E_GBL1112847.txt	53BP1-R-E	53BP1	0.9720804	Under Evaluation	Rabbit	CST	4937	http://www.cellsignal.com/products/4937.html
+ARAF	A-Raf_pS299-R-C_GBL1112958.txt	A-Raf_pS299-R-C	A-Raf_pS299	0.9420466	Use with Caution	Rabbit	CST	4431	http://www.cellsignal.com/products/4431.html
+ACACA ACACB	ACC_pS79-R-V_GBL1112739.txt	ACC_pS79-R-V	ACC_pS79	0.9611742	Validated	Rabbit	CST	3661	http://www.cellsignal.com/products/3661.html
+ACACA	ACC1-R-E_GBL1112740.txt	ACC1-R-E	ACC1	0.9569629	Under Evaluation	Rabbit	Epitomics	1768-1	http://www.epitomics.com/products/product_info/419/Acetyl-antibody-1768-1.html
+TUBA1B	Acetyl-a-Tubulin-Lys40-R-C_GBL1112946.txt	Acetyl-a-Tubulin-Lys40-R-C	Acetyl-a-Tubulin-Lys40	0.962532	Under Evaluation	Rabbit	CST	5335	http://www.cellsignal.com/products/5335.html
+ACVRL1	ACVRL1-R-C_GBL1112866.txt	ACVRL1-R-C	ACVRL1	0.9493932	Use with Caution	Rabbit	Abcam	ab108207	http://www.abcam.com/acvrl1-antibody-epr4074-ab108207.html
+ADAR	ADAR1-M-V_GBL1112930.txt	ADAR1-M-V	ADAR1	0.9679019	Validated	Mouse	Abcam	ab88574	http://www.abcam.com/adar1-antibody-ab88574.html
+AKT1 AKT2 AKT3	Akt-R-V_GBL1112865.txt	Akt-R-V	Akt	0.9639921	Validated	Rabbit	CST	4691	http://www.cellsignal.com/products/primary-antibodies/4691
+AKT1 AKT2 AKT3	Akt_pS473-R-V_GBL1112764.txt	Akt_pS473-R-V	Akt_pS473	0.9709825	Validated	Rabbit	CST	9271	http://www.cellsignal.com/products/primary-antibodies/4691?hit=productId&amp;Ntt=4691
+AKT1 AKT2 AKT3	Akt_pT308-R-V_GBL1112884.txt	Akt_pT308-R-V	Akt_pT308	0.9674153	Validated	Rabbit	CST	9275	http://www.cellsignal.com/products/9275.html
+CTNNB1	alpha-Catenin-M-V_GBL1112917.txt	alpha-Catenin-M-V	alpha-Catenin	0.9376815	Validated	Mouse	Calbiochem	CA1030	Discontinued
+PRKAA1	AMPK_alpha-R-C_GBL1112741.txt	AMPK_alpha-R-C	AMPK_alpha	0.9759253	Use with Caution	Rabbit	CST	2532	http://www.cellsignal.com/products/2532.html
+PRKAA1	AMPK_pT172-R-V_GBL1112742.txt	AMPK_pT172-R-V	AMPK_pT172	0.9691196	Validated	Rabbit	CST	2535	http://www.cellsignal.com/products/2535.html
+ANXA1	Annexin-1-M-E_GBL1112933.txt	Annexin-1-M-E	Annexin I	0.9534415	Validated	Mouse	BD Biosciences	610066	http://www.bdbiosciences.com/ptProduct.jsp?prodId=25213&amp;key=610066&amp;param=search&amp;mterms=true&amp;from=dTable
+ANXA7	Annexin_VII-M-V_GBL1112927.txt	Annexin_VII-M-V	Annexin_VII	0.9464679	Validated	Mouse	BD Biosciences	610668	http://www.bdbiosciences.com/ptProduct.jsp?prodId=25306&amp;key=610668&amp;param=search&amp;mterms=true&amp;from=dTable
+AR	AR-R-V_GBL1112814.txt	AR-R-V	AR	0.9657168	Validated	Rabbit	Epitomics	1852-1	http://www.epitomics.com/products/product_info/259/Androgen-antibody-1852-1.html
+ARHI	ARHI-M-E_GBL1112957.txt	ARHI-M-E	ARHI	0.9539786	Use with Caution	Mouse	MDACC Laboratory	Bast Lab	http://www.scbt.com/datasheet-28383-bap1-c-4-antibody.html
+ASNS	ASNS-R-V_GBL1112891.txt	ASNS-R-V	ASNS	0.9621531	Validated	Rabbit	Sigma	HPA029318	http://www.sigmaaldrich.com/catalog/product/sigma/hpa029318?lang=en&amp;region=US
+ATM	ATM-R-E_GBL1112743.txt	ATM-R-E	ATM	0.9740298	Under Evaluation	Rabbit	Abcam	ab32420	http://www.abcam.com/atm-antibody-y170-ab32420.html
+BRAF	B-Raf-M-C_GBL1112894.txt	B-Raf-M-C	B-Raf	0.9763798	Use with Caution	Mouse	Santa Cruz	sc-5284	http://www.scbt.com/datasheet-5284-raf-b-f-7-antibody.html
+BAD	Bad_pS112-R-V_GBL1112744.txt	Bad_pS112-R-V	Bad_pS112	0.9702164	Validated	Rabbit	CST	9291	http://www.cellsignal.com/products/9291.html
+BAK1	Bak-R-C_GBL1112938.txt	Bak-R-C	Bak	0.9470649	Under Evaluation	Rabbit	Epitomics	1542-1	http://www.epitomics.com/products/product_info/83/Bak-antibody-1542-1.html
+BAP1	Bap1-c-4-M-E_GBL1112932.txt	Bap1-c-4-M-E	Bap1 c-4	0.9703261	Validated	Mouse	Santa Cruz	sc-28383	
+BAX	Bax-R-V_GBL1112746.txt	Bax-R-V	Bax	0.9725596	Validated	Rabbit	CST	2772	http://www.cellsignal.com/products/2772.html
+BCL2	Bcl-2-M-V_GBL1112893.txt	Bcl-2-M-V	Bcl-2	0.9068331	Validated	Mouse	Dako	Dako M0887	http://www.dako.com/us/ar38/p102230/prod_products.htm
+BCL2L1	Bcl-xL-R-V_GBL1112748.txt	Bcl-xL-R-V	Bcl-xL	0.9712843	Validated	Rabbit	CST	2762	http://www.cellsignal.com/products/2762.html
+BECN1	Beclin-G-C_GBL1112935.txt	Beclin-G-C	Beclin	0.9578063	Use with Caution	Goat	Santa Cruz	sc-10086	http://www.scbt.com/datasheet-10086-becn1-d-18-antibody.html
+CTNNB2	beta-Catenin-R-V_GBL1112747.txt	beta-Catenin-R-V	beta-Catenin	0.9711989	Validated	Rabbit	CST	9562	http://www.cellsignal.com/products/9562.html
+BID	Bid-R-C_GBL1112749.txt	Bid-R-C	Bid	0.9720009	Use with Caution	Rabbit	Epitomics	1008-1	http://www.epitomics.com/products/product_info/93/Bid-antibody-1008-1.html
+BCL2L11	Bim-R-V_GBL1112750.txt	Bim-R-V	Bim	0.9745551	Validated	Rabbit	Epitomics	1036-1	http://www.epitomics.com/products/product_info/94/Bim-antibody-1036-1.html
+BRCA2	BRCA2-R-C_GBL1112816.txt	BRCA2-R-C	BRCA2	0.9477456	Use with Caution	Rabbit	CST	9012	http://www.cellsignal.com/products/9012.html
+JUN	c-Jun_pS73-R-V_GBL1112755.txt	c-Jun_pS73-R-V	c-Jun_pS73	0.961518	Validated	Rabbit	CST	9164	http://www.cellsignal.com/products/9164.html
+KIT	c-Kit-R-V_GBL1112756.txt	c-Kit-R-V	c-Kit	0.9437244	Validated	Rabbit	Epitomics	1522	http://www.epitomics.com/products/product_info/158/c-Kit-CD117-antibody-1522-1.html
+MET	c-Met_pY1235-R-V_GBL1112811.txt	c-Met_pY1235-R-V	c-Met_pY1235	0.9704122	Validated	Rabbit	CST	3129	http://www.cellsignal.com/products/3129.html
+MYC	c-Myc-R-C_GBL1112882.txt	c-Myc-R-C	c-Myc	0.9514704	Use with Caution	Rabbit	CST	9402	http://www.cellsignal.com/products/9402.html
+RAF1	C-Raf-R-V_GBL1112823.txt	C-Raf-R-V	C-Raf	0.9729206	Validated	Rabbit	Millipore	05-739	https://www.millipore.com/coa.nsf/a73664f9f981af8c852569b9005b4eee/5ccbe14c984f4587852573060052d7aa/$FILE/05-739-28714.pdf
+RAF1	C-Raf_pS338-R-V_GBL1112758.txt	C-Raf_pS338-R-V	C-Raf_pS338	0.9653176	Under Evaluation	Rabbit	CST	9427	http://www.cellsignal.com/products/9427.html
+CASP7	Caspase-7_cleavedD198-R-C_GBL1112751.txt	Caspase-7_cleavedD198-R-C	Caspase-7_cleavedD198	0.9457956	Use with Caution	Rabbit	CST	9491	http://www.cellsignal.com/products/9491.html
+CAV1	Caveolin-1-R-V_GBL1112752.txt	Caveolin-1-R-V	Caveolin-1	0.9523741	Validated	Rabbit	CST	3238	http://www.cellsignal.com/products/3238.html
+MS4A1	CD20-R-C_GBL1112753.txt	CD20-R-C	CD20	0.9548219	Use with Caution	Rabbit	Epitomics	1632	http://www.epitomics.com/products/product_info/135/CD20-antibody-1632-1.html
+PECAM1	CD31-M-V_GBL1112960.txt	CD31-M-V	CD31	0.941468	Validated	Mouse	Dako	M0823	http://www.dako.com/us/ar38/p102870/prod_products.htm
+ITGA2	CD49b-M-V_GBL1112918.txt	CD49b-M-V	CD49b	0.9563386	Validated	Mouse	BD	611016	http://www.bdbiosciences.com/ptProduct.jsp?prodId=108074&amp;key=611016&amp;param=search&amp;mterms=true&amp;from=dTable
+CDC2	CDK1-R-V_GBL1112848.txt	CDK1-R-V	CDK1	0.9429474	Validated	Rabbit	CST	9112	http://www.cellsignal.com/products/9112.html
+CHEK1	Chk1-M-C_GBL1112931.txt	Chk1-M-C	Chk1	0.9618912	Under Evaluation	Rabbit	CST	2345	Discontinued, replaced by http://www.cellsignal.com/products/2360.html
+CHEK1	Chk1_pS345-R-C_GBL1112838.txt	Chk1_pS345-R-C	Chk1_pS345	0.9646187	Use with Caution	Rabbit	CST	2348	http://www.cellsignal.com/products/2348.html
+CHEK2	Chk2-M-E_GBL1112896.txt	Chk2-M-E	Chk2	0.9407424	Under Evaluation	Mouse	CST	3440	http://www.cellsignal.com/products/3440.html
+CHEK2	Chk2_pT68-R-C_GBL1112754.txt	Chk2_pT68-R-C	Chk2_pT68	0.9450478	Under Evaluation	Rabbit	CST	2197	http://www.cellsignal.com/products/2197.html
+BIRC2	cIAP-R-V_GBL1112843.txt	cIAP-R-V	cIAP	0.9699413	Validated	Rabbit	Millipore	07-759	https://www.millipore.com/catalogue/item/07-759
+CLDN7	Claudin-7-R-V_GBL1112974.txt	Claudin-7-R-V	Claudin-7	0.9574635	Validated	Rabbit	Novus	NB100-91714	http://www.novusbio.com/Claudin-7-Antibody_NB100-91714.html
+COL6A1	Collagen_VI-R-V_GBL1112757.txt	Collagen_VI-R-V	Collagen_VI	0.9641852	Validated	Rabbit	Santa Cruz	SC-20649	http://www.scbt.com/datasheet-20649-col6a1-h-200-antibody.html
+CCNB1	Cyclin_B1-R-V_GBL1112759.txt	Cyclin_B1-R-V	Cyclin_B1	0.9637497	Validated	Rabbit	Epitomics	1495-1	http://www.epitomics.com/products/product_info/170/Cyclin-antibody-1495-1.html
+CCND1	Cyclin_D1-R-V_GBL1112760.txt	Cyclin_D1-R-V	Cyclin_D1	0.964911	Validated	Rabbit	Santa Cruz	SC-718	http://www.scbt.com/datasheet-718-cyclin-d1-m-20-antibody.html
+CCNE1	Cyclin_E1-M-V_GBL1112897.txt	Cyclin_E1-M-V	Cyclin_E1	0.9587176	Validated	Mouse	Santa Cruz	SC-247	http://www.scbt.com/datasheet-247-cyclin-e-he12-antibody.html
+CCNE2	Cyclin_E2-R-C_GBL1112761.txt	Cyclin_E2-R-C	Cyclin_E2	0.9670202	Use with Caution	Rabbit	Epitomics	1142	http://www.epitomics.com/products/product_info/173/Cyclin-antibody-1142-1.html
+PARK7	DJ-1-R-E_GBL1112835.txt	DJ-1-R-E	DJ-1	0.9737962	Validated	Rabbit	Abcam	ab76008	http://www.abcam.com/park7-dj1-antibody-ep2815y-ab76008.html
+DVL3	Dvl3-R-V_GBL1112845.txt	Dvl3-R-V	Dvl3	0.9684152	Validated	Rabbit	CST	3218	http://www.cellsignal.com/products/3218.html
+CDH1	E-Cadherin-R-V_GBL1112867.txt	E-Cadherin-R-V	E-Cadherin	0.9654004	Validated	Rabbit	CST	4065	Discontinued, Replaced by http://www.cellsignal.com/products/3195.html
+EEF2	eEF2-R-C_GBL1112855.txt	eEF2-R-C	eEF2	0.9742734	Use with Caution	Rabbit	CST	2332	http://www.cellsignal.com/products/2332.html
+EEF2K	eEF2K-R-V_GBL1112856.txt	eEF2K-R-V	eEF2K	0.9743642	Validated	Rabbit	CST	3692	http://www.cellsignal.com/products/3692.html
+EGFR	EGFR-R-V_GBL1112869.txt	EGFR-R-V	EGFR	0.9566025	Validated	Rabbit	CST	2232	http://www.cellsignal.com/products/2232.html
+EGFR	EGFR_pY1068-R-C_GBL1112762.txt	EGFR_pY1068-R-C	EGFR_pY1068	0.9570003	Use with Caution	Rabbit	CST	2234	http://www.cellsignal.com/products/2234.html
+EGFR	EGFR_pY1173-R-V_GBL1112763.txt	EGFR_pY1173-R-V	EGFR_pY1173	0.9775111	Validated	Rabbit	Epitomics	1124	http://www.epitomics.com/products/product_info/187/EGFR-antibody-1124-1.html
+EIF4E	eIF4E-R-V_GBL1112810.txt	eIF4E-R-V	eIF4E	0.9728159	Validated	Rabbit	CST	9742	http://www.cellsignal.com/products/9742.html
+EIF4G1	eIF4G-R-C_GBL1112872.txt	eIF4G-R-C	eIF4G	0.9683352	Use with Caution	Rabbit	CST	2498	http://www.cellsignal.com/products/2498.html
+ESR1	ER-alpha-R-V_GBL1112765.txt	ER-alpha-R-V	ER-alpha	0.9599697	Validated	Rabbit	Lab Vision	RM-9101-S	https://thermo.dirxion.com/immunohistochemistry/WebProject.asp?CodeId=7.6.3.2&amp;BookCode=ihc12flx#
+ESR1	ER-alpha_pS118-R-V_GBL1112766.txt	ER-alpha_pS118-R-V	ER-alpha_pS118	0.9581629	Validated	Rabbit	Epitomics	1091-1	http://www.epitomics.com/products/product_info/201/ER-antibody-1091-1.html
+ERCC1	ERCC1-M-V_GBL1112898.txt	ERCC1-M-V	ERCC1	0.9627965	Validated	Mouse	Santa Cruz	sc-17809	http://www.scbt.com/datasheet-17809-ercc1-d-10-antibody.html
+MAPK1	ERK2-R-E_GBL1112767.txt	ERK2-R-E	ERK2	0.976902	Under Evaluation	Rabbit	Santa Cruz	sc-154	http://www.scbt.com/datasheet-154-erk-2-c-14-antibody.html
+ETS1	ETS-1-R-V_GBL1112888.txt	ETS-1-R-V	ETS-1	0.961805	Validated	Rabbit	BethYl	A303-501A	www.bethyl.com/product/A303-501A/Ets-1_Antibody?referrer=search_default
+FASN	FASN-R-V_GBL1112885.txt	FASN-R-V	FASN	0.9494961	Validated	Rabbit	CST	3180	http://www.cellsignal.com/products/3180.html
+FN1	Fibronectin-R-V_GBL1112768.txt	Fibronectin-R-V	Fibronectin	0.9589303	Validated	Rabbit	Epitomics	1574-1	http://www.epitomics.com/products/product_info/215/Fibronectin-antibody-1574-1.html
+FOXM1	FoxM1-R-V_GBL1112944.txt	FoxM1-R-V	FoxM1	0.9658626	Validated	Rabbit	CST	5436	http://www.cellsignal.com/products/5436.html
+FOXO3	FOXO3a-R-C_GBL1112959.txt	FOXO3a-R-C	FOXO3a	0.9306877	Use with Caution	Rabbit	CST	9467	Discontinued and replaced by http://www.cellsignal.com/products/2497.html
+FOXO3	FOXO3a_pS318_S321-R-C_GBL1112769.txt	FOXO3a_pS318_S321-R-C	FOXO3a_pS318_S321	0.9630161	Use with Caution	Rabbit	CST	9465	http://www.cellsignal.com/products/3180.html
+G6PD	G6PD-M-V_GBL1112928.txt	G6PD-M-V	G6PD	0.9178976	Validated	Mouse	Santa Cruz	sc-373887	http://www.scbt.com/datasheet-373887-g6pd-g-6-antibody.html
+GAB2	Gab2-R-V_GBL1112846.txt	Gab2-R-V	GAB2	0.9676515	Validated	Rabbit	CST	3239	http://www.cellsignal.com/products/3239.html
+GAPDH	GAPDH-M-C_GBL1112899.txt	GAPDH-M-C	GAPDH	0.8812168	Use with Caution	Mouse	Ambion	AM4300	http://products.invitrogen.com/ivgn/product/AM4300?ICID=search-am4300
+GATA3	GATA3-M-V_GBL1112912.txt	GATA3-M-V	GATA3	0.9457562	Validated	Mouse	BD Biosciences	558686	http://www.bdbiosciences.com/ptProduct.jsp?prodId=656284&amp;key=558686&amp;param=search&amp;mterms=true&amp;from=dTable
+GSK3A GSK3B	GSK3-alpha-beta-M-V_GBL1112900.txt	GSK3-alpha-beta-M-V	GSK3-alpha-beta	0.9671444	Validated	Mouse	Santa Cruz	SC-7291	http://www.scbt.com/datasheet-7291-gsk-3alpha-beta-0011-a-antibody.html
+GSK3A GSK3B	GSK3-alpha-beta_pS21_S9-R-V_GBL1112770.txt	GSK3-alpha-beta_pS21_S9-R-V	GSK3-alpha-beta_pS21_S9	0.9672816	Validated	Rabbit	CST	9331	http://www.cellsignal.com/products/9331.html
+GSK3A GSK3B	GSK3_pS9-R-V_GBL1112863.txt	GSK3_pS9-R-V	GSK3_pS9	0.9650927	Validated	Rabbit	CST	9336	http://www.cellsignal.com/products/9336.html
+ERBB2	HER2-M-V_GBL1112922.txt	HER2-M-V	HER2	0.9387408	Validated	Mouse	Lab Vision	MS-325-P1	hermo.dirxion.com/immunohistochemistry/WebProject.asp?CodeId=7.6.3.2&amp;BookCode=ihc12flx#
+ERBB2	HER2_pY1248-R-C_GBL1112860.txt	HER2_pY1248-R-C	HER2_pY1248	0.9415136	Use with Caution	Rabbit	Upstate (Millipore)	06-229	https://www.millipore.com/catalogue/item/06-229
+ERBB3	HER3-R-V_GBL1112841.txt	HER3-R-V	HER3	0.9671706	Validated	Mouse	Lab Vision	MS-201-P1ABX	https://thermo.dirxion.com/immunohistochemistry/WebProject.asp?CodeId=7.6.3.2&amp;BookCode=ihc12flx#
+ERBB3	HER3_pY1289-R-C_GBL1112812.txt	HER3_pY1289-R-C	HER3_pY1289	0.9685162	Use with Caution	Rabbit	CST	4791	http://www.cellsignal.com/products/4791.html
+NRG1	Heregulin-R-V_GBL1112834.txt	Heregulin-R-V	Heregulin-	0.9524007	Validated	Rabbit	CST	2573	http://www.cellsignal.com/products/2573.html
+HSPA1A	HSP70-R-C_GBL1112771.txt	HSP70-R-C	HSP70	0.9506251	Use with Caution	Rabbit	CST	4872	http://www.cellsignal.com/products/4872.html
+IGFBP2	IGFBP2-R-V_GBL1112772.txt	IGFBP2-R-V	IGFBP2	0.9489723	Validated	Rabbit	CST	3922	http://www.cellsignal.com/products/3922.html
+INPP4B	INPP4B-R-V_GBL1112859.txt	INPP4B-R-V	INPP4B	0.9627492	Validated	Rabbit	CST	4039	http://www.cellsignal.com/products/primary-antibodies/4039?hit=productId&amp;Ntt=4039
+IRS1	IRS1-R-V_GBL1112822.txt	IRS1-R-V	IRS1	0.9729765	Validated	Rabbit	Upstate (Millipore)	06-248	https://www.millipore.com/catalogue/item/06-248
+MAPK8	JNK_pT183_pY185-R-V_GBL1112832.txt	JNK_pT183_pY185-R-V	JNK_pY183_pY185	0.9634225	Validated	Rabbit	CST	4668	http://www.cellsignal.com/products/4668.html
+MAPK9	JNK2-R-C_GBL1112773.txt	JNK2-R-C	JNK2	0.9636853	Use with Caution	Rabbit	CST	4672	http://www.cellsignal.com/products/4672.html
+XRCC5	Ku80-R-C_GBL1112839.txt	Ku80-R-C	Ku80	0.9724524	Use with Caution	Rabbit	CST	2180	http://www.cellsignal.com/products/2180.html
+LCK	Lck-R-V_GBL1112774.txt	Lck-R-V	Lck	0.9560996	Validated	Rabbit	CST	2752	http://www.cellsignal.com/products/2752.html
+STK11	LKB1-M-E_GBL1112901.txt	LKB1-M-E	LKB1	0.9553428	Under Evaluation	Mouse	Abcam	ab15095	http://www.abcam.com/lkb1-antibody-ley-37dg6-ab15095.html
+MAPK1 MAPK3	MAPK_pT202_Y204-R-V_GBL1112775.txt	MAPK_pT202_Y204-R-V	MAPK_pT202_Y204	0.9616316	Validated	Rabbit	CST	4377	http://www.cellsignal.com/products/4377.html
+MAP2K1	MEK1-R-V_GBL1112776.txt	MEK1-R-V	MEK1	0.9732956	Validated	Rabbit	Epitomics	1235-1	http://www.epitomics.com/products/product_info/276/MEK1-antibody-1235-1.html
+MAP2K1	MEK1_pS217_S221-R-V_GBL1112861.txt	MEK1_pS217_S221-R-V	MEK1_pS217_S221	0.9695061	Validated	Rabbit	CST	9154	http://www.cellsignal.com/products/9154.html
+ERRFI1	MIG-6-M-V_GBL1112923.txt	MIG-6-M-V	MIG-6	0.9165826	Validated	Mouse	Sigma	WH0054206M1	http://www.sigmaaldrich.com/catalog/product/sigma/wh0054206m1?lang=en&amp;region=US
+MRE11A	Mre11-R-C_GBL1112777.txt	Mre11-R-C	Mre11	0.9540095	Use with Caution	Rabbit	CST	4847	http://www.cellsignal.com/products/4847.html
+MSH2	MSH2-M-V_GBL1112913.txt	MSH2-M-V	MSH2	0.9628318	Validated	Mouse	CST	2850	http://www.cellsignal.com/products/primary-antibodies/2850?hit=productId&amp;Ntt=2850
+MSH6	MSH6-R-C_GBL1112857.txt	MSH6-R-C	MSH6	0.9684078	Use with Caution	Rabbit	Novus Biologicals	22030002	http://www.novusbio.com/productsearch/22030002
+FRAP1	mTOR-R-V_GBL1112963.txt	mTOR-R-V	mTOR	0.9727582	Validated	Rabbit	CST	2983	http://www.cellsignal.com/products/2983.html
+FRAP1	mTOR_pS2448-R-C_GBL1112779.txt	mTOR_pS2448-R-C	mTOR_pS2448	0.9734915	Use with Caution	Rabbit	CST	2971	http://www.cellsignal.com/products/2971.html
+MYH11	MYH11-R-V_GBL1112973.txt	MYH11-R-V	MYH11	0.8198925	Validated	Rabbit	SDI / Novus	21370002	http://www.novusbio.com/Myosin-heavy-chain-11-Antibody_21370002.html
+MYH9	Myosin-IIa_pS1943-R-V_GBL1112886.txt	Myosin-IIa_pS1943-R-V	Myosin IIa pS1943	0.9729699	Validated	Rabbit	CST	5026	http://www.cellsignal.com/products/5026.html
+CDH2	N-Cadherin-R-V_GBL1112964.txt	N-Cadherin-R-V	N-Cadherin	0.941699	Validated	Rabbit	CST	4061	http://www.cellsignal.com/products/4061.html
+NRAS	N-Ras-M-V_GBL1112969.txt	N-Ras-M-V	N-Ras	0.9388544	Validated	Mouse	Santa Cruz	sc-31	http://www.scbt.com/datasheet-31-n-ras-f155-antibody.html
+NDRG1	NDRG1_pT346-R-V_GBL1112874.txt	NDRG1_pT346-R-V	NDRG1_pT346-	0.95915	Validated	Rabbit	CST	3217	http://www.cellsignal.com/products/3217.html
+NFKB1	NF-kB-p65_pS536-R-C_GBL1112781.txt	NF-kB-p65_pS536-R-C	NF-kB-p65_pS536	0.9755407	Use with Caution	Rabbit	CST	3033	http://www.cellsignal.com/products/3033.html
+NF2	NF2-R-C_GBL1112941.txt	NF2-R-C	NF2	0.9708134	Use with Caution	Rabbit	SDI / Novus	2271.00.02	http://www.novusbio.com/Merlin-Antibody_22710002.html
+NOTCH1	Notch1-R-V_GBL1112858.txt	Notch1-R-V	Notch1	0.9718297	Validated	Rabbit	CST	3268	http://www.novusbio.com/Merlin-Antibody_22710002.html
+CDH3	P-Cadherin-R-C_GBL1112789.txt	P-Cadherin-R-C	P-Cadherin	0.9517873	Under Evaluation	Rabbit	CST	2130	http://www.cellsignal.com/products/2130.html
+CDKN1A	p21-R-V_GBL1112782.txt	p21-R-V	p21	0.9478703	Validated	Rabbit	Santa Cruz	SC-397	http://www.scbt.com/datasheet-397-p21-c-19-antibody.html
+CDKN1B	p27-R-V_GBL1112836.txt	p27-R-V	p27	0.9579986	Validated	Rabbit	Epitomics	1591-1	http://www.epitomics.com/products/product_info/311/p27-Kip1-antibody-1591-1.html
+CDKN1B	p27_pT157-R-C_GBL1112972.txt	p27_pT157-R-C	p27_pT157	0.9588889	Use with Caution	Rabbit	R&amp;D	AF1555	http://www.rndsystems.com/Products/AF1555
+CDKN1B	p27_pT198-R-V_GBL1112939.txt	p27_pT198-R-V	p27_pT198	0.9585155	Validated	Rabbit	Abcam	ab64949	http://www.abcam.com/p27-kip-1-phospho-t198-antibody-ab64949.html
+MAPK14	p38-R-V_GBL1112783.txt	p38-R-V	p38_MAPK	0.9738049	Validated	Rabbit	CST	9212	http://www.cellsignal.com/products/9212.html
+MAPK14	p38_pT180_Y182-R-V_GBL1112784.txt	p38_pT180_Y182-R-V	p38_pT180_Y182	0.969755	Validated	Rabbit	CST	9211	http://www.cellsignal.com/products/9211.html
+TP53	p53-R-E_GBL1112785.txt	p53-R-E	p53	0.9427288	Under Evaluation	Rabbit	CST	9282	http://www.cellsignal.com/products/9282.html
+SQSTM1	p62-LCK-ligand-M-C_GBL1112929.txt	p62-LCK-ligand-M-C	p62 LCK ligand	0.9522044	Under Evaluation	Mouse	BD Transduction Lab	610833	http://www.bdbiosciences.com/ptProduct.jsp?prodId=32650&amp;key=610833&amp;param=search&amp;mterms=true&amp;from=dTable
+RPS6KB1	p70S6K-R-V_GBL1112786.txt	p70S6K-R-V	p70S6K	0.9567273	Validated	Rabbit	Epitomics	1494-1	http://www.epitomics.com/products/product_info/321/p70-antibody-1494-1.html
+RPS6KB1	p70S6K_pT389-R-V_GBL1112787.txt	p70S6K_pT389-R-V	p70S6K_pT389	0.9688696	Validated	Rabbit	CST	9205	http://www.cellsignal.com/products/9205.html
+RPS6KA1	p90RSK-R-C_GBL1112815.txt	p90RSK-R-C	p90RSK	0.9731009	Use with Caution	Rabbit	CST	9347	http://www.cellsignal.com/products/9347.html
+RPS6KA1	p90RSK_pT359_S363-R-C_GBL1112817.txt	p90RSK_pT359_S363-R-C	p90RSK_pT359_S363	0.9591865	Use with Caution	Rabbit	CST	9344	http://www.cellsignal.com/products/9344.html
+SERPINE1	PAI-1-M-E_GBL1112902.txt	PAI-1-M-E	PAI-1	0.9558295	Under Evaluation	Mouse	BD Biosciences	612024	http://www.bdbiosciences.com/ptProduct.jsp?prodId=106729&amp;key=612024&amp;param=search&amp;mterms=true&amp;from=dTable
+PXN	Paxillin-R-C_GBL1112788.txt	Paxillin-R-C	Paxillin	0.9721674	Use with Caution	Rabbit	Epitomics	1500-1	http://www.epitomics.com/products/product_info/334/Paxillin-antibody-1500-1.html
+PCNA	PCNA-M-C_GBL1112975.txt	PCNA-M-C	PCNA	0.9330808	Use with Caution	Mouse	Abcam	ab29	http://www.abcam.com/pcna-antibody-pc10-proliferation-marker-ab29.html
+PDCD4	PDCD4-R-C_GBL1112825.txt	PDCD4-R-C	PDCD4	0.9680411	Use with Caution	Rabbit	Rockland	600-401-965	http://www.rockland-inc.com/store/Apoptosis-Antibodies-600-401-965-O4L_18137.aspx
+PDK1	PDK1-R-V_GBL1112790.txt	PDK1-R-V	PDK1	0.9710018	Validated	Rabbit	CST	3062	http://www.cellsignal.com/products/3062.html
+PDK1	PDK1_pS241-R-V_GBL1112791.txt	PDK1_pS241-R-V	PDK1_pS241	0.9752059	Validated	Rabbit	CST	3061	http://www.cellsignal.com/products/3061.html
+PEA15	PEA15-R-V_GBL1112849.txt	PEA15-R-V	Pea-15	0.9735796	Validated	Rabbit	CST	2780	http://www.cellsignal.com/products/2780.html
+PEA15	PEA15_pS116-R-V_GBL1112850.txt	PEA15_pS116-R-V	PEA15_pS116	0.9618809	Validated	Rabbit	Invitrogen	44-836G	http://products.invitrogen.com/ivgn/product/44836G?ICID=search-44836g
+PIK3CA	PI3K-p110-alpha-R-C_GBL1112824.txt	PI3K-p110-alpha-R-C	PI3K-p110-alpha	0.9691088	Use with Caution	Rabbit	CST	4255	http://www.cellsignal.com/products/4255.html
+PIK3R1	PI3K-p85-R-V_GBL1112792.txt	PI3K-p85-R-V	PI3K-p85	0.9710037	Validated	Rabbit	Upstate (Millipore)	06-195	https://www.millipore.com/catalogue/item/06-195
+PRKCA	PKC-alpha-M-V_GBL1112905.txt	PKC-alpha-M-V	PKC-alpha	0.9343754	Validated	Mouse	Upstate (Millipore)	05-154	https://www.millipore.com/catalogue/item/05-154
+PRKCA	PKC-alpha_pS657-R-C_GBL1112793.txt	PKC-alpha_pS657-R-C	PKC-alpha_pS657	0.9603017	Use with Caution	Rabbit	Upstate (Millipore)	06-822	https://www.millipore.com/catalogue/item/06-822
+PRKCD	PKC-delta_pS664-R-V_GBL1112844.txt	PKC-delta_pS664-R-V	PKC-delta_pS664	0.9533274	Validated	Rabbit	Millipore	07-875	https://www.millipore.com/catalogue/item/07-875
+PKC	PKC-pan_BetaII_pS660-R-V_GBL1112878.txt	PKC-pan_BetaII_pS660-R-V	PKC-pan_BetaII_pS660	0.9693974	Validated	Rabbit	CST	9371	http://www.cellsignal.com/products/9371.html
+PGR	PR-R-V_GBL1112794.txt	PR-R-V	PR	0.950795	Validated	Rabbit	Epitomics	1483-1	http://www.epitomics.com/products/product_info/354/Progesterone-antibody-1483-1.html
+AKT1S1	PRAS40_pT246-R-V_GBL1112813.txt	PRAS40_pT246-R-V	PRAS40_pT246	0.9666436	Validated	Rabbit	Biosource	441100G	http://products.invitrogen.com/ivgn/product/441100G?ICID=search-441100g
+PRDX1	PRDX1-R-V_GBL1112971.txt	PRDX1-R-V	PRDX1	0.9313305	Under Evaluation	Rabbit	Sigma/Atlas	HPA007730	http://www.sigmaaldrich.com/catalog/product/sigma/hpa007730?lang=en&amp;region=US
+PREX1	PREX1-R-E_GBL1112889.txt	PREX1-R-E	PREX1	0.9553033	Validated	Rabbit	Abcam	ab102739	http://www.abcam.com/prex1-antibody-ab102739.html
+PTEN	PTEN-R-V_GBL1112796.txt	PTEN-R-V	PTEN	0.9738292	Validated	Rabbit	CST	9552	http://www.cellsignal.com/products/9552.html
+RAB11A RAB11B	Rab11-R-E_GBL1112864.txt	Rab11-R-E	Rab11	0.9524091	Under Evaluation	Rabbit	CST	3539	http://www.cellsignal.com/products/3539.html
+RAB25	Rab25-R-V_GBL1112883.txt	Rab25-R-V	Rab25	0.9603709	Validated	Rabbit	CST	4314	http://www.cellsignal.com/products/4314.html
+RAD50	Rad50-M-V_GBL1112920.txt	Rad50-M-V	Rad50	0.9527337	Validated	Mouse	Millipore	05-525	https://www.millipore.com/catalogue/item/05-525
+RAD51	Rad51-R-V_GBL1112892.txt	Rad51-R-V	Rad51	0.9465889	Validated	Rabbit	CST	8875	http://www.cellsignal.com/products/primary-antibodies/8875?hit=productId&amp;Ntt=8875
+RPTOR	Raptor-R-V_GBL1112875.txt	Raptor-R-V	Raptor	0.9726319	Validated	Rabbit	CST	2280	http://www.cellsignal.com/products/2280.html
+RB1	Rb_pS807_S811-R-V_GBL1112795.txt	Rb_pS807_S811-R-V	Rb_pS807_S811	0.9606472	Validated	Rabbit	CST	9308	http://www.cellsignal.com/products/9308.html
+RBM15	RBM15-R-V_GBL1112879.txt	RBM15-R-V	RBM15	0.9686519	Validated	Rabbit	SDI / Novus	21390002	http://www.novusbio.com/RBM15-Antibody_21390002.html
+RICTOR	Rictor-R-C_GBL1112876.txt	Rictor-R-C	Rictor	0.9475799	Use with Caution	Rabbit	CST	2114	Discontinued and replaced by http://www.cellsignal.com/products/2280.html
+RICTOR	Rictor_pT1135-R-V_GBL1112877.txt	Rictor_pT1135-R-V	Rictor_pT1135	0.9738288	Validated	Rabbit	CST	3806	http://www.cellsignal.com/products/3806.html
+RPS6	S6-R-E_GBL1112798.txt	S6-R-E	S6	0.9695152	Under Evaluation	Rabbit	CST	2217	http://www.cellsignal.com/products/2217.html
+RPS6	S6_pS235_S236-R-V_GBL1112799.txt	S6_pS235_S236-R-V	S6_pS235_S236	0.9638312	Validated	Rabbit	CST	2211	http://www.cellsignal.com/products/2211.html
+RPS6	S6_pS240_S244-R-V_GBL1112800.txt	S6_pS240_S244-R-V	S6_pS240_S244	0.9717305	Validated	Rabbit	CST	2215	http://www.cellsignal.com/products/2215.html
+SCD1	SCD1-M-V_GBL1112961.txt	SCD1-M-V	SCD1	0.9295396	Validated	Mouse	Santa Cruz	sc-58420	http://www.scbt.com/datasheet-58420-scd-cd-e10-antibody.html
+SFRS1	SF2-M-V_GBL1112925.txt	SF2-M-V	SF2	0.9333803	Validated	Mouse	Invitrogen	32-4500	http://products.invitrogen.com/ivgn/product/324500?ICID=search-324500
+SHC1	Shc_pY317-R-E_GBL1112851.txt	Shc_pY317-R-E	Shc_pY317	0.9530988	Under Evaluation	Rabbit	CST	2431	http://www.cellsignal.com/products/2431.html
+SMAD1	Smad1-R-V_GBL1112842.txt	Smad1-R-V	Smad1	0.9689746	Validated	Rabbit	Epitomics	1649-1	http://www.epitomics.com/products/product_info/388/Smad1-antibody-1649-1.html
+SMAD3	Smad3-R-V_GBL1112821.txt	Smad3-R-V	Smad3	0.971202	Validated	Rabbit	Epitomics	1735-1	http://www.epitomics.com/products/product_info/454/Smad3-antibody-1735-1.html
+SMAD4	Smad4-M-V_GBL1112916.txt	Smad4-M-V	Smad4	0.9206434	Validated	Mouse	Santa Cruz	sc-7966	http://www.scbt.com/table-smad4.html
+SRC	Src-M-V_GBL1112909.txt	Src-M-V	Src	0.9686043	Validated	Mouse	Upstate (Millipore)	05-184	https://www.millipore.com/catalogue/item/05-184
+SRC	Src_pY416-R-C_GBL1112801.txt	Src_pY416-R-C	Src_pY416	0.9588805	Use with Caution	Rabbit	CST	2101	http://www.cellsignal.com/products/2101.html
+SRC	Src_pY527-R-V_GBL1112802.txt	Src_pY527-R-V	Src_pY527	0.9647905	Validated	Rabbit	CST	2105	http://www.cellsignal.com/products/2105.html
+STAT3	STAT3_pY705-R-V_GBL1112803.txt	STAT3_pY705-R-V	STAT3_pY705	0.9670276	Validated	Rabbit	CST	9131	http://www.cellsignal.com/products/9131.html
+STAT5A	STAT5-alpha-R-V_GBL1112804.txt	STAT5-alpha-R-V	STAT5-alpha	0.9642047	Validated	Rabbit	Epitomics	1289-1	http://www.epitomics.com/products/product_info/398/Stat-5-antibody-1289-1.html
+STMN1	Stathmin-R-V_GBL1112809.txt	Stathmin-R-V	Stathmin	0.9601588	Validated	Rabbit	Epitomics	1972-1	http://www.epitomics.com/products/product_info/701/Stathmin-antibody-1972-1.html
+SYK	Syk-M-V_GBL1112921.txt	Syk-M-V	Syk	0.9614217	Validated	Mouse	Santa Cruz	sc-1240	http://www.scbt.com/datasheet-1240-syk-4d10-antibody.html
+WWTR1	TAZ-R-V_GBL1112818.txt	TAZ-R-V	TAZ	0.9691371	Validated	Rabbit	CST	2149	http://www.cellsignal.com/products/2149.html
+C12ORF5	TIGAR-R-V_GBL1112868.txt	TIGAR-R-V	TIGAR	0.9600217	Under Evaluation	Rabbit	Epitomics	S1711	http://www.epitomics.com/products/product_info/3961/TIGAR-antibody-S1711.html
+TGM2	Transglutaminase-M-V_GBL1112914.txt	Transglutaminase-M-V	Transglutaminase	0.9588732	Validated	Mouse	Lab Vision	MS-224	https://thermo.dirxion.com/immunohistochemistry/WebProject.asp?CodeId=7.6.3.2&amp;BookCode=ihc12flx#
+TFRC	TFRC-R-V_GBL1112881.txt	TFRC-R-V	TFRC	0.9514526	Validated	Rabbit	SDI / Novus	22500002	http://www.novusbio.com/Transferrin-Receptor-Antibody_22500002.html
+TSC1	TSC1-R-C_GBL1112873.txt	TSC1-R-C	TSC1	0.9770194	Use with Caution	Rabbit	CST	4906	http://www.cellsignal.com/products/4906.html
+TTF1	TTF1-R-V_GBL1112862.txt	TTF1-R-V	TTF1	0.96159	Validated	Rabbit	Abcam	ab76013	http://www.abcam.com/ttf1-antibody-ep1584y-ab76013.html
+TSC2	Tuberin-R-E_GBL1112805.txt	Tuberin-R-E	Tuberin	0.9694655	Validated	Rabbit	Epitomics	1613-1	http://www.epitomics.com/products/product_info/411/TSC2-Tuberin-antibody-1613-1.html
+TSC2	Tuberin_pT1462-R-V_GBL1112806.txt	Tuberin_pT1462-R-V	Tuberin_pT1462	0.9642094	Validated	Rabbit	CST	3617	http://www.cellsignal.com/products/3617.html
+KDR	VEGFR2-R-V_GBL1112807.txt	VEGFR2-R-V	VEGFR2	0.9659935	Validated	Rabbit	CST	2479	http://www.cellsignal.com/products/2479.html
+VHL	VHL-M-C_GBL1112910.txt	VHL-M-C	VHL	0.9625926	Use with Caution	Mouse	BD Pharmingen	556347	http://www.bdbiosciences.com/ptProduct.jsp?prodId=12727&amp;key=556347&amp;param=search&amp;mterms=true&amp;from=dTable
+XBP1	XBP1-G-C_GBL1112936.txt	XBP1-G-C	XBP1	0.9449381	Use with Caution	Goat	Santa Cruz	sc-32136	http://www.scbt.com/datasheet-32136-xbp-1-r-14-antibody.html
+XRCC1	XRCC1-R-E_GBL1112840.txt	XRCC1-R-E	XRCC1	0.9527373	Under Evaluation	Rabbit	CST	2735	http://www.cellsignal.com/products/2735.html
+YAP1	YAP-R-E_GBL1112819.txt	YAP-R-E	YAP	0.9694199	Under Evaluation	Rabbit	Santa Cruz	sc-15407	http://www.scbt.com/datasheet-15407-yap-h-125-antibody.html
+YAP1	YAP_pS127-R-E_GBL1112820.txt	YAP_pS127-R-E	YAP_pS127	0.9719322	Under Evaluation	Rabbit	CST	4911	http://www.cellsignal.com/products/4911.html
+YBX1	YB-1-R-V_GBL1112808.txt	YB-1-R-V	YB-1	0.9604605	Validated	Rabbit	SDI	1725.00.02	http://www.novusbio.com/YB1-Antibody_17250002.html
+YBX1	YB-1_pS102-R-V_GBL1112826.txt	YB-1_pS102-R-V	YB-1_pS102	0.9748974	Validated	Rabbit	CST	2900	http://www.cellsignal.com/products/2900.html

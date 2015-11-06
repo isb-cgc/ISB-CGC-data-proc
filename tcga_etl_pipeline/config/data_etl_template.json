@@ -1,0 +1,211 @@
+{
+    "project_id": "",
+    "bq_dataset": "",
+    "all_tumor_types": [
+        "laml", 
+        "acc", 
+        "blca", 
+        "lgg", 
+        "brca", 
+        "cesc", 
+        "chol", 
+        "lcml", 
+        "coad", 
+        "esca", 
+        "gbm", 
+        "hnsc", 
+        "kich", 
+        "kirc", 
+        "kirp", 
+        "lihc", 
+        "luad", 
+        "lusc", 
+        "dlbc", 
+        "meso", 
+        "misc", 
+        "ov", 
+        "paad", 
+        "pcpg", 
+        "prad", 
+        "read", 
+        "sarc", 
+        "skcm", 
+        "stad", 
+        "tgct", 
+        "thym", 
+        "thca", 
+        "ucs", 
+        "ucec", 
+        "uvm"
+    ],
+    "tumor_types": [
+        "all"
+    ],
+    "skip_tumor_types": [
+        "cntl",
+        "fppp"
+    ],
+    "platforms": [
+        "all"
+    ],
+    "buckets": {
+        "open": "",
+        "key_prefix": {
+            "tcga": "",
+            "resources": ""
+        }
+    },
+    "cloudsql": {
+        "host": "",
+        "db": "",
+        "user": "",
+        "passwd": ""
+    },
+    "log_dir_tag": "logs",
+    "sample_code2type": {
+        "01": "Primary solid Tumor",
+        "02": "Recurrent Solid Tumor",
+        "03": "Primary Blood Derived Cancer - Peripheral Blood",
+        "04": "Recurrent Blood Derived Cancer - Bone Marrow",
+        "05": "Additional - New Primary",
+        "06": "Metastatic",
+        "07": "Additional Metastatic",
+        "08": "Human Tumor Original Cells",
+        "09": "Primary Blood Derived Cancer - Bone Marrow",
+        "10": "Blood Derived Normal",
+        "11": "Solid Tissue Normal",
+        "12": "Buccal Cell Normal",
+        "13": "EBV Immortalized Normal",
+        "14": "Bone Marrow Normal",
+        "20": "Control Analyte",
+        "40": "Recurrent Blood Derived Cancer - Peripheral Blood",
+        "50": "Cell Lines",
+        "60": "Primary Xenograft Tissue",
+        "61": "Cell Line Derived Xenograft Tissue"
+    },
+    "sample_code2letter": {
+        "01": "TP",
+        "02": "TR",
+        "03": "TB",
+        "04": "TRBM",
+        "05": "TAP",
+        "06": "TM",
+        "07": "TAM",
+        "08": "THOC",
+        "09": "TBM",
+        "10": "NB",
+        "11": "NT",
+        "12": "NBC",
+        "13": "NEBV",
+        "14": "NBM",
+        "20": "CELLC",
+        "40": "TRB",
+        "50": "CELL",
+        "60": "XP",
+        "61": "XCL"
+    },
+    "maf":{
+        "bq_table" : "MAF",
+        "schema_file": "maf.json",
+        "output_dir": "tcga/intermediary/MAF/bigquery_data_files/",
+        "oncotator_input_files_dest": "tcga/intermediary/MAF/oncotator_input_files/",
+        "oncotator_input_columns": [
+            "NCBI_Build",
+            "Chromosome",
+            "Start_position",
+            "End_position",
+            "Reference_Allele",
+            "Tumor_Seq_Allele1",
+            "Tumor_Seq_Allele2",
+            "Tumor_Sample_Barcode",
+            "Matched_Norm_Sample_Barcode",
+            "Center",
+            "Strand",
+            "Match_Norm_Seq_Allele1",
+            "Match_Norm_Seq_Allele2",
+            "Tumor_Validation_Allele1",
+            "Tumor_Validation_Allele2",
+            "Match_Norm_Validation_Allele1",
+            "Match_Norm_Validation_Allele2",
+            "Verification_Status",
+            "Validation_Status",
+            "Mutation_Status",
+            "Sequencing_Phase",
+            "Sequence_Source",
+            "Validation_Method",
+            "Score",
+            "BAM_file",
+            "Sequencer",
+            "Tumor_Sample_UUID",
+            "Matched_Norm_Sample_UUID"
+        ]
+    },
+    "mirtarbase":{
+        "bq_table" : "miRTarBase",
+        "input_file": "http://mirtarbase.mbc.nctu.edu.tw/cache/download/6.1/miRTarBase_MTI.xlsx",
+        "output_file": "tcga/intermediary/mirtarbase/mirtarbase.json",
+        "schema_file": "mirtarbase.json"
+    },
+    "tcga_annotations":{
+        "bq_table" : "TCGA_Annotations",
+        "input_file": "https://tcga-data.nci.nih.gov/annotations/resources/searchannotations/json",
+        "output_file": "tcga/intermediary/tcga_annotations/tcga_annotations.json",
+        "schema_file": "tcga_annotations.json"
+    },
+    "mirna": {
+        "isoform": {
+            "bq_table_ga" : "miRNA_BCGSC_GA_isoform",
+            "bq_table_hiseq": "miRNA_BCGSC_HiSeq_isoform",
+            "output_dir": "tcga/intermediary/mirna/isoform/bq_data_files/",
+            "schema_file": "mirna_isoform.json"
+        },
+        "mirna": {
+            "bq_table_ga" : "miRNA_BCGSC_GA_mirna",
+            "bq_table_hiseq": "miRNA_BCGSC_HiSeq_mirna",
+            "output_dir": "tcga/intermediary/mirna/mirna/bq_data_files/",
+            "schema_file": "mirna_mirna.json"
+        },
+        "platforms": ["IlluminaHiSeq", "IlluminaGA"]
+    },
+    "methylation": {
+            "bq_table" : "Methylation",
+            "output_dir": "tcga/intermediary/methylation/bq_data_files/",
+            "schema_file": "methylation.json"
+        },
+    "cnv": {
+            "bq_table": "CNV",
+            "output_dir": "tcga/intermediary/cnv/bq_data_files/",
+            "schema_file": "cnv.json"
+        },
+    "protein": {
+            "bq_table": "Protein",
+            "output_dir": "tcga/intermediary/protein/bq_data_files/",
+            "schema_file": "protein.json"
+        },
+    "mrna": {
+        "unc": {
+            "bq_table_ga" : "mRNA_UNC_GA_RSEM",
+            "bq_table_hiseq": "mRNA_UNC_HiSeq_RSEM",
+            "output_dir": "tcga/intermediary/mrna/unc/bq_data_files/",
+            "schema_file": "mrna_unc.json"
+        },
+        "bcgsc": {
+            "bq_table_ga" : "mRNA_BCGSC_GA_RPKM",
+            "bq_table_hiseq": "mRNA_BCGSC_HiSeq_RPKM",
+            "output_dir": "tcga/intermediary/mrna/bcgsc/bq_data_files/",
+            "schema_file": "mrna_bcgsc.json"
+        },
+        "platforms": ["IlluminaHiSeq", "IlluminaGA"]
+    },
+    "clinical": {
+        "bq_table" : "Clinical",
+        "output_dir": "tcga/intermediary/Clinical/bq_data_files/",
+        "schema_file": "clinical.json"
+    },
+    "biospecimen": {
+        "bq_table" : "Biospecimen",
+        "output_dir": "tcga/intermediary/Biospecimen/bq_data_files/",
+        "schema_file": "biospecimen.json"
+    },
+    "HGNC_approved_symbols_file" : "docs/hgnc_approved_symbols.txt"
+}

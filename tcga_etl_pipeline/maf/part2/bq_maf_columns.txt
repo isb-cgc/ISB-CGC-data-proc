@@ -1,0 +1,63 @@
+Hugo_Symbol
+Entrez_Gene_Id
+Center
+NCBI_Build
+Chromosome
+Start_position
+End_position
+Variant_Classification
+Variant_Type
+Reference_Allele
+Tumor_Seq_Allele1
+Tumor_Seq_Allele2
+dbSNP_RS
+dbSNP_Val_Status
+Tumor_Sample_Barcode
+Matched_Norm_Sample_Barcode
+Sequencer
+Genome_Change
+Annotation_Transcript
+Transcript_Strand
+Transcript_Exon
+Transcript_Position
+cDNA_Change
+Protein_Change
+Refseq_prot_Id
+SwissProt_acc_Id
+SwissProt_entry_Id
+UniProt_AApos
+UniProt_Region
+GO_Biological_Process
+GO_Cellular_Component
+GO_Molecular_Function
+COSMIC_total_alterations_in_gene
+DrugBank
+ref_context
+gc_content
+CCLE_ONCOMAP_total_mutations_in_gene
+DNARepairGenes_Role
+OREGANNO_ID
+HGNC_Accession Numbers
+HGNC_CCDS IDs
+HGNC_Ensembl ID(supplied by Ensembl)
+HGNC_HGNC ID
+HGNC_Locus Group
+HGNC_Locus Type
+HGNC_OMIM ID(supplied by NCBI)
+HGNC_RefSeq(supplied by NCBI)
+HGNC_UCSC ID(supplied by UCSC)
+HGNC_UniProt ID(supplied by UniProt)
+gencode_transcript_name
+gencode_transcript_status
+gencode_transcript_type
+gene_type
+match_norm_seq_allele1
+match_norm_seq_allele2
+match_norm_validation_allele1
+match_norm_validation_allele2
+mutation_status
+secondary_variant_classification
+sequence_source
+tumor_validation_allele1
+tumor_validation_allele2
+validation_method

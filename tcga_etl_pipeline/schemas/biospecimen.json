@@ -1,0 +1,158 @@
+[
+    {
+        "type": "STRING",
+        "name": "ParticipantBarcode"
+    },
+    {
+        "type": "STRING",
+        "name": "SampleBarcode"
+    },
+    {
+        "type": "STRING",
+        "name": "SampleTypeLetterCode"
+    },
+    {
+        "type": "STRING",
+        "name": "SampleType"
+    },
+    {
+        "type": "STRING", 
+        "name": "Study"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "Project"
+    },
+    {
+        "type": "STRING",
+        "name": "SampleTypeCode"
+    },
+    {
+        "type": "FLOAT", 
+        "name": "avg_percent_lymphocyte_infiltration"
+    }, 
+    {
+        "type": "FLOAT", 
+        "name": "avg_percent_monocyte_infiltration"
+    }, 
+    {
+        "type": "FLOAT", 
+        "name": "avg_percent_necrosis"
+    }, 
+    {
+        "type": "FLOAT", 
+        "name": "avg_percent_neutrophil_infiltration"
+    }, 
+    {
+        "type": "FLOAT", 
+        "name": "avg_percent_normal_cells"
+    }, 
+    {
+        "type": "FLOAT", 
+        "name": "avg_percent_stromal_cells"
+    }, 
+    {
+        "type": "FLOAT", 
+        "name": "avg_percent_tumor_cells"
+    }, 
+    {
+        "type": "FLOAT", 
+        "name": "avg_percent_tumor_nuclei"
+    }, 
+    {
+        "type": "INTEGER", 
+        "name": "batch_number"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "bcr"
+    }, 
+    {
+        "type": "FLOAT", 
+        "name": "days_to_collection"
+    }, 
+    {
+        "type": "FLOAT", 
+        "name": "days_to_sample_procurement"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "is_ffpe"
+    }, 
+    {
+        "type": "FLOAT", 
+        "name": "max_percent_lymphocyte_infiltration"
+    }, 
+    {
+        "type": "FLOAT", 
+        "name": "max_percent_monocyte_infiltration"
+    }, 
+    {
+        "type": "FLOAT", 
+        "name": "max_percent_necrosis"
+    }, 
+    {
+        "type": "FLOAT", 
+        "name": "max_percent_neutrophil_infiltration"
+    }, 
+    {
+        "type": "FLOAT", 
+        "name": "max_percent_normal_cells"
+    }, 
+    {
+        "type": "FLOAT", 
+        "name": "max_percent_stromal_cells"
+    }, 
+    {
+        "type": "FLOAT", 
+        "name": "max_percent_tumor_cells"
+    }, 
+    {
+        "type": "FLOAT", 
+        "name": "max_percent_tumor_nuclei"
+    }, 
+    {
+        "type": "FLOAT", 
+        "name": "min_percent_lymphocyte_infiltration"
+    }, 
+    {
+        "type": "FLOAT", 
+        "name": "min_percent_monocyte_infiltration"
+    }, 
+    {
+        "type": "FLOAT", 
+        "name": "min_percent_necrosis"
+    }, 
+    {
+        "type": "FLOAT", 
+        "name": "min_percent_neutrophil_infiltration"
+    }, 
+    {
+        "type": "FLOAT", 
+        "name": "min_percent_normal_cells"
+    }, 
+    {
+        "type": "FLOAT", 
+        "name": "min_percent_stromal_cells"
+    }, 
+    {
+        "type": "FLOAT", 
+        "name": "min_percent_tumor_cells"
+    }, 
+    {
+        "type": "FLOAT", 
+        "name": "min_percent_tumor_nuclei"
+    }, 
+    {
+        "type": "INTEGER", 
+        "name": "num_portions"
+    }, 
+    {
+        "type": "INTEGER", 
+        "name": "num_slides"
+    }, 
+    {
+        "type": "STRING",
+        "name": "SampleUUID"
+    }
+]
