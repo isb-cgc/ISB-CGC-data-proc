@@ -1,3 +1,33 @@
+The data upload code uploads the contents of the TCGA DCC into GCS.
+
+The code is heavily data-driven based on the input configuration.
+
+The current archives that are candidates to upload are obtained from the DCC latestarchive.  They are organized into a nested map 
+per study per platform of 'bio', 'mage-tab', 'data' and 'maf' archives.  Metadata for the CloudSQL metadata tables are obtained from 
+that spreadsheet and also from the DCC metadata.current.txt and the CGHub manifest.  The NCI annotations are obtained to be used to 
+filter out the upload of files whose participant, sample or aliquot barcodes are marked 'redacted', 'dnu', or with 'unacceptable prior 
+treatment'.
+
+The code then runs each study in parallel.  Each study first processes the 'bio' archives, obtaining metadata from the Level 1 clinical, 
+auxiliary, and biospecimen files.  These files are uploaded into GCS, with the exception of files marked FFPE.
+
+The different platforms for each study are then processed in parallel.  The SDRF(s) associated with each platform are parsed and 
+metadata from the SDRF is put together for each aliquot/file name pair.  If the SDRF belongs to a center/platform designated for upload, 
+it is then uploaded to GCS.  After the SDRF is parsed, the archives for that platform are then processed.  If the archive  belongs to a 
+level, center, and platform combination designated for upload, the archive is downloaded to the GCE hard drive and exploded.  
+The files are processed and files that clear the excluded file type extensions are uploaded to GCS.  There are some maf file archives 
+that aren't mentioned in any SDRF files that are processed special.  They are essentially processed the same as other platform archives 
+with the additional step of parsing the maf file and associating the maf file name and aliquot barcode pairs in the metadata.
+
+As each platform completes for a study, its metadata is merged with previous platforms' metadata.  Once all the platforms have completed, 
+the metadata is merged with the higher level metadata from metadata.current.txt and the CGHub manifest.  The metadata is then saved on a 
+per study basis to the CloudSQL metadata_clinical, metadata_biospecimen, metadata_data, and metadata_samples tables.  The 
+metadata_samples records are a denormalized version of the other three tables.  The clinical, biospecimen and data metadata is returned to 
+the top processing thread.
+
+To complete the upload, the top processing thread combines the metadata from all the studies and saves the clinical, biospecimen and data 
+metadata in separate json files to GCS to be used by the ETL code to create BigQuery tables.
+
 The data upload code is run via Google Compute Engine.  The main module is `uploadTCGA` and takes a config file for an argument
 
 The compute engine is constructed by the following command:

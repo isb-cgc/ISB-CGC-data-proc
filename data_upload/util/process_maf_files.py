@@ -106,8 +106,7 @@ def upload_archive(config, log, archive_fields, archive2metadata, sdrf_metadata,
     finally:
         shutil.rmtree(archive_path)
 
-
-def process_maf_archives(config, maf_archives, sdrf_metadata, data_archive_info, archive2metadata, log):
+def process_maf_files(config, maf_archives, sdrf_metadata, data_archive_info, archive2metadata, log):
     log.info('start process potential maf archives')
     archives = [archive_fields[0] for archive_fields in data_archive_info]
     for archive_fields in maf_archives:

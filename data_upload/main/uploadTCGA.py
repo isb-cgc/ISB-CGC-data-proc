@@ -35,7 +35,7 @@ from process_latestarchive import process_latestarchive
 from process_metadata_current import process_metadata_current
 from process_sdrf import process_sdrf
 from process_cghub import process_cghub
-from process_maf_archives import process_maf_archives
+from process_maf_files import process_maf_files
 from upload_archives import upload_archives
 from util import create_log
 from util import import_module
@@ -113,9 +113,14 @@ def process_platform(config, log_dir, log_name, tumor_type, platform, archive2me
         create_log(log_dir + tumor_type + '/', log_name)
         log = logging.getLogger(log_name)
         if 'mage-tab' not in archive_types2archives:
-            log.warning('\tno mage-tab archives for %s' % (platform))
+            orphan_data_archives = set([archive_info[0] for archive_info in archive_types2archives['data']]) - \
+                set((archive_info[0] for archive_info in archive_types2archives['maf']) if 'maf' in archive_types2archives else [])
+            if 0 < len(orphan_data_archives):
+                log.warning('\tno mage-tab archives for %s and but there are data archives that are not maf: %s' % (platform, orphan_data_archives))
+            else:
+                log.warning('\tno mage-tab archives for %s' % (platform))
             if 'maf' in archive_types2archives:
-                return process_maf_archives(config, archive_types2archives['maf'], {}, {}, archive2metadata, log)
+                return process_maf_files(config, archive_types2archives['maf'], {}, {}, archive2metadata, log)
             return {}
         sdrf_metadata = process_sdrf(config, log, archive_types2archives['mage-tab'], archive2metadata, barcode2annotations)
         if 'data' in archive_types2archives:
@@ -124,7 +129,7 @@ def process_platform(config, log_dir, log_name, tumor_type, platform, archive2me
             log.warning('\tno data archives found for %s' % (tumor_type + ':' + platform))
         
         if 'maf' in archive_types2archives:
-            process_maf_archives(config, archive_types2archives['maf'], sdrf_metadata, archive_types2archives['data'], archive2metadata, log)
+            process_maf_files(config, archive_types2archives['maf'], sdrf_metadata, archive_types2archives['data'], archive2metadata, log)
         return sdrf_metadata
     except Exception as e:
         log.exception('%s generated an exception' % (platform))
@@ -262,18 +267,9 @@ def process_tumortype(config, log_dir, tumor_type, platform2archive_types2archiv
         # data map has a different structure than the clinical and biospecimen maps, remove the top map of aliquot to file_list metadata and combine all the files
         # for compatibility in calls to the data store and etl
         flattened_data_map = {}
-        maf2barcodes = {}
         for aliquot, file_name2field2value in aliquot2filename2metadata.iteritems():
             for file_name, field2value in file_name2field2value.iteritems():
                 flattened_data_map[aliquot + ':' + file_name] = field2value
-                if file_name.endswith('maf'):
-                    barcodes = maf2barcodes.setdefault(field2value['Platform'] + ':' + file_name, set())
-                    barcodes.add(aliquot)
-#         if 0 < len(maf2barcodes):
-#             maf_info = ''
-#             for maf_file, barcodes in maf2barcodes.iteritems():
-#                 maf_info += '\t%s:\n\t\t%s\n' % (maf_file, '\n\t\t'.join(barcodes))
-#             log.info('maf file barcodes:\n%s' % (maf_info))
 
         # do this per platform to parallelize
         store_metadata(config, log, 'metadata_clinical', clinical_metadata)
@@ -311,7 +307,7 @@ def process_tumortypes(config, log_dir, tumor_type2platform2archive_types2archiv
             tumor_type = future2tumortype.pop(future)
             if future.exception() is not None:
                 success = False
-                log.exception('\tError: %s generated an exception--%s' % (tumor_type, future.exception()))
+                log.exception('\t%s generated an exception--%s' % (tumor_type, future.exception()))
             else:
                 result = future.result()
                 total_clinical_metadata.update(result[0])

@@ -34,6 +34,7 @@ def get_bucket_key_prefix(config, metadata):
     return bucket_name, key
 
 def upload_files(config, archive_path, file2metadata, log):
+    # TODO: for the DatafileNameKey, use the value already in the metadata
     files = os.listdir(archive_path)
     if 0 < len(files):
         bucket_name, key_prefix = get_bucket_key_prefix(config, file2metadata[files[0]])
@@ -69,7 +70,16 @@ def upload_file(filename, metadata, nonupload_files, ffpe_samples, level, log):
     return True if 'true' == upload else False
 
 def process_files(config, archive_path, sdrf_metadata, seen_files, nonupload_files, ffpe_samples, level, log):
+    # TODO: set DatafileNameKey and DatafileUploaded here
     files = os.listdir(archive_path)
+    metadatafiles = set(sdrf_metadata.values().keys())
+    archiveonly = files - metadatafiles
+    metaonly = metadatafiles - files
+    if 0 < len(archiveonly):
+        log.warning('files only in the archive, not sdrf: %s' % (','.join(archiveonly)))
+    if 0 < len(metaonly):
+        log.warning('files only in the sdrf, not archive: %s' % (','.join(metaonly)))
+    
     file2metadata = {}
     filenames = set()
     for filename2metadata in sdrf_metadata.itervalues():
@@ -92,26 +102,22 @@ def process_files(config, archive_path, sdrf_metadata, seen_files, nonupload_fil
             log.info('\t\tuploading %s' % (file_name))
     return file2metadata
 
-def upload_archive_file(config, log, archive_fields, sdrf_metadata, seen_files, nonupload_files, ffpe_samples):
-    archive_path = None
-    try:
-        level = archive_fields[0].split('.')[-4].replace('_', ' ')
-        user_info = config['user_info']
-        archive_path = util.setup_archive(archive_fields, log, user_info['user'], user_info['password'])
-        file2metadata = process_files(config, archive_path, sdrf_metadata, seen_files, nonupload_files, ffpe_samples, level, log)
-        if 0 < len(file2metadata):
-            upload_files(config, archive_path, file2metadata, log)
-        else:
-            log.warning('did not find files to load for %s' % (archive_fields[0]))
-    finally:
-        if archive_path:
-            shutil.rmtree(archive_path)
-
-
 def upload_archive(config, sdrf_metadata, archive2metadata, ffpe_samples, archive_fields, upload_archives, seen_files, nonupload_files, access, log):
+    archive_path = None
     if config['download_archives'] and util.is_upload_archive(archive_fields[0], upload_archives, archive2metadata):
         log.info('\tuploading %s-access archive %s.' % (access, archive_fields[0]))
-        upload_archive_file(config, log, archive_fields, sdrf_metadata, seen_files, nonupload_files, ffpe_samples)
+        try:
+            level = archive_fields[0].split('.')[-4].replace('_', ' ')
+            user_info = config['user_info']
+            archive_path = util.setup_archive(archive_fields, log, user_info['user'], user_info['password'])
+            file2metadata = process_files(config, archive_path, sdrf_metadata, seen_files, nonupload_files, ffpe_samples, level, log)
+            if 0 < len(file2metadata):
+                upload_files(config, archive_path, file2metadata, log)
+            else:
+                log.warning('did not find files to load for %s' % (archive_fields[0]))
+        finally:
+            if archive_path:
+                shutil.rmtree(archive_path)
         log.info('\tfinished uploading %s-access archive %s' % (access, archive_fields[0]))
     else:
         log.info('\tskipping %s-access archive %s' % (access, archive_fields[0]))
