@@ -71,8 +71,11 @@ def upload_file(filename, metadata, nonupload_files, ffpe_samples, level, log):
 
 def process_files(config, archive_path, sdrf_metadata, seen_files, nonupload_files, ffpe_samples, level, log):
     # TODO: set DatafileNameKey and DatafileUploaded here
-    files = os.listdir(archive_path)
-    metadatafiles = set(sdrf_metadata.values().keys())
+    files = set(os.listdir(archive_path))
+    metadatafiles = set()
+    for maplist in sdrf_metadata.values():
+        for filename in maplist.keys():
+            metadatafiles.add(filename)
     archiveonly = files - metadatafiles
     metaonly = metadatafiles - files
     if 0 < len(archiveonly):
@@ -127,6 +130,7 @@ def upload_archives(config, log, archives, sdrf_metadata, archive2metadata, ffpe
     upload_archives = config['upload_archives']
     nonupload_files = config['nonupload_files']
     archives.sort(key=lambda archive_fields: archive2metadata[archive_fields[0]]['DataArchiveVersion'], reverse=True)
+    # track the uploaded file names to avoid uploading duplicates
     seen_files = set()
     for archive_fields in archives:
         if 'tcga4yeo' in archive_fields[2] and config['upload_controlled']:
