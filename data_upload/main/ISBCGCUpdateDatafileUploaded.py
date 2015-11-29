@@ -30,7 +30,6 @@ def updateDatafileUploaded(config, path_file, log):
             count += 1
             # check that the file was actually part of the metadata
             cursor = isbcgc_cloudsql_model.ISBCGC_database_helper.select(config, select_stmt, log, [filename], False)
-            cursor = []
             if 0 < len(cursor):
                 found_path_names += [[path_nobucket, filename]]
             else:
