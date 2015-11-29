@@ -11,14 +11,37 @@ import json
 import logging
 import sys
 
-import gcs_wrapper
 import isbcgc_cloudsql_model
 from util import create_log
 
-def updateDatafileUploaded(config, uploaded_data_files, log):
+def updateDatafileUploaded(config, path_name_file, log):
     try:
-        update_stmt = "update metadata_data set DatafileUploaded = 'true', DatafileNameKey = %s where DatafileName = %s"
-        isbcgc_cloudsql_model.ISBCGC_database_helper.update(config, update_stmt, log, uploaded_data_files, False)
+        select_stmt = 'select datafilename from metadata_data where datafilename = ? group by datafilename'
+        found_path_names = []
+        notfound_path_names = []
+        count = 0
+        log.info('\tprocessing path/name combinations for existence in the database')
+        for path_name in path_name_file:
+            if 0 == count % 8192:
+                log.info('\tprocessing %s record: %s' % (count, path_name))
+            count += 1
+            # check that the file was actually part of the metadata
+            cursor = isbcgc_cloudsql_model.ISBCGC_database_helper.select(config, select_stmt, log, [path_name[1]], False)
+            if 0 < len(cursor):
+                found_path_names += [path_name]
+            else:
+                notfound_path_names += [path_name]
+        if 0 == len(notfound_path_names):
+            log.info('\tprocessed a total of %s path/name combinations.' % (count))
+        else:
+            if 100 > notfound_path_names:
+                print_notfound = notfound_path_names
+            else:
+                print_notfound = notfound_path_names[:100] + ['...']
+            log.info('\tprocessed a total of %s path/name combinations.  %s files were not found:\n\t\t%s\n' % (count, len(notfound_path_names), '\n\t\t'.join(print_notfound)))
+        
+        update_stmt = 'update metadata_data set DatafileUploaded = \'true\', DatafileNameKey = %s where DatafileName = %s'
+        isbcgc_cloudsql_model.ISBCGC_database_helper.update(config, update_stmt, log, found_path_names, False)
     except Exception as e:
         log.exception('\tproblem updating')
         raise e
@@ -28,20 +51,17 @@ def main(configfilename):
     with open(configfilename) as configFile:
         config = json.load(configFile)
     
-    log_dir = str(date.today()).replace('-', '_') + '_' + config['log_dir_tag'] + 'update_datafileuploaded' + '/'
+    log_dir = str(date.today()).replace('-', '_') + '_' + config['log_dir_tag'] + '_update_uploaded' + '/'
     log_name = create_log(log_dir, 'top_processing')
     log = logging.getLogger(log_name)
     log.info('begin update DatafileUploaded')
     try:
-        gcs_wrapper.open_connection()
         for bucket in config['buckets']['update_uploaded']:
-            updateDatafileUploaded(config, gcs_wrapper.get_bucket_contents(bucket, log), log)
+            with open(bucket['outputfile'], 'r') as outfile:
+                updateDatafileUploaded(config, outfile, log)
     except Exception as e:
         log.exception('problem updating DatafileUploaded')
         raise e
-    finally:
-        if gcs_wrapper:
-            gcs_wrapper.close_connection()
     log.info('finish update DatafileUploaded')
     print datetime.now(), 'finish update DatafileUploaded'
 

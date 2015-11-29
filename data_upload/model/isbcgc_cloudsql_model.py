@@ -461,7 +461,8 @@ class ISBCGC_database_helper():
     def getDBConnection(cls, config, log):
         try:
             db = MySQLdb.connect(host=config['cloudsql']['host'], db=config['cloudsql']['db'], user=config['cloudsql']['user'], passwd=config['cloudsql']['passwd'], ssl = cls.ssl)
-        except Exception as e:
+        except:
+            # if connection requests are made too close together over a period of time, the connection attempt might fail
             time.sleep(1)
             log.warning('\n\n!!!!!!sleeping on error to reattempt db connection!!!!!!\n\n')
             db = MySQLdb.connect(host=config['cloudsql']['host'], db=config['cloudsql']['db'], user=config['cloudsql']['user'], passwd=config['cloudsql']['passwd'], ssl = cls.ssl)
