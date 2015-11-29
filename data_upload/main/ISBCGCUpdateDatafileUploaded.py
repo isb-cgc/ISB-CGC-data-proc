@@ -14,23 +14,27 @@ import sys
 import isbcgc_cloudsql_model
 from util import create_log
 
-def updateDatafileUploaded(config, path_name_file, log):
+def updateDatafileUploaded(config, path_file, log):
     try:
         select_stmt = 'select datafilename from metadata_data where datafilename = ? group by datafilename'
         found_path_names = []
         notfound_path_names = []
         count = 0
         log.info('\tprocessing path/name combinations for existence in the database')
-        for path_name in path_name_file:
+        for path in path_file:
+            path = path.strip()
+            filename = path[path.rindex('/') + 1:]
+            path_nobucket = path[path.index('/', 5):]
             if 0 == count % 8192:
-                log.info('\tprocessing %s record: %s' % (count, path_name))
+                log.info('\tprocessing %s record: %s:%s' % (count, path, filename))
             count += 1
             # check that the file was actually part of the metadata
-            cursor = isbcgc_cloudsql_model.ISBCGC_database_helper.select(config, select_stmt, log, [path_name[1]], False)
+            cursor = isbcgc_cloudsql_model.ISBCGC_database_helper.select(config, select_stmt, log, [filename], False)
+            cursor = []
             if 0 < len(cursor):
-                found_path_names += [path_name]
+                found_path_names += [[path_nobucket, filename]]
             else:
-                notfound_path_names += [path_name]
+                notfound_path_names += [[path_nobucket, filename]]
         if 0 == len(notfound_path_names):
             log.info('\tprocessed a total of %s path/name combinations.' % (count))
         else:
@@ -38,7 +42,7 @@ def updateDatafileUploaded(config, path_name_file, log):
                 print_notfound = notfound_path_names
             else:
                 print_notfound = notfound_path_names[:100] + ['...']
-            log.info('\tprocessed a total of %s path/name combinations.  %s files were not found:\n\t\t%s\n' % (count, len(notfound_path_names), '\n\t\t'.join(print_notfound)))
+            log.info('\tprocessed a total of %s path/name combinations.  %s files were not found:\n\t\t%s\n' % (count, len(notfound_path_names), '\n\t\t'.join(':'.join(tuple) for tuple in print_notfound)))
         
         update_stmt = 'update metadata_data set DatafileUploaded = \'true\', DatafileNameKey = %s where DatafileName = %s'
         isbcgc_cloudsql_model.ISBCGC_database_helper.update(config, update_stmt, log, found_path_names, False)
