@@ -16,7 +16,7 @@ from util import create_log
 
 def updateDatafileUploaded(config, path_file, log):
     try:
-        select_stmt = 'select datafilename from metadata_data where datafilename = ? group by datafilename'
+        select_stmt = 'select datafilename from metadata_data where datafilename = %s group by datafilename'
         found_path_names = []
         notfound_path_names = []
         count = 0
@@ -42,7 +42,7 @@ def updateDatafileUploaded(config, path_file, log):
                 print_notfound = notfound_path_names
             else:
                 print_notfound = notfound_path_names[:100] + ['...']
-            log.info('\tprocessed a total of %s path/name combinations.  %s files were not found:\n\t\t%s\n' % (count, len(notfound_path_names), '\n\t\t'.join(':'.join(tuple) for tuple in print_notfound)))
+            log.info('\tprocessed a total of %s path/name combinations.  %s files were not found:\n\t\t%s\n' % (count, len(notfound_path_names), '\n\t\t'.join(':'.join(pathinfo) for pathinfo in print_notfound)))
         
         update_stmt = 'update metadata_data set DatafileUploaded = \'true\', DatafileNameKey = %s where DatafileName = %s'
         isbcgc_cloudsql_model.ISBCGC_database_helper.update(config, update_stmt, log, found_path_names, False)
