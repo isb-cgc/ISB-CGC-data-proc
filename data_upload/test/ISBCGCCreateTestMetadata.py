@@ -47,11 +47,7 @@ def main(configfilename):
             for test_barcode in test_barcodes:
                 test_barcode = test_barcode.strip()
                 fileinfos = ISBCGC_database_helper.select(config, select_stmt, log, [test_barcode], False)
-                count = 0
                 for fileinfo in fileinfos:
-                    if 0 < count:
-                        raise ValueError("unexpected duplicate: %s" % (fileinfo))
-                    count += 1
                     outputfile.write('\t'.join(fileinfo) + '\n')
     except Exception as e:
         log.exception('problem creating test metadata')
