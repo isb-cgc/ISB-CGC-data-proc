@@ -41,8 +41,8 @@ def main(configfilename):
 #         ISBCGC_database_helper.initialize(config, log)
 #         inswert_stmt = "INSERT newtable SELECT * FROM oldtable where barcode in (...)"
         # first simply get the controlled access paths for the test barcodes and save to a file
-        select_stmt = "select ParticipantBarcode, DatafileName, DatafileNameKey from metadata_data where barcode = %s and datafilenamekey <> '' and securityprotocol = 'dbGap controlled-access'"
-        with open(config['outputfile']) as outputfile:
+        select_stmt = "select ParticipantBarcode, DatafileName, DatafileNameKey from metadata_data where ParticipantBarcode = %s and DatafileNameKey <> '' and securityprotocol = 'dbGap controlled-access'"
+        with open(config['outputfile'], 'w') as outputfile:
             for test_barcode in test_barcodes:
                 test_barcode = test_barcode.strip()
                 fileinfo = ISBCGC_database_helper.select(config, select_stmt, log, [test_barcode], False)
