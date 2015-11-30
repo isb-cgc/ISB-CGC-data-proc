@@ -41,12 +41,18 @@ def main(configfilename):
 #         ISBCGC_database_helper.initialize(config, log)
 #         inswert_stmt = "INSERT newtable SELECT * FROM oldtable where barcode in (...)"
         # first simply get the controlled access paths for the test barcodes and save to a file
-        select_stmt = "select ParticipantBarcode, DatafileName, DatafileNameKey from metadata_data where ParticipantBarcode = %s and DatafileNameKey <> '' and securityprotocol = 'dbGap controlled-access'"
+        select_stmt = "select ParticipantBarcode, DatafileName, DatafileNameKey from metadata_data where ParticipantBarcode = %s and DatafileNameKey <> '' and securityprotocol = 'dbGap controlled-access' " + \
+            "group by ParticipantBarcode, DatafileName, DatafileNameKey"
         with open(config['outputfile'], 'w') as outputfile:
             for test_barcode in test_barcodes:
                 test_barcode = test_barcode.strip()
-                fileinfo = ISBCGC_database_helper.select(config, select_stmt, log, [test_barcode], False)
-                outputfile.write('\t'.join(fileinfo) + '\n')
+                fileinfos = ISBCGC_database_helper.select(config, select_stmt, log, [test_barcode], False)
+                count = 0
+                for fileinfo in fileinfos:
+                    if 0 < count:
+                        raise ValueError("unexpected duplicate: %s" % (fileinfo))
+                    count += 1
+                    outputfile.write('\t'.join(fileinfo) + '\n')
     except Exception as e:
         log.exception('problem creating test metadata')
         raise e
