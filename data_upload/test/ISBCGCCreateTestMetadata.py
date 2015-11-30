@@ -18,6 +18,7 @@ limitations under the License.
 @author: michael
 '''
 from datetime import date, datetime
+import gcs_wrapper
 import json
 import logging
 import sys
@@ -49,6 +50,16 @@ def main(configfilename):
     except Exception as e:
         log.exception('problem creating test metadata')
         raise e
+
+    try:
+        gcs_wrapper.open_connection()
+        gcs_wrapper.upload_file(config['outputfile'], config['bucket_name'], config['key_name'], log)
+    except Exception as e:
+        log.exception('problem saving %s to GCS' % (config['outputfile']))
+        raise e
+    finally:
+        gcs_wrapper.close_connection()
+    
     log.info('finish create test metadata')
     print datetime.now(), 'create test metadata'
 
