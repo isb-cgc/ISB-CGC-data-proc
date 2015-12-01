@@ -55,7 +55,7 @@ def main(configfilename):
 
     try:
         gcs_wrapper.open_connection()
-        gcs_wrapper.upload_file(config['outputfile'], config['buckets']['open'], config['buckets']['protected_filenamekey'] + '/' + config['outputfile'], log)
+        gcs_wrapper.upload_file(config['outputfile'], config['buckets']['open'], config['buckets']['key_prefix']['protected_filenamekey'] + '/' + config['outputfile'], log)
     except Exception as e:
         log.exception('problem saving %s to GCS' % (config['outputfile']))
         raise e
