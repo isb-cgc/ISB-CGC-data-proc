@@ -71,20 +71,18 @@ def main(configfilename):
                 except Exception as e:
                     log.exception('problem setting up barcodes(%s): %s:%s:%s' % (len(test_barcodes), start, index, start + per))
             barcode_list += [barcodes]
-        log.info('#barcodes: %s' % (len(test_barcodes) - 1))
+        log.info('#barcodes: %s' % (len(test_barcodes)))
 
-        ISBCGC_database_helper.initialize(config, log)
         for metadata_table in ISBCGC_database_helper.metadata_tables:
-            table_create_stmt = 'create table {0} like {1}.{0}'.format(metadata_table, config['cloudsql']['source_db'])
-            log.info('table create statement: %s' % (table_create_stmt))
-            ISBCGC_database_helper.update(config, table_create_stmt, log, [[]])
+            if config["create_tables"]:
+                table_create_stmt = 'create table {1}.{0} like {2}.{0}'.format(metadata_table, config['cloudsql']['target_db'], config['cloudsql']['source_db'])
+                ISBCGC_database_helper.update(config, table_create_stmt, log, [[]])
             
-            insert_stmt = "INSERT {0} SELECT * FROM {1}.{0} where ParticipantBarcode in (%s)".format(metadata_table, config['cloudsql']['source_db'])
+            insert_stmt = "INSERT {1}.{0} SELECT * FROM {2}.{0} where ParticipantBarcode in (%s)".format(metadata_table, config['cloudsql']['target_db'], config['cloudsql']['source_db'])
             for barcodes in barcode_list:
                 log.info('cur length: %s' % (len(barcodes)))
                 cur_insert_stmt = insert_stmt % ','.join(barcodes)
-                log.info('insert statement: %s' % (cur_insert_stmt))
-                ISBCGC_database_helper.update(config, cur_insert_stmt, log, [], False)
+                ISBCGC_database_helper.update(config, cur_insert_stmt, log, [[]])
     except Exception as e:
         log.exception('problem creating test metadata')
         raise e
