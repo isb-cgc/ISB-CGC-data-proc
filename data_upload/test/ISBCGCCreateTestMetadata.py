@@ -59,26 +59,27 @@ def main(configfilename):
     try:
         with open(config['test_barcode_file']) as barcodefile:
             test_barcodes = barcodefile.readlines()
-        ISBCGC_database_helper.initialize(config, log)
+        barcode_list = []
+        per = 100
+        for start in range(1, len(test_barcodes), per):
+            barcodes = []
+            for index in range(start, start + per):
+                if index == len(test_barcodes):
+                    break
+                try:
+                    barcodes += ["'" + test_barcodes[index].strip() + "'"]
+                except Exception as e:
+                    log.exception('problem setting up barcodes(%s): %s:%s:%s' % (len(test_barcodes), start, index, start + per))
+            barcode_list += [barcodes]
         log.info('#barcodes: %s' % (len(test_barcodes) - 1))
+
+        ISBCGC_database_helper.initialize(config, log)
         for metadata_table in ISBCGC_database_helper.metadata_tables:
             table_create_stmt = 'create table {0} like {1}.{0}'.format(metadata_table, config['cloudsql']['source_db'])
             log.info('table create statement: %s' % (table_create_stmt))
             ISBCGC_database_helper.update(config, table_create_stmt, log, [[]])
             
             insert_stmt = "INSERT {0} SELECT * FROM {1}.{0} where ParticipantBarcode in (%s)".format(metadata_table, config['cloudsql']['source_db'])
-            barcode_list = []
-            per = 100
-            for start in range(1, len(test_barcodes), per):
-                barcodes = []
-                for index in range(start, start + per):
-                    if index == len(test_barcodes):
-                        break
-                    try:
-                        barcodes += ["'" + test_barcodes[index].strip() + "'"]
-                    except Exception as e:
-                        log.exception('problem setting up barcodes(%s): %s:%s:%s' % (len(test_barcodes), start, index, start + per))
-                barcode_list += [barcodes]
             for barcodes in barcode_list:
                 log.info('cur length: %s' % (len(barcodes)))
                 cur_insert_stmt = insert_stmt % ','.join(barcodes)
