@@ -48,6 +48,9 @@ def generateProtectedFileInfo(config, test_barcodes, log):
         gcs_wrapper.close_connection()
 
 def main(configfilename):
+    '''
+    take a list of ParticipantBarcodes and use those to filter the data from the four metadata tables into the test metadata tables
+    '''
     print datetime.now(), 'begin create test metadata'
     with open(configfilename) as configFile:
         config = json.load(configFile)
@@ -57,6 +60,8 @@ def main(configfilename):
     log = logging.getLogger(log_name)
     log.info('begin create test metadata')
     try:
+        # for the barcodes in the file, set up a properly formatted list for a sql 'in' clause,
+        # chunked per 100 barcodes
         with open(config['test_barcode_file']) as barcodefile:
             test_barcodes = barcodefile.readlines()
         barcode_list = []
@@ -73,13 +78,16 @@ def main(configfilename):
             barcode_list += [barcodes]
         log.info('#barcodes: %s' % (len(test_barcodes)))
 
+        # loop through the metadata tables
         for metadata_table in ISBCGC_database_helper.metadata_tables:
             if config["create_tables"]:
+                # create the test table with the same structure as the production table
                 table_create_stmt = 'create table {1}.{0} like {2}.{0}'.format(metadata_table, config['cloudsql']['target_db'], config['cloudsql']['source_db'])
                 ISBCGC_database_helper.update(config, table_create_stmt, log, [[]])
             
             insert_stmt = "INSERT {1}.{0} SELECT * FROM {2}.{0} where ParticipantBarcode in (%s)".format(metadata_table, config['cloudsql']['target_db'], config['cloudsql']['source_db'])
             for barcodes in barcode_list:
+                # loop over the chunks of barcodes and insert the matching rows in the current metadata test table
                 log.info('cur length: %s' % (len(barcodes)))
                 cur_insert_stmt = insert_stmt % ','.join(barcodes)
                 ISBCGC_database_helper.update(config, cur_insert_stmt, log, [[]])
