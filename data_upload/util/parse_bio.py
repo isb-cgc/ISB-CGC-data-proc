@@ -24,7 +24,6 @@ import os
 import re
 import shutil
 
-import gcs_wrapper
 import util
 
 clinical_pat = re.compile("^.*clinical.*.xml$")
@@ -79,7 +78,7 @@ def upload_file(config, file_path, key_name, log):
     bucket_name = config['buckets']['open']
     if config['upload_files']:
         log.info('\tuploading %s' % (key_name))
-        gcs_wrapper.upload_file(file_path, bucket_name, key_name, log)
+        util.upload_file(file_path, bucket_name, key_name, log)
 
 def upload_bio_file(config, archive_path, file_name, study, log):
     key_name = '/%s/%s/%s/%s/%s' % ('tcga', study, 'bio', 'Level_1', file_name)

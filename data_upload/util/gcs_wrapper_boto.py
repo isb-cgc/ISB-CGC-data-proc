@@ -1,6 +1,6 @@
 '''
 Created on May 27, 2015
-a wrapper to google cloud storage.
+a wrapper to google cloud storage using boto.
 
 Copyright 2015, Institute for Systems Biology.
 
@@ -43,6 +43,18 @@ def close_connection():
         connection.close()
         connection = None
     
+def __get_bucket(bucket_name):
+    if bucket_name in name2bucket:
+        bucket = name2bucket[bucket_name]
+    else:
+        with lock:
+            if bucket_name in name2bucket:
+                bucket = name2bucket[bucket_name]
+            else:
+                bucket = connection.get_bucket(bucket_name)
+                name2bucket[bucket_name] = bucket
+    return bucket
+
 def upload_file(file_path, bucket_name, key_name, log):
     global backoff
     for attempt in range(1, 4):
@@ -69,15 +81,7 @@ def upload_file(file_path, bucket_name, key_name, log):
         
 def __attempt_upload(file_path, bucket_name, key_name, log):
     time.sleep(backoff)
-    if bucket_name in name2bucket:
-        bucket = name2bucket[bucket_name]
-    else:
-        with lock:
-            if bucket_name in name2bucket:
-                bucket = name2bucket[bucket_name]
-            else:
-                bucket = connection.get_bucket(bucket_name)
-                name2bucket[bucket_name] = bucket
+    bucket = __get_bucket(bucket_name)
     if key_name in bucket:
         raise ValueError('found %s in %s' % (key_name, bucket_name))
     key = boto.gs.key.Key(bucket, key_name)
@@ -85,3 +89,7 @@ def __attempt_upload(file_path, bucket_name, key_name, log):
         key.set_contents_from_filename(file_path)
     finally:
         key.close()
+
+def get_bucket_contents(bucket_name, prefix):
+    bucket = __get_bucket(bucket_name)
+    return bucket.list(prefix)

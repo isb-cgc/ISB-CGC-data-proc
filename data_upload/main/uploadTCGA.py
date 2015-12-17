@@ -27,7 +27,6 @@ import json
 import logging
 import sys
 
-import gcs_wrapper
 from parse_bio import parse_bio
 from prepare_upload import prepare_upload
 from process_annotations import process_annotations
@@ -367,7 +366,8 @@ def uploadTCGA(configFileName):
      
         if config['upload_files'] or config['upload_etl_files']:
             # open the GCS wrapper here so it can be used by all the tumor types/platforms to save files
-            gcs_wrapper.open_connection()
+            gcs_wrapper = import_module(config['gcs_wrapper'])
+            gcs_wrapper.open_connection(config, log)
         info_status(config, log)
         tumor_type2platform2archive_types2archives, platform2archive2metadata = process_latestarchive(config, log_name)
         prepare_upload(tumor_type2platform2archive_types2archives, log)

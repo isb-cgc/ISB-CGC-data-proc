@@ -22,7 +22,6 @@ import logging
 import os
 import re
 
-import gcs_wrapper
 import util
 
 def upload_latestarchive_file(config, archive_file_path, log):
@@ -30,7 +29,7 @@ def upload_latestarchive_file(config, archive_file_path, log):
     key_name = '/%s/%s' % (config['latestarchive_folder'], str(date.today()).replace('-', '_') + '_' + 'latestarchive.txt')
     if config['upload_files'] and config['upload_open']:
         log.info('\tnot uploading %s to %s' % (archive_file_path, key_name))
-        gcs_wrapper.upload_file(archive_file_path, bucket_name, key_name, log)
+        util.upload_file(config, archive_file_path, bucket_name, key_name, log)
     else:
         log.info('\tnot uploading %s to %s' % (archive_file_path, key_name))
  
