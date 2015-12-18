@@ -18,7 +18,6 @@ limitations under the License.
 
 @author: michael
 '''
-from datatime
 from multiprocessing import Lock
 import time
 import requests
@@ -33,7 +32,7 @@ def open_connection(config = None, log = None):
     global storage_service
     if storage_service:
         raise ValueError('storage has already been initialized')
-    
+    log.info('opening GCS service')
     storage_service = storage.Client(project = config['cloud_projects']['open'])
     
 def close_connection():
