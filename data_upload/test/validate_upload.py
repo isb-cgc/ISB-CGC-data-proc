@@ -31,6 +31,94 @@ from util import create_log
 from util import import_module
 
 
+def validate_files_one_by_one(config, log, log_dir):
+    log.info('start validating files one by one')
+    gcs_wrapper = None
+    try:
+        # get the metadata contents
+        datastore = import_module(config['database_module'])
+        helper = datastore.ISBCGC_database_helper
+        select = 'select datafilename, datafileuploaded, datafilenamekey from metadata_data where datafilename = ? group by datafilename, datafileuploaded, datafilenamekey'
+        # make sure the gcs  wrapper is initialized
+        gcs_wrapper = import_module(config['gcs_wrapper'])
+        gcs_wrapper.open_connection(config, log)
+        # get the bucket contents
+        name_index = 0
+        upload_index = 1
+        keypath_index = 2
+        datafilename2datafilenameinfo = {}
+        inconsistent_update_path = set()
+        inconsistent_update_not_path = set()
+        inconsistent_not_update_path = set()
+
+        for bucket_name in config['buckets']['update_uploaded']:
+            log.info('\tgetting files in bucket %s' % (bucket_name))
+            fileiter = gcs_wrapper.get_bucket_contents(bucket_name,log)
+            matched_uploaded = 0
+            mismatched_keypath = set()
+            metapath_not_set = set()
+            upload_not_set_metapath_set_matches = set()
+            upload_not_set_metapath_set_not_matches = set()
+            not_meta_marked_uploaded = set()
+            not_in_metadata = set()
+            count = 0
+            for uploaded_file_info in fileiter:
+                keypath = uploaded_file_info.name
+                if not keypath.startswith('tcga') or keypath.startswith('tcga/intermediary'):
+                    continue
+                if 0 == count % 2056:
+                    log.info('\t\tfound %s files. current file %s' % (count, keypath))
+                count += 1
+                filename = keypath[keypath.rindex('/')+1:]
+                cursor = helper.select(config, select, log, [filename])
+                if 0 < len(cursor):
+                    first_datafileinfo = cursor[0]
+                    for datafileinfo in cursor[1:]:
+                        if first_datafileinfo[upload_index] != datafileinfo[upload_index]:
+                            if first_datafileinfo[keypath_index] != datafileinfo[keypath_index]:
+                                inconsistent_update_path.add(datafileinfo[name_index])
+                            else:
+                                inconsistent_update_not_path.add(datafileinfo[name_index])
+                        else:
+                            if first_datafileinfo[keypath_index] != datafileinfo[keypath_index]:
+                                inconsistent_not_update_path.add(datafileinfo[name_index])
+                        continue
+                
+                if 0 < len(cursor):
+                    datafileinfo = cursor[0]
+                    if datafileinfo[upload_index] == 'true':
+                        if keypath == datafileinfo[keypath_index]:
+                            matched_uploaded += 1
+                        elif datafileinfo[keypath_index]:
+                            mismatched_keypath.add(keypath + ' ' + datafileinfo[keypath_index])
+                        else:
+                            metapath_not_set.add(keypath)
+                    elif datafileinfo[keypath_index]:
+                        if keypath == datafileinfo[keypath_index]:
+                            upload_not_set_metapath_set_matches.add(keypath)
+                        elif datafileinfo[keypath_index]:
+                            upload_not_set_metapath_set_not_matches.add(keypath + ' ' + datafileinfo[keypath_index])
+                    else:
+                        not_meta_marked_uploaded.add(keypath)
+                    datafilename2datafilenameinfo.pop(filename)
+                else:
+                    not_in_metadata.add(keypath)
+            log.info('\tfinished getting files in bucket %s.  total count: %s' % (bucket_name, count))
+            log.info('\tfound %s matching between the bucket and the metadata' % (matched_uploaded))
+            log.info('\tfound %s mismatched paths:\n\t%s' % (len(mismatched_keypath), '\n\t'.join(list(mismatched_keypath)[:10])))
+            log.info('\tfound %s where file in metadata as uploaded but keypath was not set:\n\t%s' % (len(metapath_not_set), '\n\t'.join(list(metapath_not_set)[:10])))
+            log.info('\tfound %s where uploaded not set but the keypath matched:\n\t%s' % (len(upload_not_set_metapath_set_matches), '\n\t'.join(list(upload_not_set_metapath_set_matches)[:10])))
+            log.info('\tfound %s where uploaded is not set there is a keypath in the metadata but it doesn\'t match actual key path:\n\t%s' % (len(upload_not_set_metapath_set_not_matches), '\n\t'.join(list(upload_not_set_metapath_set_not_matches)[:10])))
+            log.info('\tfound %s where uploaded and keypath not set in metadata:\n\t%s' % (len(not_meta_marked_uploaded), '\n\t'.join(list(not_meta_marked_uploaded)[:10])))
+            log.info('\tfound %s where file not in the metadata at all:\n\t%s' % (len(not_in_metadata), '\n\t'.join(list(not_in_metadata)[:10])))
+        log.info('\tfound %s mismatched datafileupdated and keypath files:\n\t%s' % (len(inconsistent_update_path), '\n\t'.join(list(inconsistent_update_path)[:10])))
+        log.info('\tfound %s mismatched datafileuploaded:\n\t%s' % (len(inconsistent_update_not_path), '\n\t'.join(list(inconsistent_update_not_path)[:10])))
+        log.info('\tfound %s mismatched keypath:\n\t%s' % (len(inconsistent_not_update_path), '\n\t'.join(list(inconsistent_not_update_path)[:10])))
+    finally:
+        if gcs_wrapper:
+            gcs_wrapper.close_connection()
+    log.info('finished validating files one by one')
+
 def validate_files(config, log, log_dir):
     log.info('start validating files')
 # TODO: look at the set of file extensions that have been uploaded
@@ -89,12 +177,12 @@ def validate_files(config, log, log_dir):
             count = 0
             for uploaded_file_info in fileiter:
                 keypath = uploaded_file_info.name
-                if not keypath.startswith('tcga'):
+                if not keypath.startswith('tcga') or keypath.startswith('tcga/intermediary'):
                     continue
                 if 0 == count % 2056:
                     log.info('\t\tfound %s files. current file %s' % (count, keypath))
                 count += 1
-                filename = keypath[keypath.rindex['/']+1:]
+                filename = keypath[keypath.rindex('/')+1:]
                 if datafilename2datafilenameinfo.get(filename):
                     datafileinfo = datafilename2datafilenameinfo[filename]
                     if datafileinfo[upload_index] == 'true':

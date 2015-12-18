@@ -86,10 +86,11 @@ def __attempt_upload(file_path, bucket_name, key_name, log):
 
 def get_bucket_contents(bucket_name, log):
     bucket = __get_bucket(bucket_name)
-    iter = bucket.list_blobs()
+    iterfiles = bucket.list_blobs()
     count = 0
-    for fileinfo in iter:
+    for fileinfo in iterfiles:
         if 0 == count % 1028:
-            log.info(count, fileinfo.name)
+            log.info('%s files.  current file: %s' % (count, fileinfo.name))
         count += 1
         yield fileinfo
+    log.info('found %s total files' % (count))
