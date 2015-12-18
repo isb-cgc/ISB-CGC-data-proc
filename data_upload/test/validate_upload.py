@@ -25,6 +25,7 @@ from datetime import date
 import json
 import logging
 import sys
+import traceback
 
 from util import create_log
 from util import import_module
@@ -66,9 +67,9 @@ def validate_files(config, log, log_dir):
             count += 1
             datafilename2datafilenameinfo[datafileinfo[name_index]] = datafileinfo
         log.info('\tfinished getting files from metadata.  total count: %s' % (count))
-        log.info('\tfound %s mismatched datafileupdated and keypath files:\n\t%s' % (len(inconsistent_update_path), '\n\t'.join(inconsistent_update_path[:10])))
-        log.info('\tfound %s mismatched datafileuploaded:\n\t%s' % (len(inconsistent_update_not_path), '\n\t'.join(inconsistent_update_not_path[:10])))
-        log.info('\tfound %s mismatched keypath:\n\t%s' % (len(inconsistent_not_update_path), '\n\t'.join(inconsistent_not_update_path[:10])))
+        log.info('\tfound %s mismatched datafileupdated and keypath files:\n\t%s' % (len(inconsistent_update_path), '\n\t'.join(list(inconsistent_update_path)[:10])))
+        log.info('\tfound %s mismatched datafileuploaded:\n\t%s' % (len(inconsistent_update_not_path), '\n\t'.join(list(inconsistent_update_not_path)[:10])))
+        log.info('\tfound %s mismatched keypath:\n\t%s' % (len(inconsistent_not_update_path), '\n\t'.join(list(inconsistent_not_update_path)[:10])))
         cursor = None
         
         # make sure the gcs  wrapper is initialized
@@ -115,12 +116,12 @@ def validate_files(config, log, log_dir):
                     not_in_metadata.add(keypath)
             log.info('\tfinished getting files in bucket %s.  total count: %s' % (bucket_name, count))
             log.info('\tfound %s matching between the bucket and the metadata' % (matched_uploaded))
-            log.info('\tfound %s mismatched paths:\n\t%s' % (len(mismatched_keypath), '\n\t'.join(mismatched_keypath[:10])))
-            log.info('\tfound %s where file in metadata as uploaded but keypath was not set:\n\t%s' % (len(metapath_not_set), '\n\t'.join(metapath_not_set[:10])))
-            log.info('\tfound %s where uploaded not set but the keypath matched:\n\t%s' % (len(upload_not_set_metapath_set_matches), '\n\t'.join(upload_not_set_metapath_set_matches[:10])))
-            log.info('\tfound %s where uploaded is not set there is a keypath in the metadata but it doesn\'t match actual key path:\n\t%s' % (len(upload_not_set_metapath_set_not_matches), '\n\t'.join(upload_not_set_metapath_set_not_matches[:10])))
-            log.info('\tfound %s where uploaded and keypath not set in metadata:\n\t%s' % (len(not_meta_marked_uploaded), '\n\t'.join(not_meta_marked_uploaded[:10])))
-            log.info('\tfound %s where file not in the metadata at all:\n\t%s' % (len(not_in_metadata), '\n\t'.join(not_in_metadata[:10])))
+            log.info('\tfound %s mismatched paths:\n\t%s' % (len(mismatched_keypath), '\n\t'.join(list(mismatched_keypath)[:10])))
+            log.info('\tfound %s where file in metadata as uploaded but keypath was not set:\n\t%s' % (len(metapath_not_set), '\n\t'.join(list(metapath_not_set)[:10])))
+            log.info('\tfound %s where uploaded not set but the keypath matched:\n\t%s' % (len(upload_not_set_metapath_set_matches), '\n\t'.join(list(upload_not_set_metapath_set_matches)[:10])))
+            log.info('\tfound %s where uploaded is not set there is a keypath in the metadata but it doesn\'t match actual key path:\n\t%s' % (len(upload_not_set_metapath_set_not_matches), '\n\t'.join(list(upload_not_set_metapath_set_not_matches)[:10])))
+            log.info('\tfound %s where uploaded and keypath not set in metadata:\n\t%s' % (len(not_meta_marked_uploaded), '\n\t'.join(list(not_meta_marked_uploaded)[:10])))
+            log.info('\tfound %s where file not in the metadata at all:\n\t%s' % (len(not_in_metadata), '\n\t'.join(list(not_in_metadata)[:10])))
             
         # now find the remaining files marked in the metadata as uploaded that aren't actually
         not_marked_count = 0
@@ -139,9 +140,9 @@ def validate_files(config, log, log_dir):
                 else:
                     marked_uploaded_with_path.add(datafileinfo[keypath_index])
         log.info('found %s properly marked non-uploaded in the metadata' % (not_marked_count))
-        log.info('found %s falsely marked uploaded with a path:\n\t%s' % (len(marked_uploaded_with_path), '\n\t'.join(marked_uploaded_with_path[:10])))
-        log.info('found %s falsely marked not uploaded with a path:\n\t%s' % (len(marked_not_uploaded_with_path), '\n\t'.join(marked_not_uploaded_with_path[:10])))
-        log.info('found %s falsely marked uploaded without a path:\n\t%s' % (len(marked_uploaded_without_path), '\n\t'.join(marked_uploaded_without_path[:10])))
+        log.info('found %s falsely marked uploaded with a path:\n\t%s' % (len(marked_uploaded_with_path), '\n\t'.join(list(marked_uploaded_with_path)[:10])))
+        log.info('found %s falsely marked not uploaded with a path:\n\t%s' % (len(marked_not_uploaded_with_path), '\n\t'.join(list(marked_not_uploaded_with_path)[:10])))
+        log.info('found %s falsely marked uploaded without a path:\n\t%s' % (len(marked_uploaded_without_path), '\n\t'.join(list(marked_uploaded_without_path)[:10])))
     
         log.info('finished validating files')
     finally:
@@ -307,7 +308,8 @@ def main(configFileName):
         log_name = create_log(log_dir, 'validating')
         log = logging.getLogger(log_name)
     except Exception as e:
-        log.exception("problem in creating the log for validation")
+        print 'problem in creating the log for validation'
+        traceback.print_exc(limit = 5)
         raise e
 
     try:
