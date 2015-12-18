@@ -21,6 +21,7 @@ limitations under the License.
 
 @author: michael
 '''
+from datetime import date
 import json
 import logging
 import sys
@@ -305,12 +306,18 @@ def main(configFileName):
         log_dir = str(date.today()).replace('-', '_') + '_' + config['log_dir_tag'] + '/'
         log_name = create_log(log_dir, 'validating')
         log = logging.getLogger(log_name)
-
-        validate_database(config, log, log_dir)
-        validate_files(config, log, log_dir)
     except Exception as e:
-        log.exception("problem in validation")
+        log.exception("problem in creating the log for validation")
         raise e
+
+    try:
+        validate_database(config, log, log_dir)
+    except:
+        log.exception('problem with validating the database')
+    try:
+        validate_files(config, log, log_dir)
+    except:
+        log.exception('problem with validating the files')
     
 if __name__ == '__main__':
     main(sys.argv[1])
