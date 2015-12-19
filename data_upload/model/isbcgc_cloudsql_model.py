@@ -465,11 +465,11 @@ class ISBCGC_database_helper():
         try:
             db = MySQLdb.connect(host=config['cloudsql']['host'], db=config['cloudsql']['db'], user=config['cloudsql']['user'], passwd=config['cloudsql']['passwd'], ssl = cls.ssl)
         except Exception as e:
-            count = 4
+            count = 20
             while count > 0:
                 time.sleep(1)
                 count -= 1
-                log.warning('\n\n!!!!!!sleeping on error to reattempt db connection!!!!!!\n\n')
+                log.warning('\n\n!!!!!!sleeping on error to reattempt db connection: %s!!!!!!\n\n' % (e))
                 db = MySQLdb.connect(host=config['cloudsql']['host'], db=config['cloudsql']['db'], user=config['cloudsql']['user'], passwd=config['cloudsql']['passwd'], ssl = cls.ssl)
                 break
             
