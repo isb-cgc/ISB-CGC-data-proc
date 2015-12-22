@@ -188,7 +188,15 @@ def validate_files(config, log, log_dir):
                     log.info('\t\tfound %s files. current file %s\n\tfilename: %s\n\tstudy: %s\n\tlevel: %s\n\tcenter: %s\n\tplatform: %s' % 
                              (count, keypath, filename, fields[1].lower(), level, center, fields[2]))
                 count += 1
-                
+        # print out the first few entries from the dictionary
+        level2center2platform2fileinfo = study2level2center2platform2fileinfo['acc']
+        for level, center2platform2fileinfo in level2center2platform2fileinfo.iteritems():
+            log.info('\t\t%s' % (level))
+            for center, platform2fileinfo in center2platform2fileinfo.iteritems():
+                log.info('\t\t\t%s' % (center))
+                for platform, fileinfo in platform2fileinfo.iteritems():
+                    log.info('\t\t\t\t%s(%s): %s' % (platform, len(fileinfo), ', '.join(list(fileinfo)[:10])))
+        
         datastore = import_module(config['database_module'])
         helper = datastore.ISBCGC_database_helper
         # get the metadata contents by level, center and platform combinations.
@@ -208,7 +216,7 @@ def validate_files(config, log, log_dir):
         inconsistent_not_update_path = set()
         upload_archives = config['upload_archives']
         for combo in combinations:
-            combo_name = ':'.join([piece if piece else 'None' for piece in combo])
+            combo_name = ':'.join([str(piece) if piece else 'None' for piece in combo])
             log.info('\tlooking at %s' % (combo_name))
             
             datafilename2datafilenameinfo = {}
@@ -217,7 +225,7 @@ def validate_files(config, log, log_dir):
                 # adjust for CGHub lack of full paltform name information
                 if 'DNA'  in combo[3]:
                     fileinfo = study2level2center2platform2fileinfo.get(combo[0], {}).get(combo[1], {}).get(combo[2], {}).get('DNA', set())
-                else:
+                elif 'RNA' in combo[3]:
                     fileinfo = study2level2center2platform2fileinfo.get(combo[0], {}).get(combo[1], {}).get(combo[2], {}).get('RNA', set())
                 platforms = upload_archives.get(combo[1], {}).get(combo[2], [])
                 for platform in platforms:
@@ -226,9 +234,9 @@ def validate_files(config, log, log_dir):
                         uploadable = True
                         break
             else:
-                uploadable = True if upload_archives.get(combo[1], {}).get(combo[2], []).count(combo[3]) else False
-                fileinfo = study2level2center2platform2fileinfo.get(combo[0], {}).get(combo[1], {}).get(combo[2], {}).get(combo[3], set())
-            
+                uploadable = True if upload_archives.get(combo[1].replace(' ', '_'), {}).get(combo[2], []).count(combo[3]) else False
+                fileinfo = study2level2center2platform2fileinfo.get(combo[0], {}).get(combo[1].replace(' ', '_'), {}).get(combo[2], {}).get(combo[3], set())
+            log.info('\t\tuploadable: %s file count: %s' % (uploadable, len(fileinfo)))
             if 0 == len(fileinfo):
                 if not uploadable:
                     log.info('\t\tno files properly found in bucket for not loadable combo')
