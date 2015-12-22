@@ -162,9 +162,6 @@ def validate_files(config, log, log_dir):
                 if not keypath.startswith('tcga/') or keypath.startswith('tcga/intermediary') or keypath.endswith('bai') or keypath.endswith('xml') \
                     or 'antibody_annotation' in keypath or 'sdrf' in keypath:
                     continue
-                if 0 == count % 8192:
-                    log.info('\t\tfound %s files. current file %s' % (count, keypath))
-                count += 1
                 filename = keypath[keypath.rindex('/')+1:]
                 # add file info to master map
                 fields = keypath.split('/')
@@ -187,6 +184,10 @@ def validate_files(config, log, log_dir):
                 if tuple([filename, keypath]) in fileinfo:
                     raise ValueError('already saw %s%s' % (filename, keypath))
                 fileinfo.add(tuple([filename, keypath]))
+                if 0 == count % 8192:
+                    log.info('\t\tfound %s files. current file %s\n\tfilename: %s\n\tstudy: %s\n\tlevel: %s\n\tcenter: %s\n\tplatform: %s' % 
+                             (count, keypath, filename, fields[1].lower(), level, center, fields[2]))
+                count += 1
                 
         datastore = import_module(config['database_module'])
         helper = datastore.ISBCGC_database_helper
