@@ -138,43 +138,55 @@ def validate_files(config, log, log_dir):
     try:
         # paths to get level, center, and platform information
         # dcc open:         tcga/acc/Genome_Wide_SNP_6/broad.mit.edu__snp_cnv/Level_3/<file name>
-        # cghub controlled: tcga/ACC/DNA/WXS/BCM/<file name> (use shortname2centername)
+        #                       or
+        #                   tcga/acc/bio/Level_1/<file name>
+        # cghub controlled: tcga/CHOL/DNA/WXS/WUGSC/ILLUMINA/109e9868e439717a65c48c775552212a.bam (use shortname2centername)
         # dcc controlled:   tcga/acc/Genome_Wide_SNP_6/broad.mit.edu__snp_cnv/Level_1/<file name>
         
         # make sure the gcs  wrapper is initialized
         gcs_wrapper = import_module(config['gcs_wrapper'])
         gcs_wrapper.open_connection(config, log)
         # get the bucket contents and organize in the master map
-        shortname2centername = config['cghub']['shortname2centername']
+        shortname2centername = config['metadata_locations']['cghub']['shortname2centername']
         study2level2center2platform2fileinfo = {}
         for bucket_name in config['buckets']['update_uploaded']:
             log.info('\tgetting files in bucket %s' % (bucket_name))
+            if bucket_name.startswith('360'):
+                fieldlen = 7
+            else:
+                fieldlen = 6
             fileiter = gcs_wrapper.get_bucket_contents(bucket_name,log)
             count = 0
             for uploaded_file_info in fileiter:
                 keypath = uploaded_file_info.name
-                if not keypath.startswith('tcga/') or keypath.startswith('tcga/intermediary') or keypath.endswith('bai'):
+                if not keypath.startswith('tcga/') or keypath.startswith('tcga/intermediary') or keypath.endswith('bai') or keypath.endswith('xml') \
+                    or 'antibody_annotation' in keypath or 'sdrf' in keypath:
                     continue
-                if 0 == count % 2056:
+                if 0 == count % 8192:
                     log.info('\t\tfound %s files. current file %s' % (count, keypath))
                 count += 1
                 filename = keypath[keypath.rindex('/')+1:]
                 # add file info to master map
                 fields = keypath.split('/')
+                if fieldlen != len(fields):
+                    log.warning('\t\todd path: %s' % (keypath))
+                    continue
                 level2center2platform2fileinfo = study2level2center2platform2fileinfo.get(fields[1].lower(), {})
                 pipeline_fields = fields[3].split('__')
                 if 1 == len(pipeline_fields):
                     # CGHub style path
-                    center2platform2fileinfo = level2center2platform2fileinfo.get('Level_1')
-                    platform2fileinfo = center2platform2fileinfo.get(shortname2centername[fields[4]])
+                    level = 'Level_1'
+                    center = shortname2centername[fields[4]]
                 else:
                     # DCC style path
-                    center2platform2fileinfo = level2center2platform2fileinfo.get(fields[4])
-                    platform2fileinfo = center2platform2fileinfo.get(pipeline_fields[0])
+                    level = fields[4]
+                    center = pipeline_fields[0]
+                center2platform2fileinfo = level2center2platform2fileinfo.get(level, {})
+                platform2fileinfo = center2platform2fileinfo.get(center, {})
                 fileinfo = platform2fileinfo.get(fields[2], set())
-                if tuple(filename, keypath) in fileinfo:
+                if tuple([filename, keypath]) in fileinfo:
                     raise ValueError('already saw %s%s' % (filename, keypath))
-                fileinfo.add(tuple(filename, keypath))
+                fileinfo.add(tuple([filename, keypath]))
                 
         datastore = import_module(config['database_module'])
         helper = datastore.ISBCGC_database_helper
@@ -195,7 +207,8 @@ def validate_files(config, log, log_dir):
         inconsistent_not_update_path = set()
         upload_archives = config['upload_archives']
         for combo in combinations:
-            log.info('\tlooking at %s' % (':'.join(combo)))
+            combo_name = ':'.join([piece if piece else 'None' for piece in combo])
+            log.info('\tlooking at %s' % (combo_name))
             
             datafilename2datafilenameinfo = {}
             uploadable = False
@@ -231,7 +244,7 @@ def validate_files(config, log, log_dir):
                     where study = %s and datalevel = %s and datacentername = %s and platform = %s \
                     group by datafilename, datafileuploaded, datafilenamekey'
             cursor = helper.select(config, select, log, [combo[0], combo[1], combo[2], combo[3]])
-            log.info('\t\tselect %s rows in the database for %s' % (len(cursor), ':'.join(combo)))
+            log.info('\t\tselect %s rows in the database for %s' % (len(cursor), combo_name))
             for datafileinfo in cursor:
                 if datafilename2datafilenameinfo.get(datafileinfo[name_index]):
                     prev_datafileinfo = datafilename2datafilenameinfo[datafileinfo[name_index]]
@@ -286,7 +299,7 @@ def validate_files(config, log, log_dir):
                     if datafileinfo[upload_index] == 'true':
                         metadata_marked_uploaded_not_in_bucket.add(datafileinfo[name_index] + ' ' + datafileinfo[keypath_index])
                 
-            log.info('\t\tfinished getting files in bucket %s for %s.  total count: %s' % (bucket_name, ':'.join(combo), count))
+            log.info('\t\tfinished getting files in bucket %s for %s.  total count: %s' % (bucket_name, combo_name, count))
             log.info('\t\tfound %s matching between the bucket and the metadata' % (matched_uploaded))
             log.info('\t\tfound %s mismatched paths:\n\t%s' % (len(mismatched_keypath), '\n\t'.join(list(mismatched_keypath)[:50])))
             log.info('\t\tfound %s where file in metadata as uploaded but keypath was not set:\n\t%s' % (len(metapath_not_set), '\n\t'.join(list(metapath_not_set)[:50])))
