@@ -168,7 +168,7 @@ def validate_files(config, log, log_dir):
                 if fieldlen != len(fields):
                     log.warning('\t\todd path: %s' % (keypath))
                     continue
-                level2center2platform2fileinfo = study2level2center2platform2fileinfo.get(fields[1].lower(), {})
+                level2center2platform2fileinfo = study2level2center2platform2fileinfo.setdefault(fields[1].lower(), {})
                 pipeline_fields = fields[3].split('__')
                 if 1 == len(pipeline_fields):
                     # CGHub style path
@@ -178,9 +178,9 @@ def validate_files(config, log, log_dir):
                     # DCC style path
                     level = fields[4]
                     center = pipeline_fields[0]
-                center2platform2fileinfo = level2center2platform2fileinfo.get(level, {})
-                platform2fileinfo = center2platform2fileinfo.get(center, {})
-                fileinfo = platform2fileinfo.get(fields[2], set())
+                center2platform2fileinfo = level2center2platform2fileinfo.setdefault(level, {})
+                platform2fileinfo = center2platform2fileinfo.setdefault(center, {})
+                fileinfo = platform2fileinfo.setdefault(fields[2], set())
                 if tuple([filename, keypath]) in fileinfo:
                     raise ValueError('already saw %s%s' % (filename, keypath))
                 fileinfo.add(tuple([filename, keypath]))
@@ -195,7 +195,7 @@ def validate_files(config, log, log_dir):
             for center, platform2fileinfo in center2platform2fileinfo.iteritems():
                 log.info('\t\t\t%s' % (center))
                 for platform, fileinfo in platform2fileinfo.iteritems():
-                    log.info('\t\t\t\t%s(%s): %s' % (platform, len(fileinfo), ', '.join(list(fileinfo)[:10])))
+                    log.info('\t\t\t\t%s(%s): %s' % (platform, len(fileinfo), ', '.join(tup[0] for tup in list(fileinfo)[:10])))
         
         datastore = import_module(config['database_module'])
         helper = datastore.ISBCGC_database_helper
@@ -221,11 +221,17 @@ def validate_files(config, log, log_dir):
             
             datafilename2datafilenameinfo = {}
             uploadable = False
+            # acc:
+            # Level 1:
+            # bcgsc.ca:
+            # IlluminaHiSeq_miRNASeq
             if 'Level_1' == combo[1]:
                 # adjust for CGHub lack of full paltform name information
                 if 'DNA'  in combo[3]:
+                    map_combo = combo[0] + ':' + combo[1] + ':' + combo[2] + ':' + 'DNA'
                     fileinfo = study2level2center2platform2fileinfo.get(combo[0], {}).get(combo[1], {}).get(combo[2], {}).get('DNA', set())
                 elif 'RNA' in combo[3]:
+                    map_combo = combo[0] + ':' + combo[1] + ':' + combo[2] + ':' + 'RNA'
                     fileinfo = study2level2center2platform2fileinfo.get(combo[0], {}).get(combo[1], {}).get(combo[2], {}).get('RNA', set())
                 platforms = upload_archives.get(combo[1], {}).get(combo[2], [])
                 for platform in platforms:
@@ -235,18 +241,19 @@ def validate_files(config, log, log_dir):
                         break
             else:
                 uploadable = True if upload_archives.get(combo[1].replace(' ', '_'), {}).get(combo[2], []).count(combo[3]) else False
+                map_combo = combo[0] + ':' + combo[1].replace(' ', '_') + ':' + combo[2] + ':' + combo[3]
                 fileinfo = study2level2center2platform2fileinfo.get(combo[0], {}).get(combo[1].replace(' ', '_'), {}).get(combo[2], {}).get(combo[3], set())
             log.info('\t\tuploadable: %s file count: %s' % (uploadable, len(fileinfo)))
             if 0 == len(fileinfo):
                 if not uploadable:
-                    log.info('\t\tno files properly found in bucket for not loadable combo')
+                    log.info('\t\tno files properly found in bucket for not loadable combo: %s' % (map_combo))
                 else:
-                    log.info('\t\tno files found in bucket for what is loadable combo')
+                    log.info('\t\tno files found in bucket for what is loadable combo: %s' % (map_combo))
             else:
                 if not uploadable:
-                    log.info('\t\tfiles found in bucket for combo that should not have been uploaded')
+                    log.info('\t\tfiles found in bucket for combo that should not have been uploaded: %s' % (map_combo))
                 else:
-                    log.info('\t\tfiles properly found in bucket for loadable combo')
+                    log.info('\t\tfiles properly found in bucket for loadable combo: %s' % (map_combo))
 
             select = 'select datafilename, datafileuploaded, datafilenamekey \
                     from metadata_data \
