@@ -202,7 +202,7 @@ def validate_files(config, log, log_dir):
         # get the metadata contents by level, center and platform combinations.
         select = 'select study, datalevel, datacentername, platform, count(*) \
                 from metadata_data \
-                group by study, datalevel, datacentername, platform, datafilename \
+                group by study, datalevel, datacentername, platform \
                 order by study, replace(datalevel, \' \', \'_\')'
         combinations = helper.select(config, select, log, verbose = False)
 
@@ -240,7 +240,7 @@ def validate_files(config, log, log_dir):
                         uploadable = True
                         break
             else:
-                uploadable = True if upload_archives.get(combo[1].replace(' ', '_'), {}).get(combo[2], []).get(combo[3]) else False
+                uploadable = True if combo[3] in upload_archives.get(combo[1].replace(' ', '_'), {}).get(combo[2], []).count(combo[3]) else False
                 map_combo = combo[0].lower() + ':' + (combo[1].replace(' ', '_') if combo[1] else 'None') + ':' + (combo[2] if combo[2] else 'None') + ':' + (combo[3] if combo[3] else 'None')
                 fileinfo = study2level2center2platform2fileinfo.get(combo[0].lower(), {}).get(combo[1].replace(' ', '_'), {}).get(combo[2], {}).get(combo[3], set())
             log.info('\t\tuploadable: %s bucket file count: %s' % (uploadable, len(fileinfo)))
@@ -255,11 +255,18 @@ def validate_files(config, log, log_dir):
                 else:
                     log.info('\t\tfiles properly found in bucket for loadable combo: %s' % (map_combo))
 
-            select = 'select datafilename, datafileuploaded, datafilenamekey \
-                    from metadata_data \
-                    where study = %s and datalevel = %s and datacentername = %s and platform = %s \
-                    group by datafilename, datafileuploaded, datafilenamekey'
-            cursor = helper.select(config, select, log, [combo[0], combo[1], combo[2], combo[3]], verbose = False)
+            if combo[2]:
+                select = 'select datafilename, datafileuploaded, datafilenamekey \
+                        from metadata_data \
+                        where study = %s and datalevel = %s and datacentername = %s and platform = %s \
+                        group by datafilename, datafileuploaded, datafilenamekey'
+                cursor = helper.select(config, select, log, [combo[0], combo[1], combo[2], combo[3]], verbose = False)
+            else:
+                select = 'select datafilename, datafileuploaded, datafilenamekey \
+                        from metadata_data \
+                        where study = %s and datalevel = %s and datacentername is null and platform = %s \
+                        group by datafilename, datafileuploaded, datafilenamekey'
+                cursor = helper.select(config, select, log, [combo[0], combo[1], combo[3]], verbose = False)
             log.info('\t\tselected %s rows in the database for %s' % (len(cursor), combo_name))
             for datafileinfo in cursor:
                 if datafilename2datafilenameinfo.get(datafileinfo[name_index]):
