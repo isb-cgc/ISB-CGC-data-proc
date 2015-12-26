@@ -188,22 +188,28 @@ def validate_files(config, log, log_dir):
                     log.info('\t\tfound %s files. current file %s\n\tfilename: %s\n\tstudy: %s\n\tlevel: %s\n\tcenter: %s\n\tplatform: %s' % 
                              (count, keypath, filename, fields[1].lower(), level, center, fields[2]))
                 count += 1
-        # print out the first few entries from the dictionary
-        level2center2platform2fileinfo = study2level2center2platform2fileinfo['acc']
-        for level, center2platform2fileinfo in level2center2platform2fileinfo.iteritems():
-            log.info('\t\t%s' % (level))
-            for center, platform2fileinfo in center2platform2fileinfo.iteritems():
-                log.info('\t\t\t%s' % (center))
-                for platform, fileinfo in platform2fileinfo.iteritems():
-                    log.info('\t\t\t\t%s(%s): %s' % (platform, len(fileinfo), ', '.join(tup[0] for tup in list(fileinfo)[:10])))
+            log.info('\t\tfound a total of %s files for bucket %s' % (count, bucket_name))
+        # print out the CGHub entries from the dictionary
+        for study, level2center2platform2fileinfo in study2level2center2platform2fileinfo:
+            combo = study
+            for level, center2platform2fileinfo in level2center2platform2fileinfo.iteritems():
+                if level != 'Level 1':
+                    break
+                combo += ':' + level
+                for center, platform2fileinfo in center2platform2fileinfo.iteritems():
+                    combo += ':' + center
+                    for platform, fileinfo in platform2fileinfo.iteritems():
+                        if 'DNA' in platform or 'RNA' in platform:
+                            log.info('\t\t%s(%s): %s' % (combo + ':' + platform, len(fileinfo), ', '.join(tup[0] for tup in list(fileinfo)[:10])))
         
         datastore = import_module(config['database_module'])
         helper = datastore.ISBCGC_database_helper
         # get the metadata contents by level, center and platform combinations.
         select = 'select study, datalevel, datacentername, platform, count(*) \
                 from metadata_data \
+                where project = \'TCGA\' \
                 group by study, datalevel, datacentername, platform \
-                order by study, replace(datalevel, \' \', \'_\')'
+                order by study, datalevel'
         combinations = helper.select(config, select, log, verbose = False)
 
         # now loop over the study, level, center, platform combinations in the database
@@ -225,7 +231,7 @@ def validate_files(config, log, log_dir):
             # Level 1:
             # bcgsc.ca:
             # IlluminaHiSeq_miRNASeq
-            if 'Level_1' == combo[1]:
+            if 'Level 1' == combo[1]:
                 # adjust for CGHub lack of full platform name information
                 if 'DNA'  in combo[3]:
                     map_combo = combo[0].lower() + ':' + combo[1] + ':' + combo[2] + ':' + 'DNA'
@@ -240,7 +246,7 @@ def validate_files(config, log, log_dir):
                         uploadable = True
                         break
             else:
-                uploadable = True if combo[3] in upload_archives.get(combo[1].replace(' ', '_'), {}).get(combo[2], []).count(combo[3]) else False
+                uploadable = True if upload_archives.get(combo[1].replace(' ', '_'), {}).get(combo[2], []).count(combo[3]) else False
                 map_combo = combo[0].lower() + ':' + (combo[1].replace(' ', '_') if combo[1] else 'None') + ':' + (combo[2] if combo[2] else 'None') + ':' + (combo[3] if combo[3] else 'None')
                 fileinfo = study2level2center2platform2fileinfo.get(combo[0].lower(), {}).get(combo[1].replace(' ', '_'), {}).get(combo[2], {}).get(combo[3], set())
             log.info('\t\tuploadable: %s bucket file count: %s' % (uploadable, len(fileinfo)))
@@ -283,6 +289,7 @@ def validate_files(config, log, log_dir):
                 count += 1
                 datafilename2datafilenameinfo[datafileinfo[name_index]] = datafileinfo
             
+            metadata_marked_uploaded_not_in_bucket = set()
             if 0 < len(fileinfo):
                 matched_uploaded = 0
                 mismatched_keypath = set()
@@ -313,18 +320,17 @@ def validate_files(config, log, log_dir):
                         datafilename2datafilenameinfo.pop(filename)
                     else:
                         not_in_metadata.add(keypath)
-                    if 0 < len(datafilename2datafilenameinfo):
-                        # none of the remainig files in the metadata should be marked as uploaded!
-                        metadata_marked_uploaded_not_in_bucket = set()
-                        for datafileinfo in datafilename2datafilenameinfo:
-                            if datafileinfo[upload_index] == 'true':
-                                metadata_marked_uploaded_not_in_bucket.add(datafileinfo[name_index] + ' ' + datafileinfo[keypath_index])
-                        if 0 < len(metadata_marked_uploaded_not_in_bucket):
-                            log.info('\t\tfound %s files in the metadata marked as uploaded but not in the bucket\n\t%s' % (len(metadata_marked_uploaded_not_in_bucket), '\n\t'.join(list(metadata_marked_uploaded_not_in_bucket)[:50])))
+                if 0 < len(datafilename2datafilenameinfo):
+                    # none of the remaining files in the metadata should be marked as uploaded!
+                    for datafileinfo in datafilename2datafilenameinfo.itervalues():
+                        if datafileinfo[upload_index] == 'true':
+                            metadata_marked_uploaded_not_in_bucket.add(datafileinfo[name_index] + ' ' + datafileinfo[keypath_index])
                 log.info('\t\tfinished getting files for %s.  found %s matching between the bucket and the metadata.  total count in bucket: %s.  total count in metadata: %s' % 
                          (combo_name, matched_uploaded, count, len(cursor)))
                 if (0 < len(not_in_metadata)):
                     log.info('\t\tfound %s where file not in the metadata at all:\n\t%s' % (len(not_in_metadata), '\n\t'.join(list(not_in_metadata)[:50])))
+                if 0 < len(metadata_marked_uploaded_not_in_bucket):
+                    log.info('\t\tfound %s files in the metadata marked as uploaded but not in the bucket\n\t%s' % (len(metadata_marked_uploaded_not_in_bucket), '\n\t'.join(list(metadata_marked_uploaded_not_in_bucket)[:50])))
                 if (0 < len(not_meta_marked_uploaded)):
                     log.info('\t\tfound %s where uploaded and keypath not set in metadata:\n\t%s' % (len(not_meta_marked_uploaded), '\n\t'.join(list(not_meta_marked_uploaded)[:50])))
                 if (0 < len(mismatched_keypath)):
@@ -337,9 +343,7 @@ def validate_files(config, log, log_dir):
                     log.info('\t\tfound %s where uploaded is not set but there is a keypath in the metadata but it doesn\'t match actual key path:\n\t%s' % (len(upload_not_set_metapath_set_not_matches), '\n\t'.join(list(upload_not_set_metapath_set_not_matches)[:50])))
             else:
                 # none of these should be marked as uploaded!
-                metadata_marked_uploaded_not_in_bucket = set()
-                log.info('length of metadata map is %s' % (len(datafilename2datafilenameinfo)))
-                for datafileinfo in datafilename2datafilenameinfo:
+                for datafileinfo in datafilename2datafilenameinfo.itervalues():
                     if datafileinfo[upload_index] == 'true':
                         metadata_marked_uploaded_not_in_bucket.add(datafileinfo[keypath_index])
                 if 0 < len(metadata_marked_uploaded_not_in_bucket):
