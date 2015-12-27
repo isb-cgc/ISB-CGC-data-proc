@@ -130,6 +130,18 @@ def validate_files_one_by_one(config, log, log_dir):
             gcs_wrapper.close_connection()
     log.info('finished validating files one by one')
 
+
+def classify(filelist, filetype_exts):
+    classified = {}
+    for fileinfo in filelist:
+        for ext in filetype_exts:
+            if ('*' == ext[0] and ext[1:-1] in fileinfo) or fileinfo.endswith(ext):
+                count = classified.setdefault(ext, 0)
+                classified[ext] = count + 1
+                filelist.discard(fileinfo)
+    report = '\n\t' + ', '.join(ext + ': ' + count for (ext, count) in classified) + ('\n\t' + '\n\t'.join(list(filelist)[:50]) if len(filelist) else '')
+    return report
+
 def validate_files(config, log, log_dir):
     log.info('start validating files')
 # TODO: look at the set of file extensions that have been uploaded
@@ -190,17 +202,15 @@ def validate_files(config, log, log_dir):
                 count += 1
             log.info('\t\tfound a total of %s files for bucket %s' % (count, bucket_name))
         # print out the CGHub entries from the dictionary
-        for study, level2center2platform2fileinfo in study2level2center2platform2fileinfo:
-            combo = study
+        log.info('CGHub combos')
+        for study, level2center2platform2fileinfo in study2level2center2platform2fileinfo.iteritems():
             for level, center2platform2fileinfo in level2center2platform2fileinfo.iteritems():
-                if level != 'Level 1':
+                if level != 'Level_1':
                     break
-                combo += ':' + level
                 for center, platform2fileinfo in center2platform2fileinfo.iteritems():
-                    combo += ':' + center
                     for platform, fileinfo in platform2fileinfo.iteritems():
                         if 'DNA' in platform or 'RNA' in platform:
-                            log.info('\t\t%s(%s): %s' % (combo + ':' + platform, len(fileinfo), ', '.join(tup[0] for tup in list(fileinfo)[:10])))
+                            log.info('\t\t%s(%s): %s' % (study + ':' + level + ':' + center + ':' + platform, len(fileinfo), ', '.join(tup[0] for tup in list(fileinfo)[:10])))
         
         datastore = import_module(config['database_module'])
         helper = datastore.ISBCGC_database_helper
@@ -221,6 +231,7 @@ def validate_files(config, log, log_dir):
         inconsistent_update_not_path = set()
         inconsistent_not_update_path = set()
         upload_archives = config['upload_archives']
+        filetype_exts = config['filetype_exts']
         for combo in combinations:
             combo_name = ':'.join([str(piece) if piece else 'None' for piece in combo])
             log.info('\tlooking at %s' % (combo_name))
@@ -234,10 +245,10 @@ def validate_files(config, log, log_dir):
             if 'Level 1' == combo[1]:
                 # adjust for CGHub lack of full platform name information
                 if 'DNA'  in combo[3]:
-                    map_combo = combo[0].lower() + ':' + combo[1] + ':' + combo[2] + ':' + 'DNA'
+                    map_combo = combo[0].lower() + ':' + combo[1] + ':' + (combo[2] if combo[2] else 'None') + ':' + 'DNA'
                     fileinfo = study2level2center2platform2fileinfo.get(combo[0].lower(), {}).get(combo[1], {}).get(combo[2], {}).get('DNA', set())
                 elif 'RNA' in combo[3]:
-                    map_combo = combo[0].lower() + ':' + combo[1] + ':' + combo[2] + ':' + 'RNA'
+                    map_combo = combo[0].lower() + ':' + combo[1] + ':' + (combo[2] if combo[2] else 'None') + ':' + 'RNA'
                     fileinfo = study2level2center2platform2fileinfo.get(combo[0].lower(), {}).get(combo[1], {}).get(combo[2], {}).get('RNA', set())
                 platforms = upload_archives.get(combo[1], {}).get(combo[2], [])
                 for platform in platforms:
@@ -328,26 +339,34 @@ def validate_files(config, log, log_dir):
                 log.info('\t\tfinished getting files for %s.  found %s matching between the bucket and the metadata.  total count in bucket: %s.  total count in metadata: %s' % 
                          (combo_name, matched_uploaded, count, len(cursor)))
                 if (0 < len(not_in_metadata)):
-                    log.info('\t\tfound %s where file not in the metadata at all:\n\t%s' % (len(not_in_metadata), '\n\t'.join(list(not_in_metadata)[:50])))
+                    report = classify(not_in_metadata, filetype_exts)
+                    log.info('\t\tfound %s where file not in the metadata at all:\n\t%s' % (len(not_in_metadata), report))
                 if 0 < len(metadata_marked_uploaded_not_in_bucket):
-                    log.info('\t\tfound %s files in the metadata marked as uploaded but not in the bucket\n\t%s' % (len(metadata_marked_uploaded_not_in_bucket), '\n\t'.join(list(metadata_marked_uploaded_not_in_bucket)[:50])))
+                    report = classify(metadata_marked_uploaded_not_in_bucket, filetype_exts)
+                    log.info('\t\tfound %s files in the metadata marked as uploaded but not in the bucket\n\t%s' % (len(metadata_marked_uploaded_not_in_bucket), report))
                 if (0 < len(not_meta_marked_uploaded)):
-                    log.info('\t\tfound %s where uploaded and keypath not set in metadata:\n\t%s' % (len(not_meta_marked_uploaded), '\n\t'.join(list(not_meta_marked_uploaded)[:50])))
+                    report = classify(not_meta_marked_uploaded, filetype_exts)
+                    log.info('\t\tfound %s where uploaded and keypath not set in metadata:\n\t%s' % (len(not_meta_marked_uploaded), report))
                 if (0 < len(mismatched_keypath)):
-                    log.info('\t\tfound %s mismatched paths:\n\t%s' % (len(mismatched_keypath), '\n\t'.join(list(mismatched_keypath)[:50])))
+                    report = classify(mismatched_keypath, filetype_exts)
+                    log.info('\t\tfound %s mismatched paths:\n\t%s' % (len(mismatched_keypath), report))
                 if (0 < len(metapath_not_set)):
-                    log.info('\t\tfound %s where file in metadata as uploaded but keypath was not set:\n\t%s' % (len(metapath_not_set), '\n\t'.join(list(metapath_not_set)[:50])))
+                    report = classify(metapath_not_set, filetype_exts)
+                    log.info('\t\tfound %s where file in metadata as uploaded but keypath was not set:\n\t%s' % (len(metapath_not_set), report))
                 if (0 < len(upload_not_set_metapath_set_matches)):
-                    log.info('\t\tfound %s where uploaded not set but the keypath matched:\n\t%s' % (len(upload_not_set_metapath_set_matches), '\n\t'.join(list(upload_not_set_metapath_set_matches)[:50])))
+                    report = classify(upload_not_set_metapath_set_matches, filetype_exts)
+                    log.info('\t\tfound %s where uploaded not set but the keypath matched:\n\t%s' % (len(upload_not_set_metapath_set_matches), report))
                 if (0 < len(upload_not_set_metapath_set_not_matches)):
-                    log.info('\t\tfound %s where uploaded is not set but there is a keypath in the metadata but it doesn\'t match actual key path:\n\t%s' % (len(upload_not_set_metapath_set_not_matches), '\n\t'.join(list(upload_not_set_metapath_set_not_matches)[:50])))
+                    report = classify(upload_not_set_metapath_set_not_matches, filetype_exts)
+                    log.info('\t\tfound %s where uploaded is not set but there is a keypath in the metadata but it doesn\'t match actual key path:\n\t%s' % (len(upload_not_set_metapath_set_not_matches), report))
             else:
                 # none of these should be marked as uploaded!
                 for datafileinfo in datafilename2datafilenameinfo.itervalues():
                     if datafileinfo[upload_index] == 'true':
                         metadata_marked_uploaded_not_in_bucket.add(datafileinfo[keypath_index])
                 if 0 < len(metadata_marked_uploaded_not_in_bucket):
-                    log.info('\t\tfound %s files in the metadata marked as uploaded but not in the empty bucket\n\t%s' % (len(metadata_marked_uploaded_not_in_bucket), '\n\t'.join(list(metadata_marked_uploaded_not_in_bucket)[:50])))
+                    report = classify(metadata_marked_uploaded_not_in_bucket, filetype_exts)
+                    log.info('\t\tfound %s files in the metadata marked as uploaded but not in the empty bucket\n\t%s' % (len(metadata_marked_uploaded_not_in_bucket), report))
                 else:
                     log.info('\t\tempty bucket properly had no files marked uploaded')
                 
