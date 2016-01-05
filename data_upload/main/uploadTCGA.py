@@ -350,6 +350,7 @@ def info_status(config, log):
 def uploadTCGA(configFileName):
     print datetime.now(), 'begin uploadTCGA()'
     global executor
+    gcs_wrapper = None
     try:
         with open(configFileName) as configFile:
             config = json.load(configFile)
