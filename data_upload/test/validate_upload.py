@@ -142,7 +142,7 @@ def classify(filelist, filetype_exts):
                 classified[ext] = count + 1
                 found.add(fileinfo)
     filelist -= found
-    report = '\n\t,'.join(ext + ': ' + str(count) for (ext, count) in classified.iteritems()) + ('\n\t' + '\n\t'.join(list(filelist)[:50]) if len(filelist) else '')
+    report = '\n\t' + ', '.join(ext + ': ' + str(count) for (ext, count) in classified.iteritems()) + ('\n\t' + '\n\t'.join(list(filelist)[:50]) if len(filelist) else '')
     return filecount, report
 
 def validate_files(config, log, log_dir):
@@ -252,20 +252,27 @@ def validate_files(config, log, log_dir):
             # Level 1:
             # bcgsc.ca:
             # IlluminaHiSeq_miRNASeq
-            if 'Level 1' == combo[1] and 'SNP' not in combo[3]:
+            if 'Level 1' == combo[1] and ('RNA' in combo[3] or 'DNA' in combo[3]):
                 # adjust for CGHub lack of full platform name information
                 if 'DNA'  in combo[3]:
+                    typeSeq = 'DNA'
                     map_combo = combo[0].lower() + ':' + combo[1] + ':' + (combo[2] if combo[2] else 'None') + ':' + 'DNA'
                 elif 'RNA' in combo[3]:
+                    typeSeq = 'RNA'
                     map_combo = combo[0].lower() + ':' + combo[1] + ':' + (combo[2] if combo[2] else 'None') + ':' + 'RNA'
-                platforminfo = study2level2center2platform2fileinfo.get(combo[0].lower(), {}).get('Level 2', {}).get(combo[2], {}).keys()
-                platforminfo += study2level2center2platform2fileinfo.get(combo[0].lower(), {}).get('Level 3', {}).get(combo[2], {}).keys()
-                for platform in platforminfo:
-                    if combo[3] in platform:
-                        # not a perfect check but no way to know from CGHub the exact DNA or RNA platform
-                        fileinfo = study2level2center2platform2fileinfo.get(combo[0].lower(), {}).get('Level_1', {}).get(combo[2], {}).get(platform, [])
-                        uploadable = True
-                        break
+                platforminfo = study2level2center2platform2fileinfo.get(combo[0].lower(), {}).get('Level_1', {}).get(combo[2], {}).keys()
+                platforminfo.sort()
+                log.info('bucket platform: %s(%s) metadata platforms: %s' % (combo[3], typeSeq, platforminfo))
+                if combo[3] in platforminfo:
+                    fileinfo = study2level2center2platform2fileinfo.get(combo[0].lower(), {}).get('Level_1', {}).get(combo[2], {}).get(combo[3], [])
+                    uploadable = True
+                else:
+                    for platform in platforminfo:
+                        if typeSeq in platform:
+                            # not a perfect check but no way to know from CGHub the exact DNA or RNA platform
+                            fileinfo = study2level2center2platform2fileinfo.get(combo[0].lower(), {}).get('Level_1', {}).get(combo[2], {}).get(platform, [])
+                            uploadable = True
+                            break
                 if 0 == len(fileinfo):
                     log.warning('\t\tdidn\'t find a match for %s' % (map_combo))
             else:
