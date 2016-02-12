@@ -1,0 +1,35 @@
+[
+    {
+        "type": "STRING",
+        "name": "ParticipantBarcode"
+    },
+    {
+        "type": "STRING",
+        "name": "SampleBarcode"
+    },
+    {
+        "type": "STRING",
+        "name": "CCLE_long_name"
+    },
+    {
+        "type": "STRING",
+        "name": "gene_id"
+    },
+    {
+        "type": "STRING",
+        "name": "HGNC_gene_symbol"
+    },
+    {
+        "type": "STRING",
+        "name": "original_gene_symbol"
+    },
+    {
+        "type": "STRING",
+        "name": "Platform"
+    },
+    {
+        "type": "FLOAT",
+        "name": "RMA_normalized_expression"
+    }
+]
+
