@@ -25,7 +25,7 @@ import numpy as np
 import hgnc_validation
 
 def main():
-    """Example to download a file from the Google Storage, transform,
+    """Parse GCT file, merge with barcodes info, melt(tidy) 
         and load to Google Storage and BigQuery
     """
 
@@ -101,21 +101,19 @@ def main():
     data_df = pd.merge(melted_df, samples_map_df, on='CCLE_long_name', how='outer')
     data_df['Platform'] = "Affymetrix U133 Plus 2.0"
 
-    # upload the contents of the dataframe in njson format
-    print "Converting to CSV"
-    outfilename = "tcga/intermediary/CCLE_mrna_expr/bq_data_files/ccle_mrna_expr.csv"
-#    gcs.convert_df_to_njson_and_upload(data_df, outfilename)
-
-
     # reorder columns
     col_order = ["ParticipantBarcode", "SampleBarcode", "CCLE_long_name", "gene_id", "HGNC_gene_symbol", "original_gene_symbol", "Platform", "RMA_normalized_expression"]    
     data_df = data_df[col_order]
 
     # upload the contents of the dataframe in CSV format
+    print "Convert to CSV"
+    outfilename = "tcga/intermediary/CCLE_mrna_expr/bq_data_files/ccle_mrna_expr.csv"
     df_string = data_df.to_csv(index=False, header=False)
     status = gcs.upload_blob_from_string(outfilename, df_string)
     print status
- 
+
+    # save the excel file 
     writer.save()
+
 if __name__ == '__main__':
     main()
