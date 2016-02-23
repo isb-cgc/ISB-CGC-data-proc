@@ -98,7 +98,9 @@ def main():
 
     
     # merge to get barcode information
-    data_df = pd.merge(melted_df, samples_map_df, on='CCLE_long_name', how='outer')
+    # changed from outer join to inner join. In this case it shouldnt matter, since we already did a inner join
+    # while select the samples above.
+    data_df = pd.merge(melted_df, samples_map_df, on='CCLE_long_name', how='inner')
     data_df['Platform'] = "Affymetrix U133 Plus 2.0"
 
     # reorder columns
