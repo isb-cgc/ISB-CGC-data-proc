@@ -355,8 +355,9 @@ def validate_files(config, log, log_dir):
                     for datafileinfo in datafilename2datafilenameinfo.itervalues():
                         if datafileinfo[upload_index] == 'true':
                             metadata_marked_uploaded_not_in_bucket.add(datafileinfo[name_index] + ' ' + datafileinfo[keypath_index])
-                log.info('\t\tfinished getting files for %s.  \n\t\t\tfound %s matching between the bucket and the metadata.  total count in bucket: %s.  total count in metadata: %s' % 
-                         (combo_name, matched_uploaded, count, len(cursor)))
+                _, report = classify(set([keypath for filename, keypath in fileinfo]), filetype_exts)
+                log.info('\t\tfinished getting files for %s.  \n\t\t\tfound %s matching between the bucket and the metadata.  total count in bucket: %s.  total count in metadata: %s.  bucket file types: %s' % 
+                         (combo_name, matched_uploaded, count, len(cursor), report))
                 if (0 < len(not_in_metadata)):
                     filecount, report = classify(not_in_metadata, filetype_exts)
                     log.info('\t\tfound mismatch of %s where file not in the metadata at all:\n\t%s' % (filecount, report))
