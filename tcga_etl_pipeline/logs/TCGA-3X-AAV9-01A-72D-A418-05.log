@@ -1,3 +1,0 @@
-[INFO 2016-03-04-15:28:22 oauth2client.client Process-12] Attempting refresh to obtain initial access_token
-[INFO 2016-03-04-15:28:22 oauth2client.client Process-12] Refreshing access_token
-[INFO 2016-03-04-15:28:22 bigquery_etl.extract.gcloud_wrapper Process-12] StringIO

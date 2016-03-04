@@ -1,5 +1,0 @@
-[INFO 2016-03-04-15:28:12 oauth2client.client Process-5] Attempting refresh to obtain initial access_token
-[INFO 2016-03-04-15:28:12 oauth2client.client Process-5] Refreshing access_token
-[INFO 2016-03-04-15:28:12 bigquery_etl.extract.gcloud_wrapper Process-5] StringIO
-[INFO 2016-03-04-15:28:16 bigquery_etl.extract.utils Process-5] Converting  file to a dataframe
-[INFO 2016-03-04-15:28:17 bigquery_etl.transform.tools Process-5] Cleaning up the dataframe
