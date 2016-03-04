@@ -7,3 +7,4 @@ chardet
 colorlog
 retrying
 mysql-python
+google-api-python-client

@@ -19,8 +19,17 @@ usage: pipeline.py [-h] [-w MAX_WORKERS] [--dry_run] [--create_new] [--debug]
 
 example: python pipeline.py protein config/data_etl_open.json --dry_run --debug --create_new
 ```
+Datasets that are part of the pipeline:
+  * protein
+  * mirna_mirna
+  * mirna_isoform
+  * methylation
+  * cnv
+  * mrna_bcgsc
+  * mrna_unc
 
-### Datasets not part of Pipeline
+
+### Datasets that are not part of Pipeline
 
 * TCGA Annotations
  * python tcga_annotations/transform.py config/data_etl_open.json
@@ -30,7 +39,6 @@ example: python pipeline.py protein config/data_etl_open.json --dry_run --debug 
  * Change the mirtarbase.input_file parameter to latest mirtarbase file link
  * python mirtarbase/transform.py config/data_etl_open.json
  * python mirtarbase/load.py config/data_etl_open.json
-
 
 ### Tests
  * python tests/sanity_check_bq2.py isb-cgc tcga_data_staging Clinical
