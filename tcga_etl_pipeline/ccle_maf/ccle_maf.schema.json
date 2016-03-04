@@ -1,0 +1,210 @@
+[
+    {
+        "type": "STRING",
+        "name": "SampleBarcode"
+    },
+    {
+        "type": "STRING", 
+        "name": "Annotation_Transcript"
+    }, 
+    {
+        "type": "INTEGER", 
+        "name": "CCLE_ONCOMAP_Total_Mutations_In_Gene"
+    }, 
+    {
+        "type": "INTEGER", 
+        "name": "COSMIC_Total_Alterations_In_Gene"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "Center"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "Chromosome"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "DNARepairGenes_Role"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "DbSNP_RS"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "DbSNP_Val_Status"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "DrugBank"
+    }, 
+    {
+        "type": "INTEGER", 
+        "name": "End_Position"
+    }, 
+    {
+        "type": "INTEGER", 
+        "name": "Entrez_Gene_Id"
+    }, 
+    {
+        "type": "FLOAT", 
+        "name": "GC_Content"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "GENCODE_Transcript_Name"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "GENCODE_Transcript_Status"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "GENCODE_Transcript_Type"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "GO_Biological_Process"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "GO_Cellular_Component"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "GO_Molecular_Function"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "Gene_Type"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "Genome_Change"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "HGNC_Accession_Numbers"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "HGNC_CCDS_IDs"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "HGNC_Ensembl_ID_Supplied_By_Ensembl"
+    }, 
+    {
+        "type": "INTEGER", 
+        "name": "HGNC_HGNC_ID"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "HGNC_Locus_Group"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "HGNC_Locus_Type"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "HGNC_OMIM_ID_Supplied_By_NCBI"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "HGNC_RefSeq_Supplied_By_NCBI"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "HGNC_UCSC_ID_Supplied_By_UCSC"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "HGNC_UniProt_ID_Supplied_By_UniProt"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "Hugo_Symbol"
+    }, 
+    {
+        "type": "INTEGER", 
+        "name": "NCBI_Build"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "OREGANNO_ID"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "Protein_Change"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "Ref_Context"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "Reference_Allele"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "Refseq_Prot_Id"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "Secondary_Variant_Classification"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "Sequencing_Source"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "Sequencer"
+    }, 
+    {
+        "type": "INTEGER", 
+        "name": "Start_Position"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "SwissProt_Acc_Id"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "SwissProt_Entry_Id"
+    }, 
+    {
+        "type": "INTEGER", 
+        "name": "Transcript_Exon"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "Transcript_Position"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "Transcript_Strand"
+    }, 
+    {
+        "type": "INTEGER", 
+        "name": "UniProt_AApos"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "UniProt_Region"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "Variant_Classification"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "Variant_Type"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "cDNA_Change"
+    }
+]

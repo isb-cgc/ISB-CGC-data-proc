@@ -1,0 +1,5 @@
+[INFO 2016-03-04-15:28:19 oauth2client.client Process-3] Attempting refresh to obtain initial access_token
+[INFO 2016-03-04-15:28:19 oauth2client.client Process-3] Refreshing access_token
+[INFO 2016-03-04-15:28:19 bigquery_etl.extract.gcloud_wrapper Process-3] StringIO
+[INFO 2016-03-04-15:28:21 bigquery_etl.extract.utils Process-3] Converting  file to a dataframe
+[ERROR 2016-03-04-15:28:26 bigquery_etl.extract.utils Process-3] Error tokenizing data. C error: Calling read(nbytes) on source failed. Try engine='python'.
