@@ -19,9 +19,25 @@ from util import import_module
 
 lock = Lock()
 
+fields2value = {}
+
 def store_metadata(config, log, table, key_metadata):
     if not config['process_bio']:
         return
+    if 0 == len(fields2value):
+        # set up the map to get statistics across all studies for desired bio columns
+        clinical_auxiliary_filters = config['metadata_locations']['clinical']
+        clinical_auxiliary_filters.update(config['metadata_locations']['auxiliary'])
+        for value in clinical_auxiliary_filters.itervalues():
+            try:
+                fields2value[value] = 0
+            except:
+                # just ignore the derived fields that are specified as unhashable dicts
+                pass
+        biospecimen_filters = config['metadata_locations']['biospecimen']
+        for value in biospecimen_filters.itervalues():
+            fields2value[value] = 0
+    
     count = 0
     count_upload = 0
     not_data_fields = set()
@@ -49,6 +65,8 @@ def store_metadata(config, log, table, key_metadata):
                     if value in (None, '->'):
                         metadata[field] = None
                     else:
+                        if field in fields2value:
+                            fields2value[field] = fields2value[field] + 1
                         if field in list_fields:
                             metadata[field] = [str(v.encode('ascii', 'ignore').strip()) for v in value]
                             try:
@@ -114,3 +132,10 @@ def store_metadata(config, log, table, key_metadata):
             log.warning( '\tfiles with no sdrf file(%s):\n\t\t%s' % (len(nosdrf), '\n\t\t'.join(list(nosdrf)[:150])))
     
     log.info('\tfinished store metadata.  stored %s total records' % (count))
+
+def print_combined_stats(log):
+    fields = fields2value.keys()
+    fields.sort()
+    log.info('metadata stats over all studies:')
+    for field in fields:
+        log.info('\t%s: %s' % (field, fields2value[field]))

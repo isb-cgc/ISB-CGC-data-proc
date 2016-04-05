@@ -23,14 +23,23 @@ from lxml import etree
 import os
 import re
 import shutil
+from threading import Lock
 
 import gcs_wrapper
 import util
 
 clinical_pat = re.compile("^.*clinical.*.xml$")
-biospecimen_pat = re.compile("^.*biospecimen.*.xml$")
 auxiliary_pat = re.compile("^.*auxiliary.*.xml$")
+ssf_pat = re.compile("^.*ssf.*.xml$")
+omf_pat = re.compile("^.*omf.*.xml$")
+biospecimen_pat = re.compile("^.*biospecimen.*.xml$")
 blank_elements = re.compile("^\\n\s*$")
+
+ssf_element2count = {}
+ssf_study2element2values2count = {}
+omf_element2count = {}
+omf_study2element2values2count = {}
+lock = Lock()
 
 class Calculate:
     def calculateBMI(self, (weight, height, log)):
@@ -208,9 +217,13 @@ def parse_biospecimen(biospecimen_file, log, biospecimen_barcode2field2value, ke
     patient_features = elem2dict(patient_element, "patient") # 1
 
     # get cqcf features
-    cqcf_element = root.find('.//cqcf:biospecimen_cqcf', namespaces=root.nsmap)
-    cqcf_features = elem2dict(cqcf_element, "cqcf")
-
+    cqcf_features = {}
+    try:
+        cqcf_element = root.find('.//cqcf:biospecimen_cqcf', namespaces=root.nsmap)
+        cqcf_features = elem2dict(cqcf_element, "cqcf")
+    except:
+        log.warning('no cqcf features')
+        
     # there are some patients with a "null" Project, issue warning and do not include     
     if 'admin:project_code' not in admin_features:
         log.warning("No project code found for the file %s, excluding" % biospecimen_file)
@@ -246,15 +259,15 @@ def parse_biospecimen(biospecimen_file, log, biospecimen_barcode2field2value, ke
 #             return None
         biospecimen_barcode2field2value[features[key_field]] = features
 
-def merge_clinical_auxiliary(clinical_contents, auxiliary_contents):
+def merge_clinical_other(clinical_contents, other_contents, other_tag):
   
     data = {}
     for patientBarcode in clinical_contents:
-        if patientBarcode in auxiliary_contents:
+        if patientBarcode in other_contents:
             clin_data = clinical_contents[patientBarcode].items()
-            aux_data = auxiliary_contents[patientBarcode].items()
+            aux_data = other_contents[patientBarcode].items()
             if dict(clin_data)['batch_number'] != dict(aux_data)['batch_number']:
-                raise Exception("batch_numbers between clin and aux data must be same")
+                raise Exception("batch_numbers between clin and %s data must be same" % (other_tag))
             data[patientBarcode] = dict(aux_data + clin_data)
         else:
             data[patientBarcode] = clinical_contents[patientBarcode]
@@ -265,7 +278,7 @@ def merge_clinical_auxiliary(clinical_contents, auxiliary_contents):
 #   actually, this is the only function we need to parse the XML
 # Same function is used in the auxiliary parsing
 #-------------------------------------------------------------------------------
-def elem2dict_clinical(node, xml_dict, nodes_to_avoid, level=0):
+def elem2dict_clinical(node, xml_dict, nodes_to_avoid, level=0, prefix = '', max_level = 4):
     # TCGA data is some manually entered, so we will see some non-ascii characters
     # this should break if it has any non-ascii characters
     try:
@@ -280,16 +293,22 @@ def elem2dict_clinical(node, xml_dict, nodes_to_avoid, level=0):
    
     # here we do not want to replace upper level elements with lower levels
     if (not blank_elements.match(str(node_text))) and (node_tag not in xml_dict) and node_text:
-        xml_dict[node_tag] = node_text.strip()
+        if prefix:
+            xml_dict[prefix[:-1]] = node_text.strip()
+        else:
+            xml_dict[node_tag] = node_text.strip()
+        # TODO: remove this after debugging
+        if prefix and node_tag in ('disease_code', 'batch_number', 'bcr_patient_barcode'):
+            xml_dict[node_tag] = node_text.strip()
     
     # Go to only level 3
-    if level == 4:
+    if level == max_level:
         return xml_dict
 
     for child in node.iterchildren():
         if child.tag.split("}")[1] not in nodes_to_avoid:
             # recursive 
-            elem2dict_clinical(child, xml_dict, nodes_to_avoid, level+1)
+            elem2dict_clinical(child, xml_dict, nodes_to_avoid, level+1, ('%s%s.' % (prefix, child.tag.split("}")[1]) if prefix else ''), max_level)
     return xml_dict
 
 
@@ -297,6 +316,89 @@ def elem2dict_clinical(node, xml_dict, nodes_to_avoid, level=0):
 # TCGA files have many namespaces, 
 #  we need to get all of them correctly
 # -------------------------------------
+def parse_omf(omf_file, log, omf_barcode2field2value, key_field):
+    """ Parse clinical files and generate a JSON file
+        No annotations in this script.
+    """
+    log.info('\tprocessing %s' % (omf_file))
+    
+    # get the XML tree (lxml)
+    tree = etree.parse(omf_file)
+    root = tree.getroot() #this is the root; we can use it to find elements
+    
+    #----------------------------------------------------------
+    # ADMIN BLOCK
+    # ssf data is divided into admin and patient blocks
+    #-----------------------------------------------------------
+    admin_features = {}
+    # get admin block elements
+    admin_element = root.find('.//admin:admin', namespaces=root.nsmap)
+    nodes_to_avoid = []
+    elem2dict_clinical(admin_element, admin_features, nodes_to_avoid, 0, 'admin.', 10)
+    admin_features["batch_number"] = admin_features["batch_number"].split(".")[0]
+
+    #-----------------------------------------------------------
+    # PATIENT BLOCK
+    #-----------------------------------------------------------
+    elements_to_avoid = []
+    patient_element = root.find(".//omf:patient", namespaces=root.nsmap)
+    patient_features = {}
+    elem2dict_clinical(patient_element, patient_features, elements_to_avoid, 0, 'patient.', 10)
+    
+    omf_features = dict(admin_features)
+    omf_features.update(patient_features)
+    omf_barcode2field2value[omf_features[key_field]] = omf_features
+
+    lock.acquire()
+    for omf_feature in omf_features:
+        omf_element2count[omf_feature] = omf_element2count.setdefault(omf_feature, 0) + 1
+        element2values2count = omf_study2element2values2count.setdefault(omf_features['disease_code'].lower(), {})
+        values2count = element2values2count.setdefault(omf_feature, {})
+        values2count[omf_features[omf_feature]] = values2count.setdefault(omf_features[omf_feature], 0) + 1
+    lock.release()
+
+
+def parse_ssf(ssf_file, log, ssf_barcode2field2value, key_field):
+    """ Parse clinical files and generate a JSON file
+        No annotations in this script.
+    """
+    log.info('\tprocessing %s' % (ssf_file))
+    
+    # get the XML tree (lxml)
+    tree = etree.parse(ssf_file)
+    root = tree.getroot() #this is the root; we can use it to find elements
+    
+    #----------------------------------------------------------
+    # ADMIN BLOCK
+    # ssf data is divided into admin and patient blocks
+    #-----------------------------------------------------------
+    admin_features = {}
+    # get admin block elements
+    admin_element = root.find('.//admin:admin', namespaces=root.nsmap)
+    nodes_to_avoid = []
+    elem2dict_clinical(admin_element, admin_features, nodes_to_avoid, 0, 'admin.', 10)
+    admin_features["batch_number"] = admin_features["batch_number"].split(".")[0]
+
+    #-----------------------------------------------------------
+    # PATIENT BLOCK
+    #-----------------------------------------------------------
+    elements_to_avoid = []
+    patient_element = root.find(".//ssf:patient", namespaces=root.nsmap)
+    patient_features = {}
+    elem2dict_clinical(patient_element, patient_features, elements_to_avoid, 0, 'patient.', 10)
+    
+    ssf_features = dict(admin_features)
+    ssf_features.update(patient_features)
+    ssf_barcode2field2value[ssf_features[key_field]] = ssf_features
+
+    lock.acquire()
+    for ssf_feature in ssf_features:
+        ssf_element2count[ssf_feature] = ssf_element2count.setdefault(ssf_feature, 0) + 1
+        element2values2count = ssf_study2element2values2count.setdefault(ssf_features['disease_code'].lower(), {})
+        values2count = element2values2count.setdefault(ssf_feature, {})
+        values2count[ssf_features[ssf_feature]] = values2count.setdefault(ssf_features[ssf_feature], 0) + 1
+    lock.release()
+
 def parse_auxiliary(auxiliary_file, log, auxiliary_barcode2field2value, key_field):
     """ Parse clinical files and generate a JSON file
         No annotations in this script.
@@ -448,44 +550,47 @@ def parse_clinical(clinical_file, log, clinical_barcode2field2value, key_field):
 
     clinical_barcode2field2value[clinical_features[key_field]] = clinical_features
     
+def parse_file(parse_function, config, archive_path, file_name, study, upload_archive, log, type_barcode2field2value, key_field, *maps):
+    parse_function(archive_path + file_name, log, type_barcode2field2value, key_field, *maps)
+    if upload_archive:
+        upload_bio_file(config, archive_path, file_name, study, log)
+    else:
+        log.info('\tskipping upload of %s' % file_name)
+    
 def parse_files(config, log, files, archive_path, archive_fields, study, archive2metadata, clinical_metadata, biospecimen_metadata):
     sample_code2letter = config['sample_code2letter']
     sample_code2type = config['sample_code2type']
-    clinical_auxiliary_filters = config['metadata_locations']['clinical']
-    clinical_auxiliary_filters.update(config['metadata_locations']['auxiliary'])
-    biospecimen_filters = config['metadata_locations']['biospecimen']
 
     upload_archive = util.is_upload_archive(archive_fields[0], config['upload_archives'], archive2metadata) and config['upload_open']
     clinical_barcode2field2value = {}
     auxiliary_barcode2field2value = {}
+    ssf_barcode2field2value = {}
+    omf_barcode2field2value = {}
     biospecimen_barcode2field2value = {}
     for file_name in files:
         if clinical_pat.match(file_name):
-            parse_clinical(archive_path + file_name, log, clinical_barcode2field2value, 'bcr_patient_barcode')
-            if upload_archive:
-                upload_bio_file(config, archive_path, file_name, study, log)
-            else:
-                log.info('\tskipping upload of %s' % file_name)
+            parse_file(parse_clinical, config, archive_path, file_name, study, upload_archive, log, clinical_barcode2field2value, 'bcr_patient_barcode')
         elif auxiliary_pat.match(file_name):
-            parse_auxiliary(archive_path + file_name, log, auxiliary_barcode2field2value, 'bcr_patient_barcode')
-            if upload_archive:
-                upload_bio_file(config, archive_path, file_name, study, log)
-            else:
-                log.info('\tskipping upload of %s' % file_name)
+            parse_file(parse_auxiliary, config, archive_path, file_name, study, upload_archive, log, auxiliary_barcode2field2value, 'bcr_patient_barcode')
+        elif ssf_pat.match(file_name):
+            parse_file(parse_ssf, config, archive_path, file_name, study, upload_archive, log, ssf_barcode2field2value, 'bcr_patient_barcode')
+        elif omf_pat.match(file_name):
+            parse_file(parse_omf, config, archive_path, file_name, study, upload_archive, log, omf_barcode2field2value, 'bcr_patient_barcode')
         elif biospecimen_pat.match(file_name):
-            parse_biospecimen(archive_path + file_name, log, biospecimen_barcode2field2value, 'sample:bcr_sample_barcode', sample_code2letter, sample_code2type)
-            if upload_archive:
-                upload_bio_file(config, archive_path, file_name, study, log)
-            else:
-                log.info('\tskipping upload of %s' % file_name)
+            parse_file(parse_biospecimen, config, archive_path, file_name, study, upload_archive, log, biospecimen_barcode2field2value, 'sample:bcr_sample_barcode', sample_code2letter, sample_code2type)
     
-    clinical_auxiliary_barcode2field2value = merge_clinical_auxiliary(clinical_barcode2field2value, auxiliary_barcode2field2value)
-    clinical_auxiliary_barcode2field2value = filter_data(log, clinical_auxiliary_barcode2field2value, clinical_auxiliary_filters)
+    clinical_auxiliary_barcode2field2value = merge_clinical_other(clinical_barcode2field2value, auxiliary_barcode2field2value, 'aux')
+    clinical_ssf_auxiliary_barcode2field2value = merge_clinical_other(clinical_auxiliary_barcode2field2value, ssf_barcode2field2value, 'ssf')
+    clinical_omf_ssf_auxiliary_barcode2field2value = merge_clinical_other(clinical_ssf_auxiliary_barcode2field2value, omf_barcode2field2value, 'omf')
+    clinical_auxiliary_filters = config['metadata_locations']['clinical']
+    clinical_auxiliary_filters.update(config['metadata_locations']['auxiliary'])
+    clinical_omf_ssf_auxiliary_barcode2field2value = filter_data(log, clinical_omf_ssf_auxiliary_barcode2field2value, clinical_auxiliary_filters)
+    biospecimen_filters = config['metadata_locations']['biospecimen']
     biospecimen_barcode2field2value = filter_data(log, biospecimen_barcode2field2value, biospecimen_filters)
     
-    clinical_metadata.update(clinical_auxiliary_barcode2field2value.iteritems())
-    biospecimen_metadata.update(biospecimen_barcode2field2value.iteritems())
-    
+    clinical_metadata.update(clinical_omf_ssf_auxiliary_barcode2field2value)
+    biospecimen_metadata.update(biospecimen_barcode2field2value)
+
 def parse_archives(config, log, archives, study, archive2metadata, clinical_metadata, biospecimen_metadata):
     tmp_dir_parent = os.environ.get('ISB_TMP', '/tmp/')
     for archive_fields in archives:
@@ -536,4 +641,20 @@ def parse_bio(config, archives, study, archive2metadata, log_name):
     if 0 < len(no_clinical):
         log.info('The following participants had no clinical data:\n\t%s' % ('\n\t'.join(no_clinical)))
     log.info('finished parse bio: %s participants, %s samples.' % (len(participants), len(biospecimen_metadata)))
+
+    log.info('current running count total for ssf elments:\n\t%s\n' % ('\n\t'.join((element + '\t' + str(count)) for element, count in ssf_element2count.iteritems())))
+    output = '' 
+    for element, values2count in ssf_study2element2values2count[study].iteritems():
+        output += '\n\t%s\t%s' % (element, (', '.join('%s: %s' % (value, count) for value, count in values2count.iteritems()) if len(values2count) < 11 else ('#distinct: %s' % (len(values2count)))))
+    log.info('count for this study, %s, for ssf elements:%s' % (study, output))
+
+    if 0 < len(omf_element2count):
+        log.info('current running count total for omf elments:\n\t%s\n' % ('\n\t'.join((element + '\t' + str(count)) for element, count in omf_element2count.iteritems())))
+        if study in omf_study2element2values2count:
+            output = '' 
+            for element, values2count in omf_study2element2values2count[study].iteritems():
+                output += '\n\t%s\t%s' % (element, (', '.join('"%s": %s' % (value, count) for value, count in values2count.iteritems()) if len(values2count) < 11 else ('#distinct: %s' % (len(values2count)))))
+            log.info('count for this study, %s, for omf elements:%s' % (study, output))
     return clinical_metadata, biospecimen_metadata, ffpe_samples
+
+

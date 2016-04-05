@@ -29,6 +29,10 @@ import sys
 
 import gcs_wrapper
 from parse_bio import parse_bio
+from parse_bio import omf_element2count
+from parse_bio import omf_study2element2values2count
+from parse_bio import ssf_element2count
+from parse_bio import ssf_study2element2values2count
 from prepare_upload import prepare_upload
 from process_annotations import process_annotations
 from process_latestarchive import process_latestarchive
@@ -330,13 +334,13 @@ def info_status(config, log):
     if not config['download_archives']:
         log.warning('\n\t====================\n\tno data archives will be downloaded this run!\n\t====================')
     if config['upload_open']:
-        log.warning('\n\t====================\n\topen-access files will be uploaded this run!\n\t====================')
+        log.warning('\n\t====================\n\topen-access files will be processed this run!\n\t====================')
     else:
-        log.warning('\n\t====================\n\tno open-access files will be uploaded this run!\n\t====================')
+        log.warning('\n\t====================\n\tno open-access files will be processed this run!\n\t====================')
     if config['upload_controlled']:
-        log.warning('\n\t====================\n\tcontrolled-access files will be uploaded this run!\n\t====================')
+        log.warning('\n\t====================\n\tcontrolled-access files will be processed this run!\n\t====================')
     else:
-        log.warning('\n\t====================\n\tno controlled-access files will be uploaded this run!\n\t====================')
+        log.warning('\n\t====================\n\tno controlled-access files will be processed this run!\n\t====================')
     # make sure not processing bio makes sense
     if not config['process_bio'] and config['upload_etl_files']:
         raise ValueError('\tbad configuration: must process bio to upload etl files')
@@ -347,6 +351,23 @@ def info_status(config, log):
         log.warning('\n\t====================\n\tnot processing bio this run!\n\t====================')
     else:
         log.warning('\n\t====================\n\tnot processing bio this run!\n\t====================')
+
+
+def write_element_stats(study2element2values2count, element2count, prefix):
+    with open('%s_element_counts.tsv' % prefix, 'w') as output_file:
+        output_file.write('field\tcount\t')
+        studies = study2element2values2count.keys()
+        studies.sort()
+        output_file.write('\t'.join(studies) + '\n')
+        for element, count in element2count.iteritems():
+            output_file.write('%s\t%s\t' % (element, count))
+            for study in studies:
+                if element in study2element2values2count[study]:
+                    values2count = study2element2values2count[study][element]
+                    output_file.write('%s\t' % (', '.join('%s: %s' % (value, count) for (value, count) in values2count.iteritems()) if len(values2count) < 11 else ('#distinct: %s' % (len(values2count)))))
+                else:
+                    output_file.write('<empty>\t')
+            output_file.write('\n')
 
 def uploadTCGA(configFileName):
     print datetime.now(), 'begin uploadTCGA()'
@@ -383,11 +404,19 @@ def uploadTCGA(configFileName):
             log.warning('\n\t====================\n\tnot processing annotations this run!\n\t====================')
             barcode2annotations = {}
         process_tumortypes(config, log_dir, tumor_type2platform2archive_types2archives, platform2archive2metadata, tumor_type2cghub_records, barcode2metadata, barcode2annotations, log)
+        
+        # print out the stats
+        metadata_modules = config['metadata_modules']
+        for metadata_module in metadata_modules:
+            module = import_module(metadata_module)
+            module.print_combined_stats(log)
     finally:
         if executor:
             executor.shutdown(wait=False)
         if gcs_wrapper:
             gcs_wrapper.close_connection()
+        write_element_stats(ssf_study2element2values2count, ssf_element2count, 'ssf')
+        write_element_stats(omf_study2element2values2count, omf_element2count, 'omf')
     log.info('finish uploadTCGA()')
     print datetime.now(), 'finish uploadTCGA()'
 
