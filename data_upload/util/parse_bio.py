@@ -1,6 +1,9 @@
 '''
 Created on Mar 26, 2015
 
+Code for parsing the TCGA bio files: clinical, biospecimen auxiliary,
+ssf, and omf
+
 Copyright 2015, Institute for Systems Biology.
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -42,11 +45,23 @@ omf_study2element2values2count = {}
 lock = Lock()
 
 class Calculate:
+    '''
+    class to encapsulate calculating derived field values
+    '''
     def calculateBMI(self, (weight, height, log)):
+        '''
+        use the weight and height to calculate the BMI
+        
+        parameters:
+            weight: weight of the participant
+            height: height of the participant
+            log: logger to log any messages
+        '''
         return float(weight) / pow(float(height)/100, 2)
 
     def enforce_vitalstatus_rules(self, filtered_dict, log):
-        """for all patients who are "Alive", we should have (ie force this to be true):
+        '''
+            for all patients who are "Alive", we should have (ie force this to be true):
             * days_to_last_known_alive = days_to_last_followup (hopefully not NA)
             * days_to_death = NA
     
@@ -54,7 +69,11 @@ class Calculate:
             * days_to_last_known_alive = days_to_death (and not NA)
                 * if we do not have a days_to_death value, then I would almost rather we revert the vital_status to Alive)
             * days_to_last_followup = NA
-        """
+        
+            parameters:
+                filtered_dict: the dictionary to use to check for the key/values to enforce vital_status
+                log: logger to log any messages
+        '''
         days_to_last_followup = filtered_dict.get('days_to_last_followup')
         days_to_death = filtered_dict.get('days_to_death') 
         vital_status = filtered_dict.get('vital_status')
@@ -85,16 +104,45 @@ class Calculate:
 calculate = Calculate()
 
 def upload_file(config, file_path, key_name, log):
+    '''
+    upload the file to GCS
+    
+    parameters:
+        file_path: path to the local file
+        key_name: GCS object key to use
+        log: logger to log any messages
+    '''
     bucket_name = config['buckets']['open']
     if config['upload_files']:
         log.info('\tuploading %s' % (key_name))
         gcs_wrapper.upload_file(file_path, bucket_name, key_name, log)
 
 def upload_bio_file(config, archive_path, file_name, study, log):
+    '''
+    upload the bio file to GCS
+
+    parameters:
+        archive_path: path to the files for the archive
+        file_name: name of the file to upload
+        study: study name to use as part of the GCS object key
+        log: logger to log any messages
+    '''
     key_name = '/%s/%s/%s/%s/%s' % ('tcga', study, 'bio', 'Level_1', file_name)
     upload_file(config, archive_path + file_name, key_name, log)
 
 def filter_data(log, data, fields):
+    '''
+    from the data map, filter the desired fields specified by the keys of field
+    with the new key from the value of the field values
+    if a field is a calculated field, create it from the appropriate fields by calling
+    the calculate method for it
+
+    parameters:
+        log: logger to log any messages
+        data: parsed map of element to value
+        fields: map of field names to get from data and the new key to use for the value in
+        the returned map
+    '''
     filtered_data = {}
     for barcode in data:
         filtered_dict = {}
@@ -102,8 +150,9 @@ def filter_data(log, data, fields):
             if 'calculate' == field:
                 continue
             new_keys = fields.get(field)
-            for new_key in new_keys.split(','):
-                filtered_dict[new_key] = data[barcode].get(field, None)
+            if field in data[barcode]:
+                for new_key in new_keys.split(','):
+                    filtered_dict[new_key] = data[barcode][field]
         if 'calculate' in fields:
             calculate_dict = fields['calculate']
             for function_info, new_key in calculate_dict.iteritems():
@@ -130,9 +179,13 @@ def filter_data(log, data, fields):
 # convert a XML node into dict
 #--------------------------------------
 def elem2dict(node, append_name):
-    """
-    Convert an lxml.etree node tree into a dict.
-    """
+    '''
+    convert an lxml.etree node tree into a dict.
+
+    parameters:
+        mode: the start node
+        append_name: name to append to the element key
+    '''
     d = {}
     for e in node.findall('*[@procurement_status="Completed"]'):
         if not e.text:
@@ -140,6 +193,8 @@ def elem2dict(node, append_name):
         key = e.tag.split('}')[1] if '}' in e.tag else e.tag
         value = e.text.strip() 
         d[append_name + ":" + key] = value
+        if key in ('batch_number'):
+            d[key] = value
       
     return d
 
@@ -147,7 +202,13 @@ def elem2dict(node, append_name):
 # Average slides block elements; 
 # collect elements starting with percent
 # --------------------------------------
-def average_slides(root, slides):
+def average_slides(slides):
+    '''
+    take the value for each field for the slide elements and produce the average
+
+    parameters:
+        slides: the set of slide values to average
+    '''
     slide_values = []
 
 #   for slide in slides.findall("bio:slide", namespaces=root.nsmap):
@@ -178,10 +239,18 @@ def average_slides(root, slides):
 # TCGA files have many namespaces, 
 #  we need to get all of them correctly
 # -------------------------------------
-def parse_biospecimen(biospecimen_file, log, biospecimen_barcode2field2value, key_field, sample_code2letter, sample_code2type):
-    """ Parse biospecimen files and generate a JSON file
-       No annotations in this script.
-    """
+def parse_biospecimen(biospecimen_file, log, biospecimen_uuid2field2value, key_field, sample_code2letter, sample_code2type):
+    ''' 
+    parse biospecimen files and generate a dictionary with element to value
+
+    parameters:
+        biospecimen_file: the biospecimen xml file to parse
+        log: logger to log any messages
+        biospecimen_uuid2field2value: the map to add the parsed element to value map by the specified key_field
+        key_field: the field to use as the key for the biospecimen_uuid2field2value map
+        sample_code2letter: map to translate the numeric sample code to the alpha sample code
+        sample_code2type: map to translate the numeric sample code to the sample type
+    '''
     log.info('\tprocessing %s' % (biospecimen_file))
 
     # get the XML tree (lxml)
@@ -207,6 +276,7 @@ def parse_biospecimen(biospecimen_file, log, biospecimen_barcode2field2value, ke
         if child.text:
             admin_features["admin:" + child.tag.split("}")[1]] = child.text.strip()
     #stripping the batch number to just the first portion 
+    admin_features["batch_number"] = admin_features["admin:batch_number"].split(".")[0]
     admin_features["admin:batch_number"] = admin_features["admin:batch_number"].split(".")[0]
   
   
@@ -216,14 +286,6 @@ def parse_biospecimen(biospecimen_file, log, biospecimen_barcode2field2value, ke
     patient_element = root.find('.//bio:patient', namespaces=root.nsmap)
     patient_features = elem2dict(patient_element, "patient") # 1
 
-    # get cqcf features
-    cqcf_features = {}
-    try:
-        cqcf_element = root.find('.//cqcf:biospecimen_cqcf', namespaces=root.nsmap)
-        cqcf_features = elem2dict(cqcf_element, "cqcf")
-    except:
-        log.warning('no cqcf features')
-        
     # there are some patients with a "null" Project, issue warning and do not include     
     if 'admin:project_code' not in admin_features:
         log.warning("No project code found for the file %s, excluding" % biospecimen_file)
@@ -240,7 +302,7 @@ def parse_biospecimen(biospecimen_file, log, biospecimen_barcode2field2value, ke
 
         # slides
         slides_element = portions_element.findall('.//bio:slide', namespaces=root.nsmap)
-        slide_features =  (average_slides(root, slides_element)) #3 ( average slides)
+        slide_features =  (average_slides(slides_element)) #3 ( average slides)
 
         sample_features["sample:num_portions"] = str(len(portions))
         sample_features["sample:num_slides"] = str(len(slides_element))
@@ -251,26 +313,77 @@ def parse_biospecimen(biospecimen_file, log, biospecimen_barcode2field2value, ke
         sample_features["sample:SampleTypeLetterCode"] = sample_code2letter[sample_features['sample:bcr_sample_barcode'].split("-")[3][0:2]]
 
         features = dict(list(sample_features.items()) + list(slide_features.items())
-                        + list(patient_features.items()) + list(admin_features.items()) +  list(cqcf_features.items()))
+                        + list(patient_features.items()) + list(admin_features.items()))
 
         # FFPE samples should be excluded 
 #         if 'sample:is_ffpe' in features and features['sample:is_ffpe'] == 'YES':
 #             print(("WARNING: FFPE samples should be excluded. Skipped file: ", biospecimen_file))
 #             return None
-        biospecimen_barcode2field2value[features[key_field]] = features
+        biospecimen_uuid2field2value[features[key_field]] = features
 
-def merge_clinical_other(clinical_contents, other_contents, other_tag):
-  
+def check_clinical_ssf_overlap(contents, fields2check, log):
+    '''
+    check the problematic fields that should migrate from the clinical file to the ssf file
+    but haven't completely yet
+
+    parameters:
+        contents: the map with the parsed clinical and ssf element to values
+        fields2check: map of clinical to ssf fields to check
+        log: logger to log any messages
+    '''
+    if 0 == len(fields2check):
+        return
+    fields2check_values = []
+    for _ in range(len(fields2check)):
+        fields2check_values += [[0, [0, []], [0, []], [0, []]]]
+    for identifier, field2value in contents.iteritems():
+        index = 0
+        oldfields = fields2check.keys()
+        oldfields.sort()
+        for oldfield in oldfields:
+            newfield = fields2check[oldfield]
+            if field2value.get(oldfield) and field2value.get(newfield):
+                if field2value.get(oldfield) == field2value.get(newfield):
+                    fields2check_values[index][0] += 1
+                elif not newfield.startswith(oldfield):
+                    fields2check_values[index][1][0] += 1
+                    fields2check_values[index][1][1] += ['%s: "%s" vs. "%s"' % (identifier, field2value.get(oldfield), field2value.get(newfield))]
+            elif field2value.get(oldfield):
+                if 'no' != field2value.get(oldfield).lower():
+                    fields2check_values[index][2][0] += 1
+                    fields2check_values[index][2][1] += ['%s: %s' % (identifier, field2value.get(oldfield))]
+            elif field2value.get(newfield):
+                fields2check_values[index][3][0] += 1
+                fields2check_values[index][3][1] += ['%s: %s' % (identifier, field2value.get(newfield))]
+            index += 1
+    
+    report = '\nchecking old vs new fields\n'
+    index = 0
+    for oldfield in oldfields:
+        report += '\tfor %s:\n\t\tmatches: %s\n\t\tmismatches: %s\n\t\tonly old: %s\n\t\tonly new: %s\n' % \
+            (oldfield, fields2check_values[index][0], fields2check_values[index][1], fields2check_values[index][2], fields2check_values[index][3])
+        index += 1
+    log.info(report+ '\n')
+
+def merge_maps_master_other(master_contents, other_contents, other_tag):
+    '''
+    take the key/value from other_conents and merge into master_contents
+
+    parameters:
+        master_contents: the map to copy into
+        other_contents: the map to copy from
+        other_tag: string to label any error messages
+    '''
     data = {}
-    for patientBarcode in clinical_contents:
-        if patientBarcode in other_contents:
-            clin_data = clinical_contents[patientBarcode].items()
-            aux_data = other_contents[patientBarcode].items()
-            if dict(clin_data)['batch_number'] != dict(aux_data)['batch_number']:
-                raise Exception("batch_numbers between clin and %s data must be same" % (other_tag))
-            data[patientBarcode] = dict(aux_data + clin_data)
+    for key in master_contents:
+        if key in other_contents:
+            master_data = master_contents[key].items()
+            other_data = other_contents[key].items()
+            if master_contents[key]['batch_number'] != other_contents[key]['batch_number']:
+                raise Exception("batch_numbers between the master map and %s data must be same" % (other_tag))
+            data[key] = dict(other_data + master_data)
         else:
-            data[patientBarcode] = clinical_contents[patientBarcode]
+            data[key] = master_contents[key]
     return data
 
 #-------------------------------------------------------------------------------
@@ -278,7 +391,18 @@ def merge_clinical_other(clinical_contents, other_contents, other_tag):
 #   actually, this is the only function we need to parse the XML
 # Same function is used in the auxiliary parsing
 #-------------------------------------------------------------------------------
-def elem2dict_clinical(node, xml_dict, nodes_to_avoid, level=0, prefix = '', max_level = 4):
+def elem2dict_clinical(node, xml_dict, nodes_to_avoid, log, max_level = 4, prefix = '', level=0):
+    '''
+    recursively parse through the nodes
+    
+    parameters:
+        node: the node to start from
+        xml_dict: where to put the results of the parse <element>: <text>
+        nodes_to_avoid: list of nodes to skip in the recursion
+        max_level: the maximum depth to recurse from node
+        prefix: what to append in front of the element key
+        level: the current level of recursion 
+    '''
     # TCGA data is some manually entered, so we will see some non-ascii characters
     # this should break if it has any non-ascii characters
     try:
@@ -292,14 +416,19 @@ def elem2dict_clinical(node, xml_dict, nodes_to_avoid, level=0, prefix = '', max
     node_tag = node.tag.split('}')[1] if '}' in node.tag else node.tag
    
     # here we do not want to replace upper level elements with lower levels
-    if (not blank_elements.match(str(node_text))) and (node_tag not in xml_dict) and node_text:
-        if prefix:
-            xml_dict[prefix[:-1]] = node_text.strip()
+    if (not blank_elements.match(str(node_text))) and node_text:
+        if node_tag in xml_dict:
+            # verify that the value is the same or log a warning
+            # if node_text.strip().lower() != xml_dict[node_tag].lower():
+            #    log.warning('values for repeated %s don\'t match: %s != %s' % (node_tag, xml_dict[node_tag], node_text))
+            pass
         else:
-            xml_dict[node_tag] = node_text.strip()
-        # TODO: remove this after debugging
-        if prefix and node_tag in ('disease_code', 'batch_number', 'bcr_patient_barcode'):
-            xml_dict[node_tag] = node_text.strip()
+            if prefix:
+                xml_dict[prefix + node_tag] = node_text.strip()
+            else:
+                xml_dict[node_tag] = node_text.strip()
+            if prefix and node_tag in ('disease_code', 'batch_number', 'bcr_patient_barcode'):
+                xml_dict[node_tag] = node_text.strip()
     
     # Go to only level 3
     if level == max_level:
@@ -308,7 +437,7 @@ def elem2dict_clinical(node, xml_dict, nodes_to_avoid, level=0, prefix = '', max
     for child in node.iterchildren():
         if child.tag.split("}")[1] not in nodes_to_avoid:
             # recursive 
-            elem2dict_clinical(child, xml_dict, nodes_to_avoid, level+1, ('%s%s.' % (prefix, child.tag.split("}")[1]) if prefix else ''), max_level)
+            elem2dict_clinical(child, xml_dict, nodes_to_avoid, log, max_level, prefix, level+1)
     return xml_dict
 
 
@@ -317,9 +446,15 @@ def elem2dict_clinical(node, xml_dict, nodes_to_avoid, level=0, prefix = '', max
 #  we need to get all of them correctly
 # -------------------------------------
 def parse_omf(omf_file, log, omf_barcode2field2value, key_field):
-    """ Parse clinical files and generate a JSON file
-        No annotations in this script.
-    """
+    ''' 
+    parse omf files and generate a dictionary with element to value
+
+    parameters:
+        omf_file: the omf xml file to parse
+        log: logger to log any messages
+        omf_barcode2field2value: the map to add the parsed element to value map by the specified key_field
+        key_field: the field to use as the key for the biospecimen_uuid2field2value map
+    '''
     log.info('\tprocessing %s' % (omf_file))
     
     # get the XML tree (lxml)
@@ -334,7 +469,7 @@ def parse_omf(omf_file, log, omf_barcode2field2value, key_field):
     # get admin block elements
     admin_element = root.find('.//admin:admin', namespaces=root.nsmap)
     nodes_to_avoid = []
-    elem2dict_clinical(admin_element, admin_features, nodes_to_avoid, 0, 'admin.', 10)
+    elem2dict_clinical(admin_element, admin_features, nodes_to_avoid, log, 10)
     admin_features["batch_number"] = admin_features["batch_number"].split(".")[0]
 
     #-----------------------------------------------------------
@@ -343,8 +478,18 @@ def parse_omf(omf_file, log, omf_barcode2field2value, key_field):
     elements_to_avoid = []
     patient_element = root.find(".//omf:patient", namespaces=root.nsmap)
     patient_features = {}
-    elem2dict_clinical(patient_element, patient_features, elements_to_avoid, 0, 'patient.', 10)
+    elem2dict_clinical(patient_element, patient_features, elements_to_avoid, log, 1)
     
+    omfs_element = root.find(".//omf:omfs", namespaces=root.nsmap)
+    for omf_element in omfs_element:
+        cur_omf_features = {}
+        elem2dict_clinical(omf_element, cur_omf_features, elements_to_avoid, log, 10, 'omf:')
+        for cur_omf_feature in cur_omf_features:
+            if cur_omf_feature in patient_features:
+                patient_features[cur_omf_feature] = '%s, %s' % (patient_features[cur_omf_feature], cur_omf_features[cur_omf_feature])
+            else:
+                patient_features[cur_omf_feature] = cur_omf_features[cur_omf_feature]
+
     omf_features = dict(admin_features)
     omf_features.update(patient_features)
     omf_barcode2field2value[omf_features[key_field]] = omf_features
@@ -358,11 +503,17 @@ def parse_omf(omf_file, log, omf_barcode2field2value, key_field):
     lock.release()
 
 
-def parse_ssf(ssf_file, log, ssf_barcode2field2value, key_field):
-    """ Parse clinical files and generate a JSON file
-        No annotations in this script.
-    """
-    log.info('\tprocessing %s' % (ssf_file))
+def parse_ssf_clinical(ssf_file, log, ssf_clinical_barcode2field2value, key_field):
+    ''' 
+    parse ssf files and generate a dictionary with element to value to add to the clinical metadata
+
+    parameters:
+        ssf_file: the ssf xml file to parse
+        log: logger to log any messages
+        ssf_barcode2field2value: the map to add the parsed element to value map by the specified key_field
+        key_field: the field to use as the key for the biospecimen_uuid2field2value map
+    '''
+    log.info('\tprocessing %s for clinical' % (ssf_file))
     
     # get the XML tree (lxml)
     tree = etree.parse(ssf_file)
@@ -376,7 +527,7 @@ def parse_ssf(ssf_file, log, ssf_barcode2field2value, key_field):
     # get admin block elements
     admin_element = root.find('.//admin:admin', namespaces=root.nsmap)
     nodes_to_avoid = []
-    elem2dict_clinical(admin_element, admin_features, nodes_to_avoid, 0, 'admin.', 10)
+    elem2dict_clinical(admin_element, admin_features, nodes_to_avoid, log, 10)
     admin_features["batch_number"] = admin_features["batch_number"].split(".")[0]
 
     #-----------------------------------------------------------
@@ -385,11 +536,11 @@ def parse_ssf(ssf_file, log, ssf_barcode2field2value, key_field):
     elements_to_avoid = []
     patient_element = root.find(".//ssf:patient", namespaces=root.nsmap)
     patient_features = {}
-    elem2dict_clinical(patient_element, patient_features, elements_to_avoid, 0, 'patient.', 10)
+    elem2dict_clinical(patient_element, patient_features, elements_to_avoid, log, 10, "clinical:")
     
     ssf_features = dict(admin_features)
     ssf_features.update(patient_features)
-    ssf_barcode2field2value[ssf_features[key_field]] = ssf_features
+    ssf_clinical_barcode2field2value[ssf_features[key_field]] = ssf_features
 
     lock.acquire()
     for ssf_feature in ssf_features:
@@ -399,10 +550,48 @@ def parse_ssf(ssf_file, log, ssf_barcode2field2value, key_field):
         values2count[ssf_features[ssf_feature]] = values2count.setdefault(ssf_features[ssf_feature], 0) + 1
     lock.release()
 
+def parse_ssf_biospecimen(ssf_file, log, ssf_sample_uuid2field2value, key_field):
+    ''' 
+    parse ssf files and generate a dictionary with element to value to add to the biospecimen metadata
+
+    parameters:
+        ssf_file: the ssf xml file to parse
+        ssf_uuid2field2value: the map to add the parsed element to value map by the specified key_field
+        key_field: the field to use as the key for the biospecimen_uuid2field2value map
+    '''
+    log.info('\tprocessing %s for sample' % (ssf_file))
+    
+    # get the XML tree (lxml)
+    tree = etree.parse(ssf_file)
+    root = tree.getroot() #this is the root; we can use it to find elements
+    
+    # get the batch number for later verification against the main biospecimen fields
+    batch_element = root.find(".//admin:batch_number", namespaces=root.nsmap)
+    batch_number = batch_element.text.strip().split(".")[0]
+    
+    elements_to_avoid = []
+    tumors_element = root.find(".//ssf:tumor_samples", namespaces=root.nsmap)
+    for tumor_element in tumors_element:
+        cur_tumor_features = {'batch_number': batch_number}
+        elem2dict_clinical(tumor_element, cur_tumor_features, elements_to_avoid, log, 10, 'sample:')
+        ssf_sample_uuid2field2value[cur_tumor_features[key_field]] = cur_tumor_features
+
+    normals_element = root.find(".//ssf:normal_controls", namespaces=root.nsmap)
+    for normal_element in normals_element:
+        cur_normal_features = {'batch_number': batch_number}
+        elem2dict_clinical(normal_element, cur_normal_features, elements_to_avoid, log, 10, 'sample:')
+        ssf_sample_uuid2field2value[cur_normal_features[key_field]] = cur_normal_features
+
 def parse_auxiliary(auxiliary_file, log, auxiliary_barcode2field2value, key_field):
-    """ Parse clinical files and generate a JSON file
-        No annotations in this script.
-    """
+    ''' 
+    parse auxiliary files and generate a dictionary with element to value
+
+    parameters:
+        auxiliary_file: the omf xml file to parse
+        log: logger to log any messages
+        auxiliary_barcode2field2value: the map to add the parsed element to value map by the specified key_field
+        key_field: the field to use as the key for the biospecimen_uuid2field2value map
+    '''
     log.info('\tprocessing %s' % (auxiliary_file))
     
     # get the XML tree (lxml)
@@ -417,7 +606,7 @@ def parse_auxiliary(auxiliary_file, log, auxiliary_barcode2field2value, key_fiel
     # get admin block elements
     admin_element = root.find('.//admin:admin', namespaces=root.nsmap)
     nodes_to_avoid = []
-    admin_features = (elem2dict_clinical(admin_element, admin_features, nodes_to_avoid, 0))
+    admin_features = elem2dict_clinical(admin_element, admin_features, nodes_to_avoid, log)
     admin_features["batch_number"] = admin_features["batch_number"].split(".")[0]
 
     #-----------------------------------------------------------
@@ -426,7 +615,7 @@ def parse_auxiliary(auxiliary_file, log, auxiliary_barcode2field2value, key_fiel
     elements_to_avoid = []
     patient_element = root.find(".//auxiliary:patient", namespaces=root.nsmap)
     patient_data = {}
-    patient_features = elem2dict_clinical(patient_element, patient_data, elements_to_avoid, 0)
+    patient_features = elem2dict_clinical(patient_element, patient_data, elements_to_avoid, log)
 
     # collate data
     auxiliary_features = dict(list(patient_features.items()) + list(admin_features.items()))
@@ -446,9 +635,15 @@ def parse_auxiliary(auxiliary_file, log, auxiliary_barcode2field2value, key_fiel
     auxiliary_barcode2field2value[auxiliary_features[key_field]] = auxiliary_features
 
 def parse_clinical(clinical_file, log, clinical_barcode2field2value, key_field):
-    """ Parse clinical files and generate a JSON file
-       No annotations in this script.
-    """
+    ''' 
+    parse auxiliary files and generate a dictionary with element to value
+
+    parameters:
+        clinical_file: the clinical xml file to parse
+        log: logger to log any messages
+        clinical_barcode2field2value: the map to add the parsed element to value map by the specified key_field
+        key_field: the field to use as the key for the biospecimen_uuid2field2value map
+    '''
     log.info('\tprocessing %s' % (clinical_file))
    
     # get the XML tree (lxml)
@@ -463,7 +658,7 @@ def parse_clinical(clinical_file, log, clinical_barcode2field2value, key_field):
     # gets admin block element
     admin_element = root.find('.//admin:admin', namespaces=root.nsmap)
     nodes_to_avoid = []
-    admin_features = (elem2dict_clinical(admin_element, admin_features, nodes_to_avoid, 0))
+    admin_features = elem2dict_clinical(admin_element, admin_features, nodes_to_avoid, log)
     admin_features["batch_number"] = admin_features["batch_number"].split(".")[0]
    
     #-----------------------------------------------------------
@@ -474,44 +669,27 @@ def parse_clinical(clinical_file, log, clinical_barcode2field2value, key_field):
     followups_element = root.find('.//' + admin_features['disease_code'].lower() + ":follow_ups", namespaces=root.nsmap)
     sequence = 0
     followups_features = {}
+    elements_to_avoid = [] 
     for followup in followups_element.getchildren():
         if followup.attrib['sequence'] > sequence:
             sequence = followup.attrib['sequence']
             followups_features = {}
-            elements_to_avoid = [] 
-            followups_features = elem2dict_clinical(followup, followups_features, elements_to_avoid, 0)
-
-    # parse "clinical_cqcf" block
-    cqcf_element = None
-    for x in root.xpath('//*'):
-        if 'clinical_cqcf' in x.tag:
-            cqcf_element = x
-            break
-#     cqcf_element = [x for x in root.xpath('//*') if 'clinical_cqcf' in x.tag][0]
-    
-    cqcf_features = {}
-    if cqcf_element:
-        elements_to_avoid = []
-        cqcf_features = elem2dict_clinical(cqcf_element, cqcf_features, elements_to_avoid, 0)    
-        # harcoded Cqcf fields, these are the only ones we need, could be in config later
-        cqcf_required = ['gleason_score_combined', 'country', 'history_of_prior_malignancy', 'frozen_specimen_anatomic_site']
-        cqcf_features = {k:v for (k,v) in cqcf_features.iteritems() if k in cqcf_required}
+            followups_features = elem2dict_clinical(followup, followups_features, elements_to_avoid, log)
 
     # parse the patient block
-    elements_to_avoid = ["follow_ups", "additional_studies", "clinical_cqcf"]
+    elements_to_avoid = ["follow_ups", "additional_studies", "clinical_cqcf", "drugs", "radiations"]
     patient_element = root.find('.//' + admin_features['disease_code'].lower() + ":patient", namespaces=root.nsmap)
     # we are ranking each level;
     # so that we do not replace the upper level elements with the lower ones
     patient_features = {}
-    patient_features = elem2dict_clinical(patient_element, patient_features, elements_to_avoid, 0)
+    patient_features = elem2dict_clinical(patient_element, patient_features, elements_to_avoid, log)
 
     # there are some patients with a "null" Project, issue warning and set to TCGA     
     if 'project_code' not in admin_features:
         log.warning("\tNo project code found for the file %s" % clinical_file)
         return
   
-    clinical_features = dict(list(cqcf_features.items()) + list(patient_features.items()) 
-                            + list(admin_features.items()) + list(followups_features.items()))
+    clinical_features = dict(list(patient_features.items()) + list(admin_features.items()) + list(followups_features.items()))
 
     # merge "pregnancies" and "total_number_of_pregnancies" columns ( assuming they are mutually exclusive)
     pregnancies =  clinical_features.get('pregnancies')
@@ -550,48 +728,96 @@ def parse_clinical(clinical_file, log, clinical_barcode2field2value, key_field):
 
     clinical_barcode2field2value[clinical_features[key_field]] = clinical_features
     
-def parse_file(parse_function, config, archive_path, file_name, study, upload_archive, log, type_barcode2field2value, key_field, *maps):
-    parse_function(archive_path + file_name, log, type_barcode2field2value, key_field, *maps)
+def parse_file(parse_function, config, archive_path, file_name, study, upload_archive, log, type_keyfield2field2value, keyfield, *maps):
+    '''
+    parse and upload the file
+    
+    parameters:
+        parse_function: function to parse the xml file
+        config: the configuration map
+        archive_path: path to the file being parsed
+        file_name: name of the file to parse
+        study: name of the TCGA study the file belongs to
+        upload_archive: if true, upload the file
+        log: logger to log any messages
+        type_keyfield2field2value: map to add the parsed result to
+        keyfield: key field to use for the type_keyfield2field2value
+        maps: optional maps for translating key fields
+    '''
+    parse_function(archive_path + file_name, log, type_keyfield2field2value, keyfield, *maps)
     if upload_archive:
         upload_bio_file(config, archive_path, file_name, study, log)
     else:
         log.info('\tskipping upload of %s' % file_name)
     
 def parse_files(config, log, files, archive_path, archive_fields, study, archive2metadata, clinical_metadata, biospecimen_metadata):
+    '''
+    iterate through the list of filenames to parse, and if appropriate, upload them
+    
+    parameters:
+        config: the configuration map
+        log: logger to log any messages
+        files: the file names to iterate through
+        archive_path: path to the file being parsed
+        archive_fields: list of archive_name, date of upload, and URL
+        study: name of the TCGA study the files belongs to
+        archive2metadata: metadata of the archive
+        clinical_metadata: the return map for clinical metadata
+        biospecimen_metadata: the return map for biospecimen metadata
+    '''
     sample_code2letter = config['sample_code2letter']
     sample_code2type = config['sample_code2type']
 
     upload_archive = util.is_upload_archive(archive_fields[0], config['upload_archives'], archive2metadata) and config['upload_open']
     clinical_barcode2field2value = {}
     auxiliary_barcode2field2value = {}
-    ssf_barcode2field2value = {}
+    ssf_clinical_barcode2field2value = {}
+    ssf_sample_uuid2field2value = {}
     omf_barcode2field2value = {}
-    biospecimen_barcode2field2value = {}
+    biospecimen_uuid2field2value = {}
     for file_name in files:
         if clinical_pat.match(file_name):
             parse_file(parse_clinical, config, archive_path, file_name, study, upload_archive, log, clinical_barcode2field2value, 'bcr_patient_barcode')
         elif auxiliary_pat.match(file_name):
             parse_file(parse_auxiliary, config, archive_path, file_name, study, upload_archive, log, auxiliary_barcode2field2value, 'bcr_patient_barcode')
         elif ssf_pat.match(file_name):
-            parse_file(parse_ssf, config, archive_path, file_name, study, upload_archive, log, ssf_barcode2field2value, 'bcr_patient_barcode')
+            parse_file(parse_ssf_clinical, config, archive_path, file_name, study, upload_archive, log, ssf_clinical_barcode2field2value, 'bcr_patient_barcode')
+            parse_file(parse_ssf_biospecimen, config, archive_path, file_name, study, upload_archive, log, ssf_sample_uuid2field2value, 'sample:bcr_sample_uuid')
+        elif biospecimen_pat.match(file_name):
+            parse_file(parse_biospecimen, config, archive_path, file_name, study, upload_archive, log, biospecimen_uuid2field2value, 'sample:bcr_sample_uuid', sample_code2letter, sample_code2type)
         elif omf_pat.match(file_name):
             parse_file(parse_omf, config, archive_path, file_name, study, upload_archive, log, omf_barcode2field2value, 'bcr_patient_barcode')
-        elif biospecimen_pat.match(file_name):
-            parse_file(parse_biospecimen, config, archive_path, file_name, study, upload_archive, log, biospecimen_barcode2field2value, 'sample:bcr_sample_barcode', sample_code2letter, sample_code2type)
     
-    clinical_auxiliary_barcode2field2value = merge_clinical_other(clinical_barcode2field2value, auxiliary_barcode2field2value, 'aux')
-    clinical_ssf_auxiliary_barcode2field2value = merge_clinical_other(clinical_auxiliary_barcode2field2value, ssf_barcode2field2value, 'ssf')
-    clinical_omf_ssf_auxiliary_barcode2field2value = merge_clinical_other(clinical_ssf_auxiliary_barcode2field2value, omf_barcode2field2value, 'omf')
-    clinical_auxiliary_filters = config['metadata_locations']['clinical']
-    clinical_auxiliary_filters.update(config['metadata_locations']['auxiliary'])
-    clinical_omf_ssf_auxiliary_barcode2field2value = filter_data(log, clinical_omf_ssf_auxiliary_barcode2field2value, clinical_auxiliary_filters)
+    clinical_auxiliary_barcode2field2value = merge_maps_master_other(clinical_barcode2field2value, auxiliary_barcode2field2value, 'aux')
+    clinical_ssf_auxiliary_barcode2field2value = merge_maps_master_other(clinical_auxiliary_barcode2field2value, ssf_clinical_barcode2field2value, 'ssf')
+    clinical_omf_ssf_auxiliary_barcode2field2value = merge_maps_master_other(clinical_ssf_auxiliary_barcode2field2value, omf_barcode2field2value, 'omf')
+    clinical_auxiliary_omf_ssf_filters = config['metadata_locations']['clinical']
+    clinical_auxiliary_omf_ssf_filters.update(config['metadata_locations']['auxiliary'])
+    clinical_auxiliary_omf_ssf_filters.update(config['metadata_locations']['omf'])
+    clinical_auxiliary_omf_ssf_filters.update(config['metadata_locations']['ssf_clinical'])
+    clinical_omf_ssf_auxiliary_barcode2field2value = filter_data(log, clinical_omf_ssf_auxiliary_barcode2field2value, clinical_auxiliary_omf_ssf_filters)
+
+    biospecimen_ssf_uuid2field2value = merge_maps_master_other(biospecimen_uuid2field2value, ssf_sample_uuid2field2value, 'ssf')
     biospecimen_filters = config['metadata_locations']['biospecimen']
-    biospecimen_barcode2field2value = filter_data(log, biospecimen_barcode2field2value, biospecimen_filters)
+    biospecimen_filters.update(config['metadata_locations']['ssf_biospecimen'])
+    biospecimen_uuid2field2value = filter_data(log, biospecimen_ssf_uuid2field2value, biospecimen_filters)
     
     clinical_metadata.update(clinical_omf_ssf_auxiliary_barcode2field2value)
-    biospecimen_metadata.update(biospecimen_barcode2field2value)
+    biospecimen_metadata.update(biospecimen_uuid2field2value)
 
 def parse_archives(config, log, archives, study, archive2metadata, clinical_metadata, biospecimen_metadata):
+    '''
+    downloads and unpacks the archives.  then parses, and if appropriate for the archive, uploads the files to GCS
+
+    parameters:
+        config: the configuration map
+        log: logger to log any messages
+        archives: information on the archives to unpack
+        study: name of the TCGA study the files belongs to
+        archive2metadata: metadata of the archive
+        clinical_metadata: the return map for clinical metadata
+        biospecimen_metadata: the return map for biospecimen metadata
+    '''
     tmp_dir_parent = os.environ.get('ISB_TMP', '/tmp/')
     for archive_fields in archives:
         if not 'Level_1' in archive_fields[0]:
@@ -607,14 +833,23 @@ def parse_archives(config, log, archives, study, archive2metadata, clinical_meta
         shutil.rmtree(archive_path)
 
 def parse_bio(config, archives, study, archive2metadata, log_name):
-    """
+    '''
+    parses the files in the bio archive, and if appropriate, uploads them to GCS
+    
+    parameters:
+        config: the configuration map
+        archives: information on the archives to unpack
+        study: name of the TCGA study the files belongs to
+        archive2metadata: metadata of the archive
+        log_name: the name of the log to use to log any messages
+        
     return type:
         bio_metadata: when the Participant barcode is the key, the value is a map that captures values from the clinical file
-          based on the fields in the config file under ['metadata_locations']['clinical'], when the Sample barcode is the 
+          based on the fields in the config file under ['metadata_locations']['clinical'], when the Sample UUID is the 
           key, the value is a map that captures values from the biospeciman file based on the fields in the config file under 
           ['metadata_locations']['biospecimen']
         ffpe_samples: set of samples where is_ffpe is YES 
-    """
+    '''
     log = logging.getLogger(log_name)
     log.info('start parse bio')
     study = study.lower()
@@ -628,10 +863,15 @@ def parse_bio(config, archives, study, archive2metadata, log_name):
         if 15 < len(barcode) and 'is_ffpe' in term2value and 'YES' == term2value['is_ffpe']:
             ffpe_samples.add(barcode)
     
+    # check the overlapping fields between the old xsd and the new xsd and ssf file
+    check_clinical_ssf_overlap(clinical_metadata, config['metadata_locations']['clinical_ssf_overlap_fields'], log)
+    check_clinical_ssf_overlap(biospecimen_metadata, config['metadata_locations']['biospecimen_ssf_overlap_fields'], log)
+    
     # sanity check the samples against the participants
     participants = set()
     no_clinical = set()
-    for barcode in biospecimen_metadata:
+    for uuid in biospecimen_metadata:
+        barcode = biospecimen_metadata[uuid]['SampleBarcode']
         participants.add(barcode[:12])
         try:
             clinical_metadata[barcode[:12]]
