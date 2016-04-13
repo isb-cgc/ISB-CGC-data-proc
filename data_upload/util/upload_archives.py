@@ -78,9 +78,13 @@ def process_files(config, archive_path, sdrf_metadata, seen_files, nonupload_fil
     
     file2metadata = {}
     filenames = set()
+    processed_filenames = set()
     for filename2metadata in sdrf_metadata.itervalues():
         try:
             for filename, metadata in filename2metadata.iteritems():
+                if filename in processed_filenames:
+                    continue
+                processed_filenames.add(filename)
                 file2metadata[filename] = metadata
                 if upload_file(filename, metadata, nonupload_files, ffpe_samples, level, log):
                     filenames.add(filename)
