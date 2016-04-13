@@ -64,14 +64,15 @@ def parse_maf_file(file_name, archive_path, log, archive_fields, archive2metadat
     log.info('\tfound %s lines for %s' % (count, file_name))
     return field2value
             
-def process_files(archive_path, log):
+def process_files(archive_path, maf_upload_files, log):
     files = os.listdir(archive_path)
     filenames = set()
     for nextfile in files:
         try:
-            # TODO: put this in config file
-            if nextfile.endswith('maf') or nextfile.endswith('vcf') or nextfile.endswith('vcf.gz'):
-                filenames.add(nextfile)
+            for maf_ext in maf_upload_files:
+                if nextfile.endswith(maf_ext):
+                    filenames.add(nextfile)
+                    break
         except Exception as e:
             log.exception('problem processing %s for maf files' % archive_path)
             raise e
@@ -92,7 +93,8 @@ def upload_archive(config, log, archive_fields, archive2metadata, sdrf_metadata,
     try:
         if config['download_archives']:
             archive_path = util.setup_archive(archive_fields, log, user_info['user'], user_info['password'])
-            filenames = process_files(archive_path, log)
+            maf_upload_files = config['maf_upload_files']
+            filenames = process_files(archive_path, maf_upload_files, log)
             if 0 < len(filenames):
                 file2metadata = {}
                 for file_name in filenames:
@@ -106,21 +108,19 @@ def upload_archive(config, log, archive_fields, archive2metadata, sdrf_metadata,
     finally:
         shutil.rmtree(archive_path)
 
-def process_maf_files(config, maf_archives, sdrf_metadata, data_archive_info, archive2metadata, log):
+def process_maf_files(config, maf_archives, sdrf_metadata, archive2metadata, log):
     log.info('start process potential maf archives')
-    archives = [archive_fields[0] for archive_fields in data_archive_info]
     for archive_fields in maf_archives:
-        if archive_fields[0] not in archives:
-            if 'tcga4yeo' in archive_fields[2] and config['upload_controlled']:
-                if config['download_archives']:
-                    upload_archive(config, log, archive_fields, archive2metadata, sdrf_metadata, 'controlled')
-                else:
-                    log.info('\tskipping maf controlled-archive %s download' % (archive_fields[0]))
-            if 'tcga4yeo' not in archive_fields[2] and config['upload_open']:
-                if config['download_archives']:
-                    upload_archive(config, log, archive_fields, archive2metadata, sdrf_metadata, 'open')
-                else:
-                    log.info('\tskipping maf open-archive %s download' % (archive_fields[0]))
+        if 'tcga4yeo' in archive_fields[2] and config['upload_controlled']:
+            if config['download_archives']:
+                upload_archive(config, log, archive_fields, archive2metadata, sdrf_metadata, 'controlled')
+            else:
+                log.info('\tskipping maf controlled-archive %s download' % (archive_fields[0]))
+        if 'tcga4yeo' not in archive_fields[2] and config['upload_open']:
+            if config['download_archives']:
+                upload_archive(config, log, archive_fields, archive2metadata, sdrf_metadata, 'open')
+            else:
+                log.info('\tskipping maf open-archive %s download' % (archive_fields[0]))
         else:
             log.info('\tskipping maf archive %s, already processed' % (archive_fields[0]))
     

@@ -120,8 +120,9 @@ def process_platform(config, log_dir, log_name, tumor_type, platform, archive2me
             else:
                 log.warning('\tno mage-tab archives for %s' % (platform))
             if 'maf' in archive_types2archives:
-                return process_maf_files(config, archive_types2archives['maf'], {}, {}, archive2metadata, log)
-            return {}
+                maf_metadata = {}
+                return process_maf_files(config, archive_types2archives['maf'], maf_metadata, archive2metadata, log)
+            return maf_metadata
         sdrf_metadata = process_sdrf(config, log, archive_types2archives['mage-tab'], archive2metadata, barcode2annotations)
         if 'data' in archive_types2archives:
             upload_archives(config, log, archive_types2archives['data'], sdrf_metadata, archive2metadata, ffpe_samples)
@@ -129,7 +130,7 @@ def process_platform(config, log_dir, log_name, tumor_type, platform, archive2me
             log.warning('\tno data archives found for %s' % (tumor_type + ':' + platform))
         
         if 'maf' in archive_types2archives:
-            process_maf_files(config, archive_types2archives['maf'], sdrf_metadata, archive_types2archives['data'], archive2metadata, log)
+            process_maf_files(config, archive_types2archives['maf'], sdrf_metadata, archive2metadata, log)
         return sdrf_metadata
     except Exception as e:
         log.exception('%s generated an exception' % (platform))

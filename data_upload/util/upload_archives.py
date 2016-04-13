@@ -70,15 +70,11 @@ def upload_file(filename, metadata, nonupload_files, ffpe_samples, level, log):
     return True if 'true' == upload else False
 
 def process_files(config, archive_path, sdrf_metadata, seen_files, nonupload_files, ffpe_samples, level, log):
-    # TODO: set DatafileNameKey and DatafileUploaded here
     files = os.listdir(archive_path)
-    metadatafiles = set(sdrf_metadata.values().keys())
-    archiveonly = files - metadatafiles
-    metaonly = metadatafiles - files
+    metadatafiles = set([curdict.keys()[0] for curdict in sdrf_metadata.values()])
+    archiveonly = set(files) - metadatafiles
     if 0 < len(archiveonly):
         log.warning('files only in the archive, not sdrf: %s' % (','.join(archiveonly)))
-    if 0 < len(metaonly):
-        log.warning('files only in the sdrf, not archive: %s' % (','.join(metaonly)))
     
     file2metadata = {}
     filenames = set()
@@ -126,6 +122,8 @@ def upload_archives(config, log, archives, sdrf_metadata, archive2metadata, ffpe
     log.info('start upload archives')
     upload_archives = config['upload_archives']
     nonupload_files = config['nonupload_files']
+    # the maf related files will be loaded separately
+    nonupload_files += config['maf_upload_files']
     archives.sort(key=lambda archive_fields: archive2metadata[archive_fields[0]]['DataArchiveVersion'], reverse=True)
     seen_files = set()
     for archive_fields in archives:
