@@ -126,7 +126,7 @@ def process_latestarchive(config, log_name):
             raise e
 
     if local:
-        archives = open('LATESTARCHIVE.txt')
+        archives = open('../latestarchive.txt')
         log.warning('using local copy for testing purposes')
         archives = archives.read()
         lines = archives.split('\n')

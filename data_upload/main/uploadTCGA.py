@@ -1,7 +1,8 @@
 '''
 Created on Mar 25, 2015
 
-Uploads the DCC files specified by the config file into Google Cloud Storage
+Uploads the DCC files specified by the config file into Google Cloud Storage and
+creates the metadata to be saved in mysql and bigquery
 
 Copyright 2015, Institute for Systems Biology.
 
@@ -29,6 +30,10 @@ import sys
 
 import gcs_wrapper
 from parse_bio import parse_bio
+from parse_bio import omf_element2count
+from parse_bio import omf_study2element2values2count
+from parse_bio import ssf_element2count
+from parse_bio import ssf_study2element2values2count
 from prepare_upload import prepare_upload
 from process_annotations import process_annotations
 from process_latestarchive import process_latestarchive
@@ -51,6 +56,16 @@ from util import upload_etl_file
 executor = None
 
 def merge_cghup(config, master_metadata, cghub_records, log):
+    '''
+    merges the cghub metadata from the manfest with the metadata obtained from dcc file
+    paths and SDRF values
+    
+    parameters:
+        config: the configuration map
+        master_metadata: the dcc based metadata
+        cghub_records: the cghub metadata
+        log: logger to log any messages
+    '''
     log.info('start merge_cghup().  merge %s cghub records' % (len(cghub_records)))
     count_exist = 0
     count_match = 0
@@ -109,6 +124,23 @@ def merge_cghup(config, master_metadata, cghub_records, log):
     log.info('finished merge_cghup()')
 
 def process_platform(config, log_dir, log_name, tumor_type, platform, archive2metadata, archive_types2archives, barcode2annotations, ffpe_samples):
+    '''
+    
+    
+    parameters:
+        config: the configuration map
+        log_dir: the base directory for the logs
+        log_name: the name of the log to use to log any messages
+        tumor_type: the TCGA study being processed
+        platform: the TCGA platform being processsed
+        archive2metadata: map of archive name to its metadata
+        archive_types2archives: map of archive types ('maf', 'mage-tab', and 'data') for this study to its archives
+        barcode2annotations: map of barcodes to TCGA annotations
+        ffpe_samples: a list of barcodes of ffpe samples
+    
+    returns:
+        sdrf_metadata: the netadata obtained from parsing the SDRF files
+    '''
     try:
         create_log(log_dir + tumor_type + '/', log_name)
         log = logging.getLogger(log_name)
@@ -136,6 +168,15 @@ def process_platform(config, log_dir, log_name, tumor_type, platform, archive2me
         raise e
 
 def merge_metadata_current_metadata(sdrf_metadata, barcode2metadata, log):
+    '''
+    merges the metadata per barcode obtained from metadata.current.txt into the metadata
+    obtained from the SDRF file
+    
+    parameters:
+        sdrf_metadata: metadata from the SDRF files
+        barcode2metadata: metadata from metadata.current.txt
+        log: logger to log any messages
+    '''
     for aliquot, filename2fields2values in sdrf_metadata.iteritems():
         try:
             for field2values in filename2fields2values.itervalues():
@@ -146,6 +187,15 @@ def merge_metadata_current_metadata(sdrf_metadata, barcode2metadata, log):
             log.warning('problem with annotations for %s(%s) for type %s' % (aliquot, e, field2values['Datatype']))
     
 def store_metadata(config, log, table, key2metadata):   
+    '''
+    calls the store_metadata method in the module specified by the configuration file
+    
+    parameters:
+        config: the configuration map
+        log: logger to log any messages
+        table: the mysql table to save the metadata to
+        key2metadata: the metadata to save
+    '''
     metadata_modules = config['metadata_modules']
     for metadata_module in metadata_modules:
         module = import_module(metadata_module)
@@ -153,6 +203,18 @@ def store_metadata(config, log, table, key2metadata):
     
 
 def process_metadata_samples(clinical_metadata, biospecimen_metadata, aliquot2filename2metadata, log):
+    '''
+    creates the denormalized samples metadata from the other metadata passed in
+    
+    parameters:
+        clinical_metadata:  metadata from the clinical bio files
+        biospecimen_metadata: metadata from the biospecimen bio files
+        aliquot2filename2metadata:metadata from the file paths and SDRF files
+        log: logger to log any messages
+    
+    returns:
+        samples_metadata: the denormalized sample-based metadata
+    '''
     samples_metadata = {}
     for samplebarcode, key2value in biospecimen_metadata.items():
         # merge biospecimen_metadata and clinical_metadata
@@ -206,6 +268,25 @@ def process_metadata_samples(clinical_metadata, biospecimen_metadata, aliquot2fi
     return samples_metadata
 
 def process_tumortype(config, log_dir, tumor_type, platform2archive_types2archives, platform2archive2metadata, cghub_records, barcode2metadata, barcode2annotations):
+    '''
+    process the study/tumor_type for uploading the files from the dcc to GCS and to obtain meatadata to save to mysql.  loops through the
+    platforms in parallel
+    
+    parameters:
+        config: the configuration map
+        log_dir: the base directory for the logs
+        tumor_type: the TCGA study being processed
+        platform2archive_types2archives: map platforms to archive types ('maf', 'mage-tab', and 'data') to archives
+        cghub_records: cghub metadata
+        platform2archive2metadata: map of platforms to archive name to the archive metadata
+        barcode2metadata: metadata from metadata.current.txt
+        barcode2annotations: map of barcodes to TCGA annotations
+    
+    returns:
+        clinical_metadata:  metadata from the clinical bio files
+        biospecimen_metadata: metadata from the biospecimen bio files
+        flattened_data_map: metadata from the file paths and SDRF files
+    '''
     print '\t', datetime.now(), 'processing tumor type %s' % (tumor_type)
     log_name = create_log(log_dir + tumor_type + '/', tumor_type)
     log = logging.getLogger(log_name)
@@ -286,6 +367,19 @@ def process_tumortype(config, log_dir, tumor_type, platform2archive_types2archiv
     return clinical_metadata, biospecimen_metadata, flattened_data_map
 
 def process_tumortypes(config, log_dir, tumor_type2platform2archive_types2archives, platform2archive2metadata, tumor_type2cghub_records, barcode2metadata, barcode2annotations, log):
+    '''
+    loop through in parallel and process the studies/tumor_types.  at the end, saves the metadata to mysql and GCS
+    
+    parameters:
+        config: the configuration map
+        log_dir: the base directory for the logs
+        tumor_type2platform2archive_types2archives: map tumor types to platforms to archive types ('maf', 'mage-tab', and 'data') to archives
+        platform2archive2metadata: map of platforms to archive name to the archive metadata
+        tumor_type2cghub_records: map tumor type to cghub metadata
+        barcode2metadata: metadata from metadata.current.txt
+        barcode2annotations: map of barcodes to TCGA annotations
+        log: logger to log any messages
+    '''
     log.info('begin process_tumortypes()')
     future2tumortype = {}
     for tumor_type, platform2archive_types2archives in tumor_type2platform2archive_types2archives.iteritems():
@@ -323,6 +417,13 @@ def process_tumortypes(config, log_dir, tumor_type2platform2archive_types2archiv
 
 
 def info_status(config, log):
+    '''
+    outputs a summery of options choosen for the current run 
+    
+    parameters:
+        config: the configuration map
+        log: logger to log any messages
+    '''
     if not config['upload_files']:
         log.warning('\n\t====================\n\tno files will be uploaded this run!\n\t====================')
     if not config['upload_etl_files']:
@@ -330,13 +431,13 @@ def info_status(config, log):
     if not config['download_archives']:
         log.warning('\n\t====================\n\tno data archives will be downloaded this run!\n\t====================')
     if config['upload_open']:
-        log.warning('\n\t====================\n\topen-access files will be uploaded this run!\n\t====================')
+        log.warning('\n\t====================\n\topen-access files will be processed this run!\n\t====================')
     else:
-        log.warning('\n\t====================\n\tno open-access files will be uploaded this run!\n\t====================')
+        log.warning('\n\t====================\n\tno open-access files will be processed this run!\n\t====================')
     if config['upload_controlled']:
-        log.warning('\n\t====================\n\tcontrolled-access files will be uploaded this run!\n\t====================')
+        log.warning('\n\t====================\n\tcontrolled-access files will be processed this run!\n\t====================')
     else:
-        log.warning('\n\t====================\n\tno controlled-access files will be uploaded this run!\n\t====================')
+        log.warning('\n\t====================\n\tno controlled-access files will be processed this run!\n\t====================')
     # make sure not processing bio makes sense
     if not config['process_bio'] and config['upload_etl_files']:
         raise ValueError('\tbad configuration: must process bio to upload etl files')
@@ -348,7 +449,39 @@ def info_status(config, log):
     else:
         log.warning('\n\t====================\n\tnot processing bio this run!\n\t====================')
 
+
+def write_element_stats(study2element2values2count, element2count, prefix):
+    '''
+    helper method to output per study metadata count information from the bio XML files
+    
+    parameters:
+        study2element2values2count: map of study to element to values to count per value
+        element2count: map of element to total count over all studies
+        prefix: prefix for the output filename
+    '''
+    with open('%s_element_counts.tsv' % prefix, 'w') as output_file:
+        output_file.write('field\tcount\t')
+        studies = study2element2values2count.keys()
+        studies.sort()
+        output_file.write('\t'.join(studies) + '\n')
+        for element, count in element2count.iteritems():
+            output_file.write('%s\t%s\t' % (element, count))
+            for study in studies:
+                if element in study2element2values2count[study]:
+                    values2count = study2element2values2count[study][element]
+                    output_file.write('%s\t' % (', '.join('"%s": %s' % (value, count) for (value, count) in values2count.iteritems()) if len(values2count) < 11 else ('#distinct: %s' % (len(values2count)))))
+                else:
+                    output_file.write('<empty>\t')
+            output_file.write('\n')
+
 def uploadTCGA(configFileName):
+    '''
+    based on the configuration map loaded from the configFileName, loads the DCC data into GCS.  also
+    obtains metadata based on file paths, SDRF values, and CGHub manifest values
+    
+    parameters:
+        configFileName: the file name of the configuration map
+    '''
     print datetime.now(), 'begin uploadTCGA()'
     global executor
     try:
@@ -383,11 +516,19 @@ def uploadTCGA(configFileName):
             log.warning('\n\t====================\n\tnot processing annotations this run!\n\t====================')
             barcode2annotations = {}
         process_tumortypes(config, log_dir, tumor_type2platform2archive_types2archives, platform2archive2metadata, tumor_type2cghub_records, barcode2metadata, barcode2annotations, log)
+        
+        # print out the stats
+        metadata_modules = config['metadata_modules']
+        for metadata_module in metadata_modules:
+            module = import_module(metadata_module)
+            module.print_combined_stats(log)
     finally:
         if executor:
             executor.shutdown(wait=False)
         if gcs_wrapper:
             gcs_wrapper.close_connection()
+        write_element_stats(ssf_study2element2values2count, ssf_element2count, 'ssf')
+        write_element_stats(omf_study2element2values2count, omf_element2count, 'omf')
     log.info('finish uploadTCGA()')
     print datetime.now(), 'finish uploadTCGA()'
 
