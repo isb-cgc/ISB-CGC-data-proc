@@ -23,25 +23,29 @@ import shutil
 import upload_archives
 import util
 
+
+def init_metadata(file_name, archive2metadata, archive_fields, study, version):
+    field2value = dict(archive2metadata[archive_fields[0]], **
+        {'DatafileName':file_name, 
+            'DataArchiveName':archive_fields[0], 
+            'DataArchiveVersion':version, 
+            'Study':study, 
+            'DataLevel':'Level 2', 
+            'DatafileUploaded':'true', 
+            'Datatype':'Mutations', 
+            'IncludeForAnalysis':'yes', 
+            'Species':'Homo sapiens'})
+    return field2value
+
 def parse_maf_file(file_name, archive_path, log, archive_fields, archive2metadata, sdrf_metadata):
     pieces = archive_fields[0].split('_')
     study = pieces[1][:pieces[1].index('.')]
     version = pieces[-1][pieces[-1].index('.') + 1:]
-    field2value = dict(archive2metadata[archive_fields[0]], 
-        **{'DatafileName': file_name, 
-        'DataArchiveName': archive_fields[0],
-        'DataArchiveVersion': version,
-        'Study': study,
-        'DataLevel': 'Level 2',
-        'DatafileUploaded': 'true',
-        'Datatype': 'Mutations',
-        'IncludeForAnalysis': 'yes',
-        'Species': 'Homo sapiens'})
+    field2value = init_metadata(file_name, archive2metadata, archive_fields, study, version)
     with open(archive_path + file_name, 'rb') as maf_file:
         aliquot_column = None
-        count = 0
+        aliquots = set()
         for line in maf_file:
-            count += 1
             if line.startswith('#'):
                 continue
             fields = line.split('\t')
@@ -54,6 +58,7 @@ def parse_maf_file(file_name, archive_path, log, archive_fields, archive2metadat
                     count += 1
                 continue
             aliquot = fields[aliquot_column]
+            aliquots.add(aliquot)
             copyfield2value = dict(field2value)
             copyfield2value['AliquotBarcode'] = aliquot
             copyfield2value['SampleBarcode'] = aliquot[:16]
@@ -61,7 +66,49 @@ def parse_maf_file(file_name, archive_path, log, archive_fields, archive2metadat
             files = sdrf_metadata.setdefault(aliquot, {})
             if file_name not in files:
                 files[file_name] = copyfield2value
-    log.info('\tfound %s lines for %s' % (count, file_name))
+    log.info('\tset metadata for %s.  found %s aliquots' % (file_name, len(aliquots)))
+    return field2value
+            
+def parse_vcf_file(file_name, archive_path, log, archive_fields, archive2metadata, sdrf_metadata):
+    pieces = archive_fields[0].split('_')
+    study = pieces[1][:pieces[1].index('.')]
+    version = pieces[-1][pieces[-1].index('.') + 1:]
+    field2value = init_metadata(file_name, archive2metadata, archive_fields, study, version)
+    with open(archive_path + file_name, 'rb') as vcf_file:
+        tumor_barcode = None
+        normal_barcode = None
+        for line in vcf_file:
+            if not line.startswith('##'):
+                raise ValueError('didn\'t find barcodes for %s' % file_name)
+            
+            if line.startswith('##SAMPLE'):
+                try:
+                    # the sample line can have odd entries with nested key=<prefix,suffix> that, between the brackets can represent a list
+                    # or even a nested map.  since those keys aren't needed, special case to set them as the blank key value
+                    sample_info = dict([(pair.split('=') if '=' in pair and not pair.startswith('softwareParam') else ['blank', 'blank']) 
+                                        for pair in line[10:].split(',')])
+                except Exception as e:
+                    log.exception("bad vcf sample line(%s): %s" % (e, line))
+                    raise e
+                if sample_info['ID'] in ('NORMAL', 'DNA_NORMAL', 'RNA_NORMAL'):
+                    normal_barcode = sample_info['SampleTCGABarcode']
+                elif sample_info['ID'] in ('PRIMARY', 'TUMOR', 'DNA_TUMOR'):
+                    tumor_barcode = sample_info['SampleTCGABarcode']
+                else:
+                    raise ValueError('unknown sample type, %s, for %s' % (sample_info['ID'], file_name))
+            
+            if tumor_barcode and normal_barcode:
+                break
+
+        for aliquot in (tumor_barcode, normal_barcode):
+            copyfield2value = dict(field2value)
+            copyfield2value['AliquotBarcode'] = aliquot
+            copyfield2value['SampleBarcode'] = aliquot[:16]
+            copyfield2value['ParticpantBarcode'] = aliquot[:12]
+            files = sdrf_metadata.setdefault(aliquot, {})
+            if file_name not in files:
+                files[file_name] = copyfield2value
+    log.info('\tset metadata for %s' % (file_name))
     return field2value
             
 def process_files(archive_path, maf_upload_files, log):
@@ -83,7 +130,7 @@ def process_files(archive_path, maf_upload_files, log):
             os.remove(archive_path + file_name)
             log.info('\t\tskipping %s' % (file_name))
         else:
-            log.info('\t\tuploading maf file %s' % (file_name))
+            log.info('\t\tuploading maf-related file %s' % (file_name))
     return filenames
 
 def upload_archive(config, log, archive_fields, archive2metadata, sdrf_metadata, access):
@@ -100,6 +147,8 @@ def upload_archive(config, log, archive_fields, archive2metadata, sdrf_metadata,
                 for file_name in filenames:
                     if file_name.endswith('maf'):
                         file2metadata[file_name] = parse_maf_file(file_name, archive_path, log, archive_fields, archive2metadata, sdrf_metadata)
+                    elif file_name.endswith('vcf') or file_name.endswith('vcf.gz'):
+                        file2metadata[file_name] = parse_vcf_file(file_name, archive_path, log, archive_fields, archive2metadata, sdrf_metadata)
                 upload_archives.upload_files(config, archive_path, file2metadata, log)
             else:
                 log.warning('\tdid not find files to load for %s' % (archive_fields[0]))
@@ -121,8 +170,6 @@ def process_maf_files(config, maf_archives, sdrf_metadata, archive2metadata, log
                 upload_archive(config, log, archive_fields, archive2metadata, sdrf_metadata, 'open')
             else:
                 log.info('\tskipping maf open-archive %s download' % (archive_fields[0]))
-        else:
-            log.info('\tskipping maf archive %s, already processed' % (archive_fields[0]))
     
     log.info('finished process potential maf archives')
     return sdrf_metadata
