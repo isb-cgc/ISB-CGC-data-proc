@@ -338,6 +338,9 @@ class ISBCGC_database_helper():
     @classmethod
     def column_insert(cls, config, rows, table, field_names, log):
         log.info('\t\t\tinsert into %s.%s\n\t(%s)\nvalues\n\t(%s)' % (config['cloudsql']['db'], table, ', '.join(field_names), ', '.join(['%s']*len(field_names))))
+        if 0 == len(rows):
+            log.warning('\tno rows to insert')
+            return
         # now save in batches
         batch = 5
         count = 0
