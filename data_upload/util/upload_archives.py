@@ -1,6 +1,8 @@
 '''
 Created on Mar 28, 2015
 
+uploads the archive contents that meet the specified conditions to GCS
+
 Copyright 2015, Institute for Systems Biology.
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,6 +26,17 @@ import gcs_wrapper
 import util
 
 def get_bucket_key_prefix(config, metadata):
+    '''
+    returns the GCS bucket and object key to use in the upload of the files in the archive
+    
+    parameters:
+        config: the configuration map
+        metadata: the map with archive metadata
+    
+    returns:
+        bucket_name: the bucket name to store the files
+        key: the object key to prefix the file names
+    '''
     # note that in an archive, all the files will share the same values for these fields
     open_access = config['access_tags']['open']
     if open_access == metadata['SecurityProtocol']:
@@ -34,6 +47,15 @@ def get_bucket_key_prefix(config, metadata):
     return bucket_name, key
 
 def upload_files(config, archive_path, file2metadata, log):
+    '''
+    uploads the files in the archive_path folder
+    
+    parameters:
+        config: the configuration map
+        archive_path: folder archive was downloaded to and the files extracted to
+        file2metadata: map of file to its metadata
+        log: logger to log any messages
+    '''
     # TODO: for the DatafileNameKey, use the value already in the metadata
     files = os.listdir(archive_path)
     if 0 < len(files):
@@ -48,6 +70,23 @@ def upload_files(config, archive_path, file2metadata, log):
         log.warning('\tno files for %s' % (archive_path))
  
 def upload_file(filename, metadata, nonupload_files, ffpe_samples, level, log):
+    '''
+    determines if the file should be uploaded.  the file must be the same level as the archive and not a 
+    control file; must not have an annotation that excludes it; must not have been preserved with the 
+    ffpe protocol; must not have been marked to be excluded in the SDRF; and must not have an extension
+    in the nonupload_files list
+    
+    parameters:
+        filename: the name of the file
+        metadata: the file metadata
+        nonupload_files: list of file extensions of files not to upload
+        ffpe_samples: list of ffpe preserved samples not to upload
+        level: the level of the archive
+        log: logger to log any messages
+    
+    returns:
+        whether to upload the file or not
+    '''
     upload = 'true'
     if level != metadata['DataLevel'] or '20' == metadata['AliquotBarcode'][13:15]:
         upload = 'false'
@@ -70,6 +109,23 @@ def upload_file(filename, metadata, nonupload_files, ffpe_samples, level, log):
     return True if 'true' == upload else False
 
 def process_files(config, archive_path, sdrf_metadata, seen_files, nonupload_files, ffpe_samples, level, log):
+    '''
+    process the files in the archive downloaded to the archive_path folder for
+    whether they should be uploaded or not
+    
+    parameters:
+        config: the configuration map
+        archive_path: folder archive was downloaded to and the files extracted to
+        sdrf_metadata: metadata map to update
+        seen_files: files that have been seen in a previously processed archive
+        nonupload_files: list of file extensions of files not to upload
+        ffpe_samples: list of ffpe preserved samples not to upload
+        level: the level of the archive
+        log: logger to log any messages
+    
+    returns:
+        file2metadata: map of filenames to upload with the metadata
+    '''
     files = os.listdir(archive_path)
     metadatafiles = set([curdict.keys()[0] for curdict in sdrf_metadata.values()])
     archiveonly = set(files) - metadatafiles
@@ -103,6 +159,21 @@ def process_files(config, archive_path, sdrf_metadata, seen_files, nonupload_fil
     return file2metadata
 
 def upload_archive(config, sdrf_metadata, archive2metadata, ffpe_samples, archive_fields, upload_archives, seen_files, nonupload_files, access, log):
+    '''
+    uploads the files in the archive that meet the conditions
+    
+    parameters:
+        config: the configuration map
+        sdrf_metadata: metadata map to update
+        archive2metadata: archive metadata
+        ffpe_samples: list of ffpe preserved samples not to upload
+        archive_fields: archive name, creation date, and URL
+        upload_archives: map of level to center to platform of archives to upload
+        seen_files: files that have been seen in a previously processed archive
+        nonupload_files: list of file extensions of files not to upload
+        access: either open or controlled
+        log: logger to log any messages
+    '''
     archive_path = None
     if config['download_archives'] and util.is_upload_archive(archive_fields[0], upload_archives, archive2metadata):
         log.info('\tuploading %s-access archive %s.' % (access, archive_fields[0]))
@@ -123,6 +194,20 @@ def upload_archive(config, sdrf_metadata, archive2metadata, ffpe_samples, archiv
         log.info('\tskipping %s-access archive %s' % (access, archive_fields[0]))
 
 def upload_archives(config, log, archives, sdrf_metadata, archive2metadata, ffpe_samples):
+    '''
+    process the metadata and upload the files from the archives
+    
+    parameters:
+        config: the configuration map
+        log: logger to log any messages
+        archives: the list of archives
+        sdrf_metadata: metadata map to update
+        archive2metadata: archive metadata
+        ffpe_samples: list of ffpe preserved samples not to upload
+    
+    returns:
+        sdrf_metadata: the updated metadata map
+    '''
     log.info('start upload archives')
     upload_archives = config['upload_archives']
     nonupload_files = config['nonupload_files']

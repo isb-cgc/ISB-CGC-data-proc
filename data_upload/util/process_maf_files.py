@@ -181,7 +181,7 @@ def parse_vcf_file(file_name, archive_path, log, archive_fields, archive2metadat
 def process_files(archive_path, maf_upload_files, log):
     '''
     process the files in the archive downloaded to the archive_path folder for
-    whether the should be uploaded or not
+    whether they should be uploaded or not
     
     parameters:
         archive_path: folder archive was downloaded to and the files extracted to
