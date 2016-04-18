@@ -1,6 +1,9 @@
 '''
 Created on Jul 4, 2015
 
+processes a list of archives for potential maf-related files to upload and gather metadata
+information
+
 Copyright 2015, Institute for Systems Biology.
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,13 +33,17 @@ normal_barcode_pattern = re.compile("^TCGA-[A-Z0-9]{2}-[A-Z0-9]{4}-1[0-9][A-Z]-[
 
 def init_metadata(file_name, archive2metadata, archive_fields, study, version):
     '''
-    
+    put together the initial metadata for the maf-related files based on the archive metadata
     
     parameters:
-        
+        file_name: name of the maf file to parse
+        archive2metadata: archive metadata
+        archive_fields: archive name, creation date, and URL
+        study: study the archive is associated with
+        version: version of the archive
     
     returns:
-        
+        field2value: initial metadata for the file
     '''
     field2value = dict(archive2metadata[archive_fields[0]], **
         {'DatafileName':file_name, 
@@ -51,6 +58,20 @@ def init_metadata(file_name, archive2metadata, archive_fields, study, version):
     return field2value
 
 def parse_maf_file(file_name, archive_path, log, archive_fields, archive2metadata, sdrf_metadata):
+    '''
+    parses the contents of the maf file to add the barcodes to the archive specific metadata
+    
+    parameters:
+        file_name: name of the maf file to parse
+        archive_path: path to the file
+        log: logger to log any messages
+        archive_fields: archive name, creation date, and URL
+        archive2metadata: archive metadata
+        sdrf_metadata: metadata map to update
+    
+    returns:
+        field2value: metadata for the file
+    '''
     pieces = archive_fields[0].split('_')
     study = pieces[1][:pieces[1].index('.')]
     version = pieces[-1][pieces[-1].index('.') + 1:]
@@ -83,6 +104,15 @@ def parse_maf_file(file_name, archive_path, log, archive_fields, archive2metadat
     return field2value
 
 def parse_vcf_contents(vcf_file, file_name, field2value, sdrf_metadata, log):
+    '''
+    parses the contents of the vcf file to add the barcodes to the archive specific metadata
+    
+    parameters:
+        vcf_file: the opened vcf file to parse
+        file_name: name of the vcf file
+        field2value: output map for the file metadata
+        sdrf_metadata: metadata map to update
+    '''
     tumor_barcode = None
     normal_barcode = None
     for line in vcf_file:
@@ -120,6 +150,20 @@ def parse_vcf_contents(vcf_file, file_name, field2value, sdrf_metadata, log):
         log.info('\tset metadata for %s' % (file_name))
 
 def parse_vcf_file(file_name, archive_path, log, archive_fields, archive2metadata, sdrf_metadata):
+    '''
+    parse the vcf file and add to the metadata
+    
+    parameters:
+        file_name: name of the vcf file to parse
+        archive_path: path to the file
+        log: logger to log any messages
+        archive_fields: archive name, creation date, and URL
+        archive2metadata: archive metadata
+        sdrf_metadata: metadata map to update
+    
+    returns:
+        field2value: metadata for the file
+    '''
     pieces = archive_fields[0].split('_')
     study = pieces[1][:pieces[1].index('.')]
     version = pieces[-1][pieces[-1].index('.') + 1:]
@@ -135,6 +179,18 @@ def parse_vcf_file(file_name, archive_path, log, archive_fields, archive2metadat
     return field2value
             
 def process_files(archive_path, maf_upload_files, log):
+    '''
+    process the files in the archive downloaded to the archive_path folder for
+    whether the should be uploaded or not
+    
+    parameters:
+        archive_path: folder archive was downloaded to and the files extracted to
+        maf_upload_files: list of maf-related file extensions
+        log: logger to log any messages
+    
+    returns:
+        filenames: list of files to upload
+    '''
     files = os.listdir(archive_path)
     filenames = set()
     for nextfile in files:
@@ -157,6 +213,17 @@ def process_files(archive_path, maf_upload_files, log):
     return filenames
 
 def upload_archive(config, log, archive_fields, archive2metadata, sdrf_metadata, access):
+    '''
+    uploads and gathers metadata on the maf-related files in the archive
+    
+    parameters:
+        config: the configuration map
+        log: logger to log any messages
+        archive_fields: archive name, creation date, and URL
+        archive2metadata: archive metadata
+        sdrf_metadata: metadata map to update
+        access: either open or controlled
+    '''
     user_info = config['user_info']
     log.info('\tchecking %s-access maf archive %s.' % (access, archive_fields[0]))
 
@@ -183,6 +250,19 @@ def upload_archive(config, log, archive_fields, archive2metadata, sdrf_metadata,
             shutil.rmtree(archive_path)
 
 def process_maf_files(config, maf_archives, sdrf_metadata, archive2metadata, log):
+    '''
+    process the metadata and upload the maf-related files from the archives
+    
+    parameters:
+        config: the configuration map
+        maf_archives: the list of potential maf containing archives
+        sdrf_metadata: metadata map to update
+        archive2metadata: archive metadata
+        log: logger to log any messages
+    
+    returns:
+        sdrf_metadata: the updated metadata map
+    '''
     log.info('start process potential maf archives')
     
     for archive_fields in maf_archives:
