@@ -145,14 +145,15 @@ def process_platform(config, log_dir, log_name, tumor_type, platform, archive2me
         create_log(log_dir + tumor_type + '/', log_name)
         log = logging.getLogger(log_name)
         if 'mage-tab' not in archive_types2archives:
-            orphan_data_archives = set([archive_info[0] for archive_info in archive_types2archives['data']]) - \
+            orphan_data_archives = (set([archive_info[0] for archive_info in archive_types2archives['data']]) if 'data' in archive_types2archives else set()) - \
                 set((archive_info[0] for archive_info in archive_types2archives['maf']) if 'maf' in archive_types2archives else [])
             if 0 < len(orphan_data_archives):
                 log.warning('\tno mage-tab archives for %s and but there are data archives that are not maf: %s' % (platform, orphan_data_archives))
             else:
                 log.warning('\tno mage-tab archives for %s' % (platform))
+            
+            maf_metadata = {}
             if 'maf' in archive_types2archives:
-                maf_metadata = {}
                 return process_maf_files(config, archive_types2archives['maf'], maf_metadata, archive2metadata, log)
             return maf_metadata
         sdrf_metadata = process_sdrf(config, log, archive_types2archives['mage-tab'], archive2metadata, barcode2annotations)
