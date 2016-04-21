@@ -150,8 +150,12 @@ def filter_data(log, data, fields):
             if 'calculate' == field:
                 continue
             new_keys = fields.get(field)
-            if field in data[barcode]:
+            if field in data[barcode] and data[barcode][field] not in ['', None]:
                 for new_key in new_keys.split(','):
+                    if new_key in filtered_dict and filtered_dict[new_key] != data[barcode][field] and \
+                      not (filtered_dict[new_key].lower() in data[barcode][field].lower() or data[barcode][field].lower() in filtered_dict[new_key].lower()):
+                        log.warning('%s--values not equal between bio files for %s: %s != %s' % (barcode, new_key, filtered_dict[new_key], data[barcode][field]))
+                        continue
                     filtered_dict[new_key] = data[barcode][field]
         if 'calculate' in fields:
             calculate_dict = fields['calculate']
@@ -320,50 +324,6 @@ def parse_biospecimen(biospecimen_file, log, biospecimen_uuid2field2value, key_f
 #             print(("WARNING: FFPE samples should be excluded. Skipped file: ", biospecimen_file))
 #             return None
         biospecimen_uuid2field2value[features[key_field]] = features
-
-def check_clinical_ssf_overlap(contents, fields2check, log):
-    '''
-    check the problematic fields that should migrate from the clinical file to the ssf file
-    but haven't completely yet
-
-    parameters:
-        contents: the map with the parsed clinical and ssf element to values
-        fields2check: map of clinical to ssf fields to check
-        log: logger to log any messages
-    '''
-    if 0 == len(fields2check):
-        return
-    fields2check_values = []
-    for _ in range(len(fields2check)):
-        fields2check_values += [[0, [0, []], [0, []], [0, []]]]
-    for identifier, field2value in contents.iteritems():
-        index = 0
-        oldfields = fields2check.keys()
-        oldfields.sort()
-        for oldfield in oldfields:
-            newfield = fields2check[oldfield]
-            if field2value.get(oldfield) and field2value.get(newfield):
-                if field2value.get(oldfield) == field2value.get(newfield):
-                    fields2check_values[index][0] += 1
-                elif not newfield.startswith(oldfield):
-                    fields2check_values[index][1][0] += 1
-                    fields2check_values[index][1][1] += ['%s: "%s" vs. "%s"' % (identifier, field2value.get(oldfield), field2value.get(newfield))]
-            elif field2value.get(oldfield):
-                if 'no' != field2value.get(oldfield).lower():
-                    fields2check_values[index][2][0] += 1
-                    fields2check_values[index][2][1] += ['%s: %s' % (identifier, field2value.get(oldfield))]
-            elif field2value.get(newfield):
-                fields2check_values[index][3][0] += 1
-                fields2check_values[index][3][1] += ['%s: %s' % (identifier, field2value.get(newfield))]
-            index += 1
-    
-    report = '\nchecking old vs new fields\n'
-    index = 0
-    for oldfield in oldfields:
-        report += '\tfor %s:\n\t\tmatches: %s\n\t\tmismatches: %s\n\t\tonly old: %s\n\t\tonly new: %s\n' % \
-            (oldfield, fields2check_values[index][0], fields2check_values[index][1], fields2check_values[index][2], fields2check_values[index][3])
-        index += 1
-    log.info(report+ '\n')
 
 def merge_maps_master_other(master_contents, other_contents, other_tag):
     '''
@@ -863,10 +823,6 @@ def parse_bio(config, archives, study, archive2metadata, log_name):
         if 15 < len(barcode) and 'is_ffpe' in term2value and 'YES' == term2value['is_ffpe']:
             ffpe_samples.add(barcode)
     
-    # check the overlapping fields between the old xsd and the new xsd and ssf file
-    check_clinical_ssf_overlap(clinical_metadata, config['metadata_locations']['clinical_ssf_overlap_fields'], log)
-    check_clinical_ssf_overlap(biospecimen_metadata, config['metadata_locations']['biospecimen_ssf_overlap_fields'], log)
-    
     # sanity check the samples against the participants
     participants = set()
     no_clinical = set()
@@ -882,11 +838,13 @@ def parse_bio(config, archives, study, archive2metadata, log_name):
         log.info('The following participants had no clinical data:\n\t%s' % ('\n\t'.join(no_clinical)))
     log.info('finished parse bio: %s participants, %s samples.' % (len(participants), len(biospecimen_metadata)))
 
-    log.info('current running count total for ssf elments:\n\t%s\n' % ('\n\t'.join((element + '\t' + str(count)) for element, count in ssf_element2count.iteritems())))
-    output = '' 
-    for element, values2count in ssf_study2element2values2count[study].iteritems():
-        output += '\n\t%s\t%s' % (element, (', '.join('%s: %s' % (value, count) for value, count in values2count.iteritems()) if len(values2count) < 11 else ('#distinct: %s' % (len(values2count)))))
-    log.info('count for this study, %s, for ssf elements:%s' % (study, output))
+    if 0 < len(ssf_element2count):
+        log.info('current running count total for ssf elments:\n\t%s\n' % ('\n\t'.join((element + '\t' + str(count)) for element, count in ssf_element2count.iteritems())))
+        if study in ssf_study2element2values2count:
+            output = '' 
+            for element, values2count in ssf_study2element2values2count[study].iteritems():
+                output += '\n\t%s\t%s' % (element, (', '.join('%s: %s' % (value, count) for value, count in values2count.iteritems()) if len(values2count) < 11 else ('#distinct: %s' % (len(values2count)))))
+            log.info('count for this study, %s, for ssf elements:%s' % (study, output))
 
     if 0 < len(omf_element2count):
         log.info('current running count total for omf elments:\n\t%s\n' % ('\n\t'.join((element + '\t' + str(count)) for element, count in omf_element2count.iteritems())))
