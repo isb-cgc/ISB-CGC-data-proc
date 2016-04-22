@@ -427,7 +427,7 @@ class ISBCGC_database_helper():
             ['venous_invasion', 'VARCHAR(8)', 'NULL'],
             ['vital_status', 'VARCHAR(8)', 'NULL'],
             ['weight', 'INTEGER', 'NULL'],
-            ['year_of_initial_pathologic_diagnosis', 'INTEGER', 'NULL']
+            ['year_of_initial_pathologic_diagnosis', 'INTEGER', 'NULL'],
             ['year_of_tobacco_smoking_onset', 'INTEGER', 'NULL'],
             ['has_Illumina_DNASeq', 'tinyint(4)', 'NULL'],
             ['has_BCGSC_HiSeq_RNASeq', 'tinyint(4)', 'NULL'],
