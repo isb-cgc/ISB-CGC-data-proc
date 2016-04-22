@@ -21,7 +21,6 @@ import os
 import re
 import shutil
 
-import gcs_wrapper
 import parseSDRF
 import util
 
@@ -44,7 +43,7 @@ def upload_sdrf_file(config, archive_path, file_name, metadata, log):
     bucket_name = config['buckets']['open']
     key_name = getSDRFKeyName(file_name, metadata, log)
     if config['upload_files'] and config['upload_open']:
-        gcs_wrapper.upload_file(archive_path + file_name, bucket_name, key_name, log)
+        util.upload_file(config, archive_path + file_name, bucket_name, key_name, log)
     else:
         log.info('\t\tnot uploading %s from sdrf archive to %s' % (file_name, key_name))
  

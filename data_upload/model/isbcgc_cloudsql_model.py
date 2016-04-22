@@ -660,6 +660,36 @@ class ISBCGC_database_helper():
                 db.close()
         
     @classmethod
+    def select_paged(cls, config, stmt, log, countper = 1000, verbose = True):
+        db = None
+        cursor = None
+        try:
+            if verbose:
+                log.info('\t\tstarting \'%s\'' % (stmt))
+            db = cls.getDBConnection(config, log)
+            cursor = db.cursor()
+            retval = []
+            # now execute the select
+            curcount = countper
+            while 0 < cursor.rowcount:
+                curstmt = stmt % (curcount)
+                cursor.execute(curstmt, [curcount])
+                retval += [row for row in cursor]
+                log.info('\t\tcompleted select.  fetched %s rows for %s', cursor.rowcount, curstmt)
+                curcount += countper
+            return retval
+        except Exception as e:
+            log.exception('\t\tselect failed')
+            if cursor:
+                cursor.execute("ROLLBACK")
+            raise e
+        finally:
+            if cursor:
+                cursor.close()
+            if db:
+                db.close()
+        
+    @classmethod
     def update(cls, config, stmt, log, params = [], verbose = True):
         db = None
         cursor = None
