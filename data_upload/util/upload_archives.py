@@ -22,7 +22,6 @@ limitations under the License.
 import os
 import shutil
 
-import gcs_wrapper
 import util
 
 def get_bucket_key_prefix(config, metadata):
@@ -65,7 +64,7 @@ def upload_files(config, archive_path, file2metadata, log):
             key_name = key_prefix + metadata['DataLevel'].replace(' ', '_') + '/'+ file_name
             metadata['DatafileNameKey'] = key_name
             if config['upload_files']:
-                gcs_wrapper.upload_file(archive_path + file_name, bucket_name, key_name, log)
+                util.upload_file(config, archive_path + file_name, bucket_name, key_name, log)
     else:
         log.warning('\tno files for %s' % (archive_path))
  

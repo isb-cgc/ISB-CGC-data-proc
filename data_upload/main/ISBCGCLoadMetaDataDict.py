@@ -38,7 +38,7 @@ def main(configFileName):
         log.info('begin create metadata data dictionary')
         
         listlist = []
-        with open('MetadataDataDictionary_v3.txt', 'r') as datadict:
+        with open('MetadataDataDictionary_v5.txt', 'r') as datadict:
             #read the header line and discard
             datadict.readline()
             for line in datadict:

@@ -33,7 +33,7 @@ import time
 import traceback
 import urllib2
 
-import gcs_wrapper
+gcs_wrapper = None 
 
 backoff = 0
 lock = Lock()
@@ -72,6 +72,12 @@ def getURLData(url, name, log):
     
     return data
 
+def upload_file(config, file_path, bucket_name, key_name, log):
+    global gcs_wrapper
+    if None == gcs_wrapper:
+        gcs_wrapper = import_module(config['gcs_wrapper'])
+    gcs_wrapper.upload_file(file_path, bucket_name, key_name, log)
+
 def upload_etl_file(config, key_name, barcode2field2value, log, type_bio, remove_keys=[]):
     log.info('\tstart upload_etl_file(%s)' % (key_name))
     output_file = StringIO()
@@ -92,7 +98,7 @@ def upload_etl_file(config, key_name, barcode2field2value, log, type_bio, remove
         output_file.close()
     bucket_name = config['buckets']['open']
     if config['upload_etl_files']:
-        gcs_wrapper.upload_file(file_path, bucket_name, key_name, log)
+        upload_file(config, file_path, bucket_name, key_name, log)
         log.info('\tuploaded etl file')
     else:
         log.info('\tnot uploading etl file')
