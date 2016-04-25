@@ -21,7 +21,7 @@ import logging
 
 import util
 
-def process_metadata_current(config, log_name):
+def process_metadata_current(config, run_dir, log_name):
     """
     return type:
         barcode2term2value: for each sample barcode, finds the AliquotUUID and CENTER_CODE values and sets it as the DataCenterCode field
@@ -34,6 +34,7 @@ def process_metadata_current(config, log_name):
     try:
         metadata = util.getURLData(metadataURL, 'metadata.current.txt', log)
         lines = metadata.split('\n')
+        util.post_run_file(run_dir, 'metadata.current.txt', metadata)
     except Exception as e:
         log.exception('problem fetching metadata.current.txt')
         if 'test' == config['mode']:

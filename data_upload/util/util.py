@@ -72,6 +72,12 @@ def getURLData(url, name, log):
     
     return data
 
+def post_run_file(path, file_name, contents):
+    if not os.path.isdir(path):
+        os.makedirs(path)
+    with open(path + file_name, 'w') as outfile:
+        outfile.write(contents)
+
 def upload_file(config, file_path, bucket_name, key_name, log):
     global gcs_wrapper
     if None == gcs_wrapper:
