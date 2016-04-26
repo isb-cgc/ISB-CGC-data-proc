@@ -28,7 +28,6 @@ import json
 import logging
 import sys
 
-import gcs_wrapper
 from parse_bio import parse_bio
 from parse_bio import omf_element2count
 from parse_bio import omf_study2element2values2count
@@ -151,7 +150,7 @@ def process_platform(config, log_dir, log_name, tumor_type, platform, archive2me
                 log.warning('\tno mage-tab archives for %s and but there are data archives that are not maf: %s' % (platform, orphan_data_archives))
             else:
                 log.warning('\tno mage-tab archives for %s' % (platform))
-            
+
             maf_metadata = {}
             if 'maf' in archive_types2archives:
                 return process_maf_files(config, archive_types2archives['maf'], maf_metadata, archive2metadata, log)
@@ -486,6 +485,7 @@ def uploadTCGA(configFileName):
     '''
     print datetime.now(), 'begin uploadTCGA()'
     global executor
+    gcs_wrapper = None
     try:
         with open(configFileName) as configFile:
             config = json.load(configFile)
@@ -502,7 +502,8 @@ def uploadTCGA(configFileName):
      
         if config['upload_files'] or config['upload_etl_files']:
             # open the GCS wrapper here so it can be used by all the tumor types/platforms to save files
-            gcs_wrapper.open_connection()
+            gcs_wrapper = import_module(config['gcs_wrapper'])
+            gcs_wrapper.open_connection(config, log)
         info_status(config, log)
         tumor_type2platform2archive_types2archives, platform2archive2metadata = process_latestarchive(config, log_name)
         prepare_upload(tumor_type2platform2archive_types2archives, log)
