@@ -518,8 +518,6 @@ def uploadTCGA(configFileName):
             barcode2annotations = {}
         process_tumortypes(config, run_dir, tumor_type2platform2archive_types2archives, platform2archive2metadata, tumor_type2cghub_records, barcode2metadata, barcode2annotations, log)
         
-        # upload the logs and TCGA files used for upload to GCS
-        upload_run_files(config, run_dir, log)
         
         # print out the stats
         metadata_modules = config['metadata_modules']
@@ -534,6 +532,13 @@ def uploadTCGA(configFileName):
         write_element_stats(ssf_study2element2values2count, ssf_element2count, 'ssf')
         write_element_stats(omf_study2element2values2count, omf_element2count, 'omf')
     log.info('finish uploadTCGA()')
+    
+    try:
+        # upload the logs and TCGA files used for upload to GCS
+        upload_run_files(config, run_dir, log)
+    except Exception as e:
+        log.exception('problem moving the logs and run files to GCS')
+
     print datetime.now(), 'finish uploadTCGA()'
 
 if __name__ == '__main__':
