@@ -42,7 +42,7 @@ from process_sdrf import process_sdrf
 from process_cghub import process_cghub
 from process_maf_files import process_maf_files
 from upload_archives import upload_archives
-from util import create_log, import_module, merge_metadata, upload_etl_file, post_run_file
+from util import create_log, import_module, merge_metadata, upload_etl_file, post_run_file, upload_run_files
 
 # using thread pool over process pool because can't nest process pools (it hangs, as documented)
 # questions: do thread pools spread across processors?  also, because CPython has a global 
@@ -517,6 +517,9 @@ def uploadTCGA(configFileName):
             log.warning('\n\t====================\n\tnot processing annotations this run!\n\t====================')
             barcode2annotations = {}
         process_tumortypes(config, run_dir, tumor_type2platform2archive_types2archives, platform2archive2metadata, tumor_type2cghub_records, barcode2metadata, barcode2annotations, log)
+        
+        # upload the logs and TCGA files used for upload to GCS
+        upload_run_files(config, run_dir, log)
         
         # print out the stats
         metadata_modules = config['metadata_modules']

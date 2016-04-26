@@ -81,16 +81,19 @@ def post_run_file(path, file_name, contents):
 def upload_run_files(config, path, log):
     if path.endswith('/'):
         path = path[:-1]
+    log.info('\tstart upload of run files')
     for (dirpath, _, filenames) in os.walk(path):
         for filename in filenames:
             filepath = '%s/%s' % (dirpath, filename)
-            if config['upload_files']:
+            if config['upload_etl_files']:
                 bucket_name = config['buckets']['open']
                 if config['upload_controlled']:
                     bucket_name = config['buckets']['controlled']
                 upload_file(config, filepath, bucket_name, config['base_run_upload_folder'] + filename, log)
             else:
                 print '\t\t%s %s/%s' % (config['base_run_upload_folder'], dirpath, filename)
+    log.info('\tfinished upload of run files')
+
 
 def upload_file(config, file_path, bucket_name, key_name, log):
     global gcs_wrapper
