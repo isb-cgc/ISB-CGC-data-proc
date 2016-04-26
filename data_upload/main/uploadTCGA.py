@@ -148,7 +148,7 @@ def process_platform(config, log_dir, log_name, tumor_type, platform, archive2me
                 log.warning('\tno mage-tab archives for %s and but there are data archives that are not maf: %s' % (platform, orphan_data_archives))
             else:
                 log.warning('\tno mage-tab archives for %s' % (platform))
-            
+
             maf_metadata = {}
             if 'maf' in archive_types2archives:
                 return process_maf_files(config, archive_types2archives['maf'], maf_metadata, archive2metadata, log)
