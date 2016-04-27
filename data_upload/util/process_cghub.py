@@ -109,6 +109,8 @@ def create_cghub_metadata(mappings, cghub_record, seen_bad_codes, log):
             fields = field.split(':')
             if 2 == len(fields) and 'literal' == fields[0]:
                 metadata[part] = fields[1]
+            elif 3 == len(fields) and 'map' == fields[0]:
+                metadata[part] = mappings[fields[1]][metadata[fields[2]]]
             elif 4 == len(fields) and 'substring' == fields[0]:
                 metadata[part] = metadata[fields[1]][int(fields[2]):int(fields[3])]
             elif 5 == len(fields) and 'match' == fields[0]:
