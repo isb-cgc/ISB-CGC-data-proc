@@ -15,9 +15,10 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 '''
-from oauth2client.client import GoogleCredentials
 from googleapiclient import discovery, http, errors
+import json
 from multiprocessing import Lock
+from oauth2client.client import GoogleCredentials
 import requests
 import time
 import io
@@ -122,5 +123,15 @@ def __attempt_upload(file_path, bucket_name, key_name, log, gcs_metadata):
     except errors.HttpError as e:
         log.error(e)
 
-
+def get_bucket_contents(bucket_name, prefix = None, log = None):
+    filename2fileinfo = {}
+    storage_service = get_storage_resource()
+    fields_to_return = 'nextPageToken,items(kind, name, updated, size, metadata(my-key))'
+    req = storage_service.objects().list(bucket=bucket_name, fields=fields_to_return)
+    while req:
+        resp = req.execute()
+        for item in req['items']:
+            filename2fileinfo[item['name']] = item
+        req = storage_service.objects().list_next(req, resp)
+    return filename2fileinfo
 

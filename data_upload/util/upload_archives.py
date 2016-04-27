@@ -1,6 +1,8 @@
 '''
 Created on Mar 28, 2015
 
+uploads the archive contents that meet the specified conditions to GCS
+
 Copyright 2015, Institute for Systems Biology.
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,10 +22,20 @@ limitations under the License.
 import os
 import shutil
 
-import gcs_wrapper
 import util
 
 def get_bucket_key_prefix(config, metadata):
+    '''
+    returns the GCS bucket and object key to use in the upload of the files in the archive
+    
+    parameters:
+        config: the configuration map
+        metadata: the map with archive metadata
+    
+    returns:
+        bucket_name: the bucket name to store the files
+        key: the object key to prefix the file names
+    '''
     # note that in an archive, all the files will share the same values for these fields
     open_access = config['access_tags']['open']
     if open_access == metadata['SecurityProtocol']:
@@ -34,6 +46,15 @@ def get_bucket_key_prefix(config, metadata):
     return bucket_name, key
 
 def upload_files(config, archive_path, file2metadata, log):
+    '''
+    uploads the files in the archive_path folder
+    
+    parameters:
+        config: the configuration map
+        archive_path: folder archive was downloaded to and the files extracted to
+        file2metadata: map of file to its metadata
+        log: logger to log any messages
+    '''
     # TODO: for the DatafileNameKey, use the value already in the metadata
     files = os.listdir(archive_path)
     if 0 < len(files):
@@ -43,7 +64,7 @@ def upload_files(config, archive_path, file2metadata, log):
             key_name = key_prefix + metadata['DataLevel'].replace(' ', '_') + '/'+ file_name
             metadata['DatafileNameKey'] = key_name
             if config['upload_files']:
-                gcs_wrapper.upload_file(archive_path + file_name, bucket_name, key_name, log)
+                util.upload_file(config, archive_path + file_name, bucket_name, key_name, log)
     else:
         log.warning('\tno files for %s' % (archive_path))
  
@@ -189,6 +210,8 @@ def upload_archives(config, log, archives, sdrf_metadata, archive2metadata, excl
     log.info('start upload archives')
     upload_archives = config['upload_archives']
     nonupload_files = config['nonupload_files']
+    # the maf related files will be loaded separately
+    nonupload_files += config['maf_upload_files']
     archives.sort(key=lambda archive_fields: archive2metadata[archive_fields[0]]['DataArchiveVersion'], reverse=True)
     seen_files = set()
     for archive_fields in archives:
