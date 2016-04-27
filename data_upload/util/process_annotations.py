@@ -105,9 +105,12 @@ Notification:Synchronous malignancy    204
 '''
 import json
 import logging
+import pprint
 import urllib
 
-def process_annotations(config, log_name):
+from util import post_run_file
+
+def process_annotations(config, run_dir, log_name):
     log = logging.getLogger(log_name)
     log.info('start processing annotations')
     
@@ -128,6 +131,7 @@ def process_annotations(config, log_name):
 
     log.info('\tstart read annotations')
     annotations = json.loads(response.read())['dccAnnotation']
+    post_run_file(run_dir, 'dcc_annotations.json', pprint.pformat(annotations, width = 300))
     log.info('\tfinish read annotations')
     
     exclude_annotation_catagories = [1,2,3,4,5,15,29,201]
