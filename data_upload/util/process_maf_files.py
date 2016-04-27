@@ -128,11 +128,15 @@ def parse_vcf_contents(vcf_file, file_name, field2value, sdrf_metadata, log):
             except Exception as e:
                 log.exception("bad vcf sample line(%s): %s" % (e, line))
                 raise e
-            # different centers set the ID value different
+            # different centers set the ID value different for the SAMPLE header and have different sets of key/values
+            barcode_key = 'SampleTCGABarcode'
+            if 'SampleTCGABarcode' not in sample_info:
+                barcode_key = 'SampleName'
+                
             if sample_info['ID'] in ('NORMAL', 'DNA_NORMAL', 'RNA_NORMAL') or normal_barcode_pattern.match(sample_info['ID']):
-                normal_barcode = sample_info['SampleTCGABarcode']
-            elif sample_info['ID'] in ('PRIMARY', 'TUMOR', 'DNA_TUMOR') or tumor_barcode_pattern.match(sample_info['ID']):
-                tumor_barcode = sample_info['SampleTCGABarcode']
+                normal_barcode = sample_info[barcode_key]
+            elif sample_info['ID'] in ('PRIMARY', 'TUMOR', 'DNA_TUMOR', 'METASTATIC', 'RECURRANCE', 'RECURRENT', 'TUMOUR') or tumor_barcode_pattern.match(sample_info['ID']):
+                tumor_barcode = sample_info[barcode_key]
             else:
                 raise ValueError('unknown sample type, %s, for %s' % (sample_info['ID'], file_name))
         

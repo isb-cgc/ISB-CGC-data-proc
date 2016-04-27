@@ -492,7 +492,6 @@ def uploadTCGA(configFileName):
         log_name = create_log(run_dir, 'top_processing')
         log = logging.getLogger(log_name)
         log.info('begin uploadTCGA()')
-        post_run_file(run_dir, "config_file.json", pprint.pformat(config, width = 300))
         executor = futures.ThreadPoolExecutor(max_workers=config['threads'])
         
         module = import_module(config['database_module'])
