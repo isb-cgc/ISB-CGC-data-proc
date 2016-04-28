@@ -72,6 +72,29 @@ def getURLData(url, name, log):
     
     return data
 
+def post_run_file(path, file_name, contents):
+    if not os.path.isdir(path):
+        os.makedirs(path)
+    with open(path + file_name, 'w') as outfile:
+        outfile.write(contents)
+
+def upload_run_files(config, path, log):
+    if path.endswith('/'):
+        path = path[:-1]
+    log.info('start upload of run files')
+    bucket_name = config['buckets']['controlled']
+    if config['upload_open']:
+        bucket_name = config['buckets']['open']
+    for (dirpath, _, filenames) in os.walk(path):
+        for filename in filenames:
+            if config['upload_etl_files']:
+                filepath = '%s/%s' % (dirpath, filename)
+                upload_file(config, filepath, bucket_name, config['base_run_upload_folder'] + filepath, log)
+            else:
+                print '\t\t%s %s/%s' % (config['base_run_upload_folder'], dirpath, filename)
+    log.info('finished upload of run files')
+
+
 def upload_file(config, file_path, bucket_name, key_name, log):
     global gcs_wrapper
     if None == gcs_wrapper:

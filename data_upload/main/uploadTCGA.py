@@ -41,10 +41,7 @@ from process_sdrf import process_sdrf
 from process_cghub import process_cghub
 from process_maf_files import process_maf_files
 from upload_archives import upload_archives
-from util import create_log
-from util import import_module
-from util import merge_metadata
-from util import upload_etl_file
+from util import create_log, import_module, merge_metadata, upload_etl_file, upload_run_files
 
 # using thread pool over process pool because can't nest process pools (it hangs, as documented)
 # questions: do thread pools spread across processors?  also, because CPython has a global 
@@ -104,6 +101,8 @@ def merge_cghup(config, master_metadata, cghub_records, log):
                                 cghub_fields = cghub_record[key].split('__')
                                 dcc_fields = dcc_metadata[key].split('__')
                                 cghub_record[key] = cghub_fields[0] + '__' + dcc_fields[1]
+                            elif 'IncludeForAnalysis' == key:
+                                log.warning('\tIncludeForAnalysis mismatched values for %s:%s:%s\tcghub: %s\tdcc: %s' % (aliquot, filename, key, cghub_record[key], dcc_metadata[key]))
                             else:
                                 log.warning('\tmismatched values for %s:%s:%s\n\t\tcghub:%s\n\t\tdcc:  %s' % (aliquot, filename, key, cghub_record[key], dcc_metadata[key]))
                 #now to merge the info
@@ -490,11 +489,10 @@ def uploadTCGA(configFileName):
         with open(configFileName) as configFile:
             config = json.load(configFile)
         
-        log_dir = str(date.today()).replace('-', '_') + '_' + config['log_dir_tag'] + '/'
-        log_name = create_log(log_dir, 'top_processing')
+        run_dir = str(date.today()).replace('-', '_') + '_' + config['log_dir_tag'] + '/'
+        log_name = create_log(run_dir, 'top_processing')
         log = logging.getLogger(log_name)
         log.info('begin uploadTCGA()')
-        
         executor = futures.ThreadPoolExecutor(max_workers=config['threads'])
         
         module = import_module(config['database_module'])
@@ -505,20 +503,21 @@ def uploadTCGA(configFileName):
             gcs_wrapper = import_module(config['gcs_wrapper'])
             gcs_wrapper.open_connection(config, log)
         info_status(config, log)
-        tumor_type2platform2archive_types2archives, platform2archive2metadata = process_latestarchive(config, log_name)
+        tumor_type2platform2archive_types2archives, platform2archive2metadata = process_latestarchive(config, run_dir, log_name)
         prepare_upload(tumor_type2platform2archive_types2archives, log)
         if 'process_cghub' not in config or config['process_cghub']:
-            tumor_type2cghub_records = process_cghub(config, log=log, removedups=True, limit=-1)
+            tumor_type2cghub_records = process_cghub(config, run_dir, log=log, removedups=True, limit=-1)
         else:
             log.warning('\n\t====================\n\tnot processing CGHub records this run!\n\t====================')
             tumor_type2cghub_records = {}
-        barcode2metadata = process_metadata_current(config, log_name)
+        barcode2metadata = process_metadata_current(config, run_dir, log_name)
         if 'process_annotations' not in config or config['process_annotations']:
-            barcode2annotations = process_annotations(config, log_name)
+            barcode2annotations = process_annotations(config, run_dir, log_name)
         else:
             log.warning('\n\t====================\n\tnot processing annotations this run!\n\t====================')
             barcode2annotations = {}
-        process_tumortypes(config, log_dir, tumor_type2platform2archive_types2archives, platform2archive2metadata, tumor_type2cghub_records, barcode2metadata, barcode2annotations, log)
+        process_tumortypes(config, run_dir, tumor_type2platform2archive_types2archives, platform2archive2metadata, tumor_type2cghub_records, barcode2metadata, barcode2annotations, log)
+        
         
         # print out the stats
         metadata_modules = config['metadata_modules']
@@ -533,6 +532,13 @@ def uploadTCGA(configFileName):
         write_element_stats(ssf_study2element2values2count, ssf_element2count, 'ssf')
         write_element_stats(omf_study2element2values2count, omf_element2count, 'omf')
     log.info('finish uploadTCGA()')
+    
+    try:
+        # upload the logs and TCGA files used for upload to GCS
+        upload_run_files(config, run_dir, log)
+    except Exception as e:
+        log.exception('problem moving the logs and run files to GCS')
+
     print datetime.now(), 'finish uploadTCGA()'
 
 if __name__ == '__main__':

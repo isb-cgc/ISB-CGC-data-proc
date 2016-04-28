@@ -295,7 +295,7 @@ def main(platform, type_uri = 'detail', log = None, removedups = False, limit = 
 
     statistics(log, filename2cghubRecords, minmaxsize, verbose)
     util.log_info(log, 'finished reading cghub archive.  %s total records, %s duplicates' % (count, dupcount))
-    return filename2cghubRecords.values(), minmaxsize
+    return filename2cghubRecords.values(), minmaxsize, archives
     
 if __name__ == '__main__':
     main(platform, removedups = True)
