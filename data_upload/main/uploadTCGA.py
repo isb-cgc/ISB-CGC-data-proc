@@ -26,7 +26,6 @@ from datetime import date
 from datetime import datetime
 import json
 import logging
-import pprint
 import sys
 
 from parse_bio import parse_bio
@@ -42,7 +41,7 @@ from process_sdrf import process_sdrf
 from process_cghub import process_cghub
 from process_maf_files import process_maf_files
 from upload_archives import upload_archives
-from util import create_log, import_module, merge_metadata, upload_etl_file, post_run_file, upload_run_files
+from util import create_log, import_module, merge_metadata, upload_etl_file, upload_run_files
 
 # using thread pool over process pool because can't nest process pools (it hangs, as documented)
 # questions: do thread pools spread across processors?  also, because CPython has a global 
@@ -102,6 +101,8 @@ def merge_cghup(config, master_metadata, cghub_records, log):
                                 cghub_fields = cghub_record[key].split('__')
                                 dcc_fields = dcc_metadata[key].split('__')
                                 cghub_record[key] = cghub_fields[0] + '__' + dcc_fields[1]
+                            elif 'IncludeForAnalysis' == key:
+                                log.warning('\tIncludeForAnalysis mismatched values for %s:%s:%s\tcghub: %s\tdcc: %s' % (aliquot, filename, key, cghub_record[key], dcc_metadata[key]))
                             else:
                                 log.warning('\tmismatched values for %s:%s:%s\n\t\tcghub:%s\n\t\tdcc:  %s' % (aliquot, filename, key, cghub_record[key], dcc_metadata[key]))
                 #now to merge the info
