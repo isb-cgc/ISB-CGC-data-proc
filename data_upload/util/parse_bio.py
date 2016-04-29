@@ -242,7 +242,7 @@ def average_slides(slides):
 # TCGA files have many namespaces, 
 #  we need to get all of them correctly
 # -------------------------------------
-def parse_biospecimen(biospecimen_file, log, biospecimen_uuid2field2value, key_field, sample_code2letter, sample_code2type):
+def parse_biospecimen(biospecimen_file, log, biospecimen_uuid2field2value, key_field, exclude_samples, sample_code2letter, sample_code2type):
     ''' 
     parse biospecimen files and generate a dictionary with element to value
 
@@ -292,6 +292,7 @@ def parse_biospecimen(biospecimen_file, log, biospecimen_uuid2field2value, key_f
     # there are some patients with a "null" Project, issue warning and do not include     
     if 'admin:project_code' not in admin_features:
         log.warning("No project code found for the file %s, excluding" % biospecimen_file)
+        exclude_samples.add(admin_features['sample:bcr_sample_barcode'])
         return
 
     # samples
@@ -709,7 +710,7 @@ def parse_file(parse_function, config, archive_path, file_name, study, upload_ar
     else:
         log.info('\tskipping upload of %s' % file_name)
     
-def parse_files(config, log, files, archive_path, archive_fields, study, archive2metadata, clinical_metadata, biospecimen_metadata):
+def parse_files(config, log, files, archive_path, archive_fields, study, archive2metadata, exclude_samples, clinical_metadata, biospecimen_metadata):
     '''
     iterate through the list of filenames to parse, and if appropriate, upload them
     
@@ -743,7 +744,7 @@ def parse_files(config, log, files, archive_path, archive_fields, study, archive
             parse_file(parse_ssf_clinical, config, archive_path, file_name, study, upload_archive, log, ssf_clinical_barcode2field2value, 'bcr_patient_barcode')
             parse_file(parse_ssf_biospecimen, config, archive_path, file_name, study, upload_archive, log, ssf_sample_uuid2field2value, 'sample:bcr_sample_uuid')
         elif biospecimen_pat.match(file_name):
-            parse_file(parse_biospecimen, config, archive_path, file_name, study, upload_archive, log, biospecimen_uuid2field2value, 'sample:bcr_sample_uuid', sample_code2letter, sample_code2type)
+            parse_file(parse_biospecimen, config, archive_path, file_name, study, upload_archive, log, biospecimen_uuid2field2value, 'sample:bcr_sample_uuid', exclude_samples, sample_code2letter, sample_code2type)
         elif omf_pat.match(file_name):
             parse_file(parse_omf, config, archive_path, file_name, study, upload_archive, log, omf_barcode2field2value, 'bcr_patient_barcode')
     
@@ -764,7 +765,7 @@ def parse_files(config, log, files, archive_path, archive_fields, study, archive
     clinical_metadata.update(clinical_omf_ssf_auxiliary_barcode2field2value)
     biospecimen_metadata.update(biospecimen_uuid2field2value)
 
-def parse_archives(config, log, archives, study, archive2metadata, clinical_metadata, biospecimen_metadata):
+def parse_archives(config, log, archives, study, archive2metadata, clinical_metadata, biospecimen_metadata, exclude_samples):
     '''
     downloads and unpacks the archives.  then parses, and if appropriate for the archive, uploads the files to GCS
 
@@ -788,7 +789,7 @@ def parse_archives(config, log, archives, study, archive2metadata, clinical_meta
             os.makedirs(archive_path)
         archive_path = util.setup_archive(archive_fields, log)
         files = os.listdir(archive_path)
-        parse_files(config, log, files, archive_path, archive_fields, study, archive2metadata, clinical_metadata, biospecimen_metadata)
+        parse_files(config, log, files, archive_path, archive_fields, study, archive2metadata, exclude_samples, clinical_metadata, biospecimen_metadata)
         shutil.rmtree(archive_path)
 
 def parse_bio(config, archives, study, archive2metadata, log_name):
@@ -807,20 +808,20 @@ def parse_bio(config, archives, study, archive2metadata, log_name):
           based on the fields in the config file under ['metadata_locations']['clinical'], when the Sample UUID is the 
           key, the value is a map that captures values from the biospeciman file based on the fields in the config file under 
           ['metadata_locations']['biospecimen']
-        ffpe_samples: set of samples where is_ffpe is YES 
+        exclude_samples: set of samples where is_ffpe is YES or project element is missing
     '''
     log = logging.getLogger(log_name)
     log.info('start parse bio')
     study = study.lower()
     clinical_metadata = {}
     biospecimen_metadata = {}
+    exclude_samples = set()
 
-    parse_archives(config, log, archives, study, archive2metadata, clinical_metadata, biospecimen_metadata)
+    parse_archives(config, log, archives, study, archive2metadata, clinical_metadata, biospecimen_metadata, exclude_samples)
     
-    ffpe_samples = set()
     for barcode, term2value in biospecimen_metadata.iteritems():
         if 15 < len(barcode) and 'is_ffpe' in term2value and 'YES' == term2value['is_ffpe']:
-            ffpe_samples.add(barcode)
+            exclude_samples.add(barcode)
     
     # sanity check the samples against the participants
     participants = set()
@@ -852,6 +853,6 @@ def parse_bio(config, archives, study, archive2metadata, log_name):
             for element, values2count in omf_study2element2values2count[study].iteritems():
                 output += '\n\t%s\t%s' % (element, (', '.join('"%s": %s' % (value, count) for value, count in values2count.iteritems()) if len(values2count) < 11 else ('#distinct: %s' % (len(values2count)))))
             log.info('count for this study, %s, for omf elements:%s' % (study, output))
-    return clinical_metadata, biospecimen_metadata, ffpe_samples
+    return clinical_metadata, biospecimen_metadata, exclude_samples
 
 

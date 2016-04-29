@@ -101,6 +101,8 @@ def merge_cghup(config, master_metadata, cghub_records, log):
                                 cghub_fields = cghub_record[key].split('__')
                                 dcc_fields = dcc_metadata[key].split('__')
                                 cghub_record[key] = cghub_fields[0] + '__' + dcc_fields[1]
+                            elif 'DataCenterName' == key:
+                                cghub_record[key] = dcc_metadata[key]
                             elif 'IncludeForAnalysis' == key:
                                 log.warning('\tIncludeForAnalysis mismatched values for %s:%s:%s\tcghub: %s\tdcc: %s' % (aliquot, filename, key, cghub_record[key], dcc_metadata[key]))
                             else:
@@ -121,7 +123,7 @@ def merge_cghup(config, master_metadata, cghub_records, log):
     log.info('\t%s cghub files appeared twice w/ different values' % (len(dups)))
     log.info('finished merge_cghup()')
 
-def process_platform(config, log_dir, log_name, tumor_type, platform, archive2metadata, archive_types2archives, barcode2annotations, ffpe_samples):
+def process_platform(config, log_dir, log_name, tumor_type, platform, archive2metadata, archive_types2archives, barcode2annotations, exclude_samples):
     '''
     
     
@@ -134,7 +136,7 @@ def process_platform(config, log_dir, log_name, tumor_type, platform, archive2me
         archive2metadata: map of archive name to its metadata
         archive_types2archives: map of archive types ('maf', 'mage-tab', and 'data') for this study to its archives
         barcode2annotations: map of barcodes to TCGA annotations
-        ffpe_samples: a list of barcodes of ffpe samples
+        exclude_samples: a list of barcodes of ffpe samples
     
     returns:
         sdrf_metadata: the netadata obtained from parsing the SDRF files
@@ -156,7 +158,7 @@ def process_platform(config, log_dir, log_name, tumor_type, platform, archive2me
             return maf_metadata
         sdrf_metadata = process_sdrf(config, log, archive_types2archives['mage-tab'], archive2metadata, barcode2annotations)
         if 'data' in archive_types2archives:
-            upload_archives(config, log, archive_types2archives['data'], sdrf_metadata, archive2metadata, ffpe_samples)
+            upload_archives(config, log, archive_types2archives['data'], sdrf_metadata, archive2metadata, exclude_samples)
         else:
             log.warning('\tno data archives found for %s' % (tumor_type + ':' + platform))
         
@@ -294,14 +296,14 @@ def process_tumortype(config, log_dir, tumor_type, platform2archive_types2archiv
     
     if config['process_bio']:
         try:
-            clinical_metadata, biospecimen_metadata, ffpe_samples = parse_bio(config, platform2archive_types2archives['bio']['bio'], tumor_type, platform2archive2metadata['bio'], create_log(log_dir + tumor_type + '/', tumor_type + '_bio'))
+            clinical_metadata, biospecimen_metadata, exclude_samples = parse_bio(config, platform2archive_types2archives['bio']['bio'], tumor_type, platform2archive2metadata['bio'], create_log(log_dir + tumor_type + '/', tumor_type + '_bio'))
         except Exception as e:
             log.exception('problem parsing bio and sample files')
             raise e
     else:
         clinical_metadata = {}
         biospecimen_metadata = {}
-        ffpe_samples = set()
+        exclude_samples = set()
         
     all_platforms = True
     platforms = []
@@ -316,7 +318,7 @@ def process_tumortype(config, log_dir, tumor_type, platform2archive_types2archiv
             continue
         if all_platforms or platform in (platforms):
             log_name = tumor_type + '_' + platform
-            future2platform[executor.submit(process_platform, config, log_dir, log_name, tumor_type, platform, platform2archive2metadata[platform], archive_types2archives, barcode2annotations, ffpe_samples)] = platform
+            future2platform[executor.submit(process_platform, config, log_dir, log_name, tumor_type, platform, platform2archive2metadata[platform], archive_types2archives, barcode2annotations, exclude_samples)] = platform
  
     platform2retry = {}
     future_keys = future2platform.keys()
@@ -333,7 +335,7 @@ def process_tumortype(config, log_dir, tumor_type, platform2archive_types2archiv
                     platform2retry[platform] = retry_ct + 1
                     log.warning('\tWARNING: resubmitting %s: %s.  try %s' % (platform, future.exception(), retry_ct))
                     new_future = executor.submit(process_platform, config, log_dir, tumor_type + '_' + platform + '_' + str(retry_ct + 1), tumor_type, 
-                            platform, platform2archive2metadata[platform], platform2archive_types2archives[platform], barcode2annotations, ffpe_samples)
+                            platform, platform2archive2metadata[platform], platform2archive_types2archives[platform], barcode2annotations, exclude_samples)
                     future2platform[new_future] = platform
                 else:
                     merge_metadata(aliquot2filename2metadata, future.result(), platform, log)

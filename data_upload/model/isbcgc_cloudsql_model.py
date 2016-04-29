@@ -253,7 +253,7 @@ class ISBCGC_database_helper():
             ['DataCGHubID', 'VARCHAR(36)', 'NULL'],
             ['DatafileMD5', 'VARCHAR(32)', 'NULL'],
             ['DatafileName', 'VARCHAR(250)', 'NOT NULL'],
-            ['DatafileNameKey', 'VARCHAR(200)', 'NOT NULL'],
+            ['DatafileNameKey', 'VARCHAR(300)', 'NOT NULL'],
             ['DatafileUploaded', 'VARCHAR(5)', 'NOT NULL'],
             ['DataLevel', 'VARCHAR(7)', 'NOT NULL'],
             ['Datatype', 'VARCHAR(50)', 'NULL'],

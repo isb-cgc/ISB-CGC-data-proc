@@ -50,7 +50,7 @@ def store_metadata(config, log, table, key_metadata):
                 # make sure every string field is stored as a string rather than unicode
                 # unicode is stored as a blob in the datastore
                 try:
-                    if value in (None, '->'):
+                    if value in (None, '->', '', 'None'):
                         metadata[field] = None
                     else:
                         fields2value[field] = fields2value.setdefault(field, 0) + 1

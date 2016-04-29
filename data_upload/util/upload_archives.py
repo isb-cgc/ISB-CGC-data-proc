@@ -68,7 +68,7 @@ def upload_files(config, archive_path, file2metadata, log):
     else:
         log.warning('\tno files for %s' % (archive_path))
  
-def upload_file(filename, metadata, nonupload_files, ffpe_samples, level, log):
+def upload_file(filename, metadata, nonupload_files, exclude_samples, level, log):
     '''
     determines if the file should be uploaded.  the file must be the same level as the archive and not a 
     control file; must not have an annotation that excludes it; must not have been preserved with the 
@@ -79,7 +79,7 @@ def upload_file(filename, metadata, nonupload_files, ffpe_samples, level, log):
         filename: the name of the file
         metadata: the file metadata
         nonupload_files: list of file extensions of files not to upload
-        ffpe_samples: list of ffpe preserved samples not to upload
+        exclude_samples: list of ffpe preserved samples or samples without a project assigned not to upload
         level: the level of the archive
         log: logger to log any messages
     
@@ -92,8 +92,8 @@ def upload_file(filename, metadata, nonupload_files, ffpe_samples, level, log):
     elif 'AnnotationCategory' in metadata and metadata['AnnotationCategory']:
         log.info('\t\tskipping file %s: \'%s\'' % (filename, metadata['AnnotationCategory']))
         upload = 'false'
-    elif metadata['SampleBarcode'] in ffpe_samples:
-        log.info('\t\tskipping ffpe file %s' % (filename))
+    elif metadata['SampleBarcode'] in exclude_samples:
+        log.info('\t\tskipping exclude (ffpe or no project) file %s' % (filename))
         upload = 'false'
     elif 'yes' != metadata['IncludeForAnalysis']:
         log.info('\t\tskipping not included file %s' % (filename))
@@ -107,7 +107,7 @@ def upload_file(filename, metadata, nonupload_files, ffpe_samples, level, log):
     metadata['DatafileUploaded'] = upload
     return True if 'true' == upload else False
 
-def process_files(config, archive_path, sdrf_metadata, seen_files, nonupload_files, ffpe_samples, level, log):
+def process_files(config, archive_path, sdrf_metadata, seen_files, nonupload_files, exclude_samples, level, log):
     '''
     process the files in the archive downloaded to the archive_path folder for
     whether they should be uploaded or not
@@ -118,7 +118,7 @@ def process_files(config, archive_path, sdrf_metadata, seen_files, nonupload_fil
         sdrf_metadata: metadata map to update
         seen_files: files that have been seen in a previously processed archive
         nonupload_files: list of file extensions of files not to upload
-        ffpe_samples: list of ffpe preserved samples not to upload
+        exclude_samples: list of ffpe preserved samples or samples without a project assigned not to upload
         level: the level of the archive
         log: logger to log any messages
     
@@ -141,7 +141,7 @@ def process_files(config, archive_path, sdrf_metadata, seen_files, nonupload_fil
                     continue
                 processed_filenames.add(filename)
                 file2metadata[filename] = metadata
-                if upload_file(filename, metadata, nonupload_files, ffpe_samples, level, log):
+                if upload_file(filename, metadata, nonupload_files, exclude_samples, level, log):
                     filenames.add(filename)
         except:
             log.exception('problem looking up %s in metadata' % filename)
@@ -157,7 +157,7 @@ def process_files(config, archive_path, sdrf_metadata, seen_files, nonupload_fil
             log.info('\t\tuploading %s' % (file_name))
     return file2metadata
 
-def upload_archive(config, sdrf_metadata, archive2metadata, ffpe_samples, archive_fields, upload_archives, seen_files, nonupload_files, access, log):
+def upload_archive(config, sdrf_metadata, archive2metadata, exclude_samples, archive_fields, upload_archives, seen_files, nonupload_files, access, log):
     '''
     uploads the files in the archive that meet the conditions
     
@@ -165,7 +165,7 @@ def upload_archive(config, sdrf_metadata, archive2metadata, ffpe_samples, archiv
         config: the configuration map
         sdrf_metadata: metadata map to update
         archive2metadata: archive metadata
-        ffpe_samples: list of ffpe preserved samples not to upload
+        exclude_samples: list of ffpe preserved samples or samples without a project assigned not to upload
         archive_fields: archive name, creation date, and URL
         upload_archives: map of level to center to platform of archives to upload
         seen_files: files that have been seen in a previously processed archive
@@ -180,7 +180,7 @@ def upload_archive(config, sdrf_metadata, archive2metadata, ffpe_samples, archiv
             level = archive_fields[0].split('.')[-4].replace('_', ' ')
             user_info = config['user_info']
             archive_path = util.setup_archive(archive_fields, log, user_info['user'], user_info['password'])
-            file2metadata = process_files(config, archive_path, sdrf_metadata, seen_files, nonupload_files, ffpe_samples, level, log)
+            file2metadata = process_files(config, archive_path, sdrf_metadata, seen_files, nonupload_files, exclude_samples, level, log)
             if 0 < len(file2metadata):
                 upload_files(config, archive_path, file2metadata, log)
             else:
@@ -192,7 +192,7 @@ def upload_archive(config, sdrf_metadata, archive2metadata, ffpe_samples, archiv
     else:
         log.info('\tskipping %s-access archive %s' % (access, archive_fields[0]))
 
-def upload_archives(config, log, archives, sdrf_metadata, archive2metadata, ffpe_samples):
+def upload_archives(config, log, archives, sdrf_metadata, archive2metadata, exclude_samples):
     '''
     process the metadata and upload the files from the archives
     
@@ -202,7 +202,7 @@ def upload_archives(config, log, archives, sdrf_metadata, archive2metadata, ffpe
         archives: the list of archives
         sdrf_metadata: metadata map to update
         archive2metadata: archive metadata
-        ffpe_samples: list of ffpe preserved samples not to upload
+        exclude_samples: list of ffpe preserved samples or samples without a project assigned not to upload
     
     returns:
         sdrf_metadata: the updated metadata map
@@ -216,8 +216,8 @@ def upload_archives(config, log, archives, sdrf_metadata, archive2metadata, ffpe
     seen_files = set()
     for archive_fields in archives:
         if 'tcga4yeo' in archive_fields[2] and config['upload_controlled']:
-            upload_archive(config, sdrf_metadata, archive2metadata, ffpe_samples, archive_fields, upload_archives, seen_files, nonupload_files, 'controlled', log)
+            upload_archive(config, sdrf_metadata, archive2metadata, exclude_samples, archive_fields, upload_archives, seen_files, nonupload_files, 'controlled', log)
         if 'tcga4yeo' not in archive_fields[2] and config['upload_open']:
-            upload_archive(config, sdrf_metadata, archive2metadata, ffpe_samples, archive_fields, upload_archives, seen_files, nonupload_files, 'open', log)
+            upload_archive(config, sdrf_metadata, archive2metadata, exclude_samples, archive_fields, upload_archives, seen_files, nonupload_files, 'open', log)
 
     log.info('finished upload archives')
