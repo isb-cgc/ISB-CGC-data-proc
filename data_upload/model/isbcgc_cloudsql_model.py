@@ -168,7 +168,6 @@ class ISBCGC_database_helper():
         'table_name': 'metadata_biospecimen',
         'primary_key_name': 'metadata_biospecimen_id',
         'columns': [
-            ['analyte_code', 'VARCHAR(2)', 'NULL'],
             ['avg_percent_lymphocyte_infiltration', 'FLOAT', 'NULL'],
             ['avg_percent_monocyte_infiltration', 'FLOAT', 'NULL'],
             ['avg_percent_necrosis', 'FLOAT', 'NULL'],
@@ -250,7 +249,6 @@ class ISBCGC_database_helper():
             ['DataCenterCode', 'VARCHAR(2)', 'NULL'],
             ['DataCenterName', 'VARCHAR(40)', 'NULL'],
             ['DataCenterType', 'VARCHAR(4)', 'NULL'],
-            ['DataCGHubID', 'VARCHAR(36)', 'NULL'],
             ['DatafileMD5', 'VARCHAR(32)', 'NULL'],
             ['DatafileName', 'VARCHAR(250)', 'NOT NULL'],
             ['DatafileNameKey', 'VARCHAR(300)', 'NOT NULL'],
