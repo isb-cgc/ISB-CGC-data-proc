@@ -38,6 +38,7 @@ def identify_data(config):
         AND DatafileUploaded='true'
         AND DatafileNameKey LIKE '%.rsem.genes.normalized_results'
         AND IncludeForAnalysis='yes'
+        AND Pipeline NOT LIKE '%TotalRNASeqV2%'
         """
 
     # connect to db and get results in a dataframe

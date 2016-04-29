@@ -17,7 +17,7 @@ limitations under the License.
 
 @author: michael
 '''
-from util import import_module, log_exception, log_info
+from util import import_module, log_exception, log_info, post_run_file
 
 import pprint
 
@@ -109,6 +109,8 @@ def create_cghub_metadata(mappings, cghub_record, seen_bad_codes, log):
             fields = field.split(':')
             if 2 == len(fields) and 'literal' == fields[0]:
                 metadata[part] = fields[1]
+            elif 3 == len(fields) and 'map' == fields[0]:
+                metadata[part] = mappings[fields[1]][metadata[fields[2]]]
             elif 4 == len(fields) and 'substring' == fields[0]:
                 metadata[part] = metadata[fields[1]][int(fields[2]):int(fields[3])]
             elif 5 == len(fields) and 'match' == fields[0]:
@@ -126,7 +128,7 @@ def create_cghub_metadata(mappings, cghub_record, seen_bad_codes, log):
     addPlatformPipelineFields(mappings, metadata, seen_bad_codes, log)
     return metadata
 
-def process_cghub(config, type_uri = 'detail', log = None, removedups = False, limit = -1, verbose = False, print_response = False):
+def process_cghub(config, run_dir, type_uri = 'detail', log = None, removedups = False, limit = -1, verbose = False, print_response = False):
     """
     return type:
         tumor_type2cghub_records: organizes the cghub record classes per tumor type
@@ -134,7 +136,7 @@ def process_cghub(config, type_uri = 'detail', log = None, removedups = False, l
     log_info(log, 'begin process cghub')
     module = import_module(config['cghub_module'])
     mappings = config['metadata_locations']['cghub']
-    cghub_records, _ = module.main(mappings['study'], log = log, removedups = removedups, limit = limit)
+    cghub_records, _, cghub_manifest = module.main(mappings['study'], log = log, removedups = removedups, limit = limit)
     tumor_type2cghub_records = {}
     count = 0
     seen_bad_codes = set()
@@ -143,5 +145,6 @@ def process_cghub(config, type_uri = 'detail', log = None, removedups = False, l
             log_info(log, '\tprocess %s cghub records' % (count))
         count += 1
         tumor_type2cghub_records.setdefault(cghub_record.disease_abbr, []).append(create_cghub_metadata(mappings, cghub_record, seen_bad_codes, log))
+    post_run_file(run_dir, 'CGHub_LATEST_MANIFEST.tsv', cghub_manifest)
     log_info(log, 'finished process cghub: %s total records' % (count))
     return tumor_type2cghub_records

@@ -22,20 +22,8 @@ import logging
 import os
 import re
 
-import gcs_wrapper
 import util
 
-def upload_latestarchive_file(config, archive_file_path, log):
-    bucket_name = config['buckets']['open']
-    key_name = '/%s/%s' % (config['latestarchive_folder'], str(date.today()).replace('-', '_') + '_' + 'latestarchive.txt')
-    if config['upload_files'] and config['upload_open']:
-        log.info('\tnot uploading %s to %s' % (archive_file_path, key_name))
-        gcs_wrapper.upload_file(archive_file_path, bucket_name, key_name, log)
-    else:
-        log.info('\tnot uploading %s to %s' % (archive_file_path, key_name))
- 
-# <project>/<study(tumor type)>/<platform>/<pipeline>/<data level>/<file name>
-# <center name>_<tumor type>.<platform>.<archive type>.<archive version>.tar.gz
 def add_stats(stats, config, archive_name, archive_path, platform2pipeline_tag):
     # exclude the archive # and revision #
     center = archive_name[:archive_name.index('_')]
@@ -74,26 +62,7 @@ def write_stats(stats):
                 for level, level_count in level2count.iteritems():
                     stats_file.write('\t%s\t%s\t%s\t%s\n' % (level_count, center, platform, level))
 
-
-def write_archive(archives):
-    tmp_dir_parent = os.environ.get('ISB_TMP', '/tmp/')
-    if not os.path.isdir(tmp_dir_parent):
-        os.makedirs(tmp_dir_parent)
-    archive_file_path = tmp_dir_parent + 'latestarchive.txt'
-    chunk_size = 512 * 1024
-    curpos = 0
-    with open(archive_file_path, 'wb') as out:
-        while True:
-            chunk = archives[curpos:curpos + chunk_size]
-            curpos = curpos + chunk_size
-            if not chunk:
-                break
-            out.write(chunk)
-            out.flush()
-    
-    return archive_file_path
-
-def process_latestarchive(config, log_name):
+def process_latestarchive(config, run_dir, log_name):
     """
     return types:
         tumor_type2platform2archive_types2archives: this map organizes the archives per
@@ -126,11 +95,11 @@ def process_latestarchive(config, log_name):
             raise e
 
     if local:
-        archives = open('LATESTARCHIVE.txt')
+        archives = open('../latestarchive.txt')
         log.warning('using local copy for testing purposes')
         archives = archives.read()
         lines = archives.split('\n')
-    archive_file_path = write_archive(archives)
+    util.post_run_file(run_dir, 'latestarchives.txt', archives)
 
     desired_platforms = config['platform2datatype'].keys()
     maf_level = config["maflevel"]
@@ -200,12 +169,5 @@ def process_latestarchive(config, log_name):
         write_stats(stats)
     else:
         log.error('no archives found!!!')
-    if config['upload_open']:
-        upload_latestarchive_file(config, archive_file_path, log)
     log.info('finished process latestarchive: %s total archives, kept %s' % (count, keep))
     return tumor_type2platform2archive_types2archives, platform2archive2metadata
-
-if __name__ == '__main__':
-    process_latestarchive()
-# <prefix>/<tumor type>/<center type>/<center name>/<platform>/<tag>/<compressed data archive file>
-# <center name>_<tumor type>.<platform>.<archive type>.<archive version>.tar.gz
