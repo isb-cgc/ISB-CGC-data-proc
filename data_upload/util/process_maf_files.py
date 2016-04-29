@@ -51,7 +51,7 @@ def init_metadata(file_name, archive2metadata, archive_fields, study, version):
         'DataArchiveVersion':version, 
         'Study':study, 
         'DataLevel':'Level 2', 
-        'DatafileUploaded':'true', 
+        'DatafileUploaded':'false', 
         'Datatype':'Mutations', 
         'IncludeForAnalysis':'yes', 
         'Species':'Homo sapiens'})

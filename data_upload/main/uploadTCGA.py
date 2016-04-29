@@ -29,10 +29,6 @@ import logging
 import sys
 
 from parse_bio import parse_bio
-from parse_bio import omf_element2count
-from parse_bio import omf_study2element2values2count
-from parse_bio import ssf_element2count
-from parse_bio import ssf_study2element2values2count
 from prepare_upload import prepare_upload
 from process_annotations import process_annotations
 from process_latestarchive import process_latestarchive
@@ -531,8 +527,6 @@ def uploadTCGA(configFileName):
             executor.shutdown(wait=False)
         if gcs_wrapper:
             gcs_wrapper.close_connection()
-        write_element_stats(ssf_study2element2values2count, ssf_element2count, 'ssf')
-        write_element_stats(omf_study2element2values2count, omf_element2count, 'omf')
     log.info('finish uploadTCGA()')
     
     try:

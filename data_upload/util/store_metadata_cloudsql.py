@@ -77,6 +77,7 @@ def store_metadata(config, log, table, key_metadata):
                         not_data_fields.add(field)
                     
                     if 'DatafileUploaded' == field and 'true' == value:
+                        log.log_info('DatafileUploaded should not be true for %s:%s' % (metadata['Platform'], metadata['DatafileName']))
                         count_upload += 1
                         upload_exts.add(metadata['DatafileName'][metadata['DatafileName'].rfind('.') + 1:])
                 except Exception as e:

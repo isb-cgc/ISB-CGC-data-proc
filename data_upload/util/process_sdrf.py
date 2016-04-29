@@ -147,6 +147,8 @@ def parse_sdrf(config, log, file_name, archive2metadata, barcode2files2term2valu
                         if 'bam' in term2value['DatafileName'] or 'tar.gz' in term2value['DatafileName']:
                             if 'DataLevel' not in term2value:
                                 term2value['DataLevel'] = 'Level 1'
+                            if 'Datatype' not in term2value:
+                                term2value['Datatype'] = 'DNA Sequence-Alignment' if 'DNA' in term2value['Platform'] else 'RNA Sequence-Alignment'
                             term2value['SecurityProtocol'] = config['access_tags']['controlled']
                         node2term2value[nodeInstance.name] = term2value
                         term2value['SDRFFileNameKey'] = getSDRFKeyName(sdrf_file_name, term2value, log)
