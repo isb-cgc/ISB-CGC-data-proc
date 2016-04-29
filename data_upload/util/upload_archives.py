@@ -213,6 +213,7 @@ def upload_archives(config, log, archives, sdrf_metadata, archive2metadata, excl
     # the maf related files will be loaded separately
     nonupload_files += config['maf_upload_files']
     archives.sort(key=lambda archive_fields: archive2metadata[archive_fields[0]]['DataArchiveVersion'], reverse=True)
+    # track the uploaded file names to avoid uploading duplicates
     seen_files = set()
     for archive_fields in archives:
         if 'tcga4yeo' in archive_fields[2] and config['upload_controlled']:

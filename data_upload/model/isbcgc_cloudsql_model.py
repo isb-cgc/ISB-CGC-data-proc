@@ -635,7 +635,7 @@ class ISBCGC_database_helper():
         cursor = None
         try:
             if verbose:
-                log.info('\t\tstarting \'%s\'' % (stmt))
+                log.info('\t\tstarting \'%s:%s\'' % (stmt, params))
             db = cls.getDBConnection(config, log)
             cursor = db.cursor()
             # now execute the select
@@ -645,7 +645,7 @@ class ISBCGC_database_helper():
             retval = [row for row in cursor]
             return retval
         except Exception as e:
-            log.exception('\t\tselect failed')
+            log.exception('\t\tselect failed: %s(%s)' % (stmt, params))
             if cursor:
                 cursor.execute("ROLLBACK")
             raise e
