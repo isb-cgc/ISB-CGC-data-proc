@@ -32,10 +32,9 @@ def addPlatformPipelineFields(config, metadata, seen_bad_codes, log):
         pprint.pprint(metadata['platform_full_name'])
         log_exception(log, 'KeyError in fullPlatform2platform[metadata["platform_full_name"]]: %s' % str(e))
     centerName = shortname2centername[metadata['DataCenterCode']]
-    assembly = metadata['GenomeReference']
     try:
         moltype = analyte2strategy2moltype[metadata['analyte_code']][metadata['library_strategy']]
-        if not moltype:
+        if 'None' == moltype:
             log_info(log, 'didn\'t find a useful molecular type for %s:%s' % (metadata['analyte_code'], metadata['library_strategy']))
     except Exception as e:
         log_exception(log, 'problem setting molecular type: \'%s\' \'%s\'' % (metadata['analyte_code'], metadata['library_strategy']))
@@ -62,6 +61,7 @@ def addPlatformPipelineFields(config, metadata, seen_bad_codes, log):
         seen_bad_codes.add(shortname)
     
 # will let CGHub upload update records (#718)
+#     assembly = metadata['GenomeReference']
 #     upload_platforms = config['upload_platforms']
 #     deprecated_centers = config['deprecated_centers']
 #     deprecated_assemblies = config['deprecated_assemblies']

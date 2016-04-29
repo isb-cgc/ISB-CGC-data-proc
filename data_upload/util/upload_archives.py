@@ -55,14 +55,12 @@ def upload_files(config, archive_path, file2metadata, log):
         file2metadata: map of file to its metadata
         log: logger to log any messages
     '''
-    # TODO: for the DatafileNameKey, use the value already in the metadata
     files = os.listdir(archive_path)
     if 0 < len(files):
         bucket_name, key_prefix = get_bucket_key_prefix(config, file2metadata[files[0]])
         for file_name in files:
             metadata = file2metadata[file_name]
             key_name = key_prefix + metadata['DataLevel'].replace(' ', '_') + '/'+ file_name
-            metadata['DatafileNameKey'] = key_name
             if config['upload_files']:
                 util.upload_file(config, archive_path + file_name, bucket_name, key_name, log)
     else:
@@ -104,7 +102,9 @@ def upload_file(filename, metadata, nonupload_files, exclude_samples, level, log
                 log.info('\t\tskipping \'%s\' file %s' % (nonupload_file, filename))
                 upload = 'false'
                 break
-    metadata['DatafileUploaded'] = upload
+    # DatafileUploaded will be set in a post upload step
+    metadata['DatafileUploaded'] = 'false'
+    metadata['DatafileNameKey'] = None
     return True if 'true' == upload else False
 
 def process_files(config, archive_path, sdrf_metadata, seen_files, nonupload_files, exclude_samples, level, log):
