@@ -37,10 +37,6 @@ omf_pat = re.compile("^.*omf.*.xml$")
 biospecimen_pat = re.compile("^.*biospecimen.*.xml$")
 blank_elements = re.compile("^\\n\s*$")
 
-ssf_element2count = {}
-ssf_study2element2values2count = {}
-omf_element2count = {}
-omf_study2element2values2count = {}
 lock = Lock()
 
 class Calculate:
@@ -454,15 +450,6 @@ def parse_omf(omf_file, log, omf_barcode2field2value, key_field):
     omf_features.update(patient_features)
     omf_barcode2field2value[omf_features[key_field]] = omf_features
 
-    lock.acquire()
-    for omf_feature in omf_features:
-        omf_element2count[omf_feature] = omf_element2count.setdefault(omf_feature, 0) + 1
-        element2values2count = omf_study2element2values2count.setdefault(omf_features['disease_code'].lower(), {})
-        values2count = element2values2count.setdefault(omf_feature, {})
-        values2count[omf_features[omf_feature]] = values2count.setdefault(omf_features[omf_feature], 0) + 1
-    lock.release()
-
-
 def parse_ssf_clinical(ssf_file, log, ssf_clinical_barcode2field2value, key_field):
     ''' 
     parse ssf files and generate a dictionary with element to value to add to the clinical metadata
@@ -501,14 +488,6 @@ def parse_ssf_clinical(ssf_file, log, ssf_clinical_barcode2field2value, key_fiel
     ssf_features = dict(admin_features)
     ssf_features.update(patient_features)
     ssf_clinical_barcode2field2value[ssf_features[key_field]] = ssf_features
-
-    lock.acquire()
-    for ssf_feature in ssf_features:
-        ssf_element2count[ssf_feature] = ssf_element2count.setdefault(ssf_feature, 0) + 1
-        element2values2count = ssf_study2element2values2count.setdefault(ssf_features['disease_code'].lower(), {})
-        values2count = element2values2count.setdefault(ssf_feature, {})
-        values2count[ssf_features[ssf_feature]] = values2count.setdefault(ssf_features[ssf_feature], 0) + 1
-    lock.release()
 
 def parse_ssf_biospecimen(ssf_file, log, ssf_sample_uuid2field2value, key_field):
     ''' 
@@ -838,21 +817,6 @@ def parse_bio(config, archives, study, archive2metadata, log_name):
         log.info('The following participants had no clinical data:\n\t%s' % ('\n\t'.join(no_clinical)))
     log.info('finished parse bio: %s participants, %s samples.' % (len(participants), len(biospecimen_metadata)))
 
-    if 0 < len(ssf_element2count):
-        log.info('current running count total for ssf elments:\n\t%s\n' % ('\n\t'.join((element + '\t' + str(count)) for element, count in ssf_element2count.iteritems())))
-        if study in ssf_study2element2values2count:
-            output = '' 
-            for element, values2count in ssf_study2element2values2count[study].iteritems():
-                output += '\n\t%s\t%s' % (element, (', '.join('%s: %s' % (value, count) for value, count in values2count.iteritems()) if len(values2count) < 11 else ('#distinct: %s' % (len(values2count)))))
-            log.info('count for this study, %s, for ssf elements:%s' % (study, output))
-
-    if 0 < len(omf_element2count):
-        log.info('current running count total for omf elments:\n\t%s\n' % ('\n\t'.join((element + '\t' + str(count)) for element, count in omf_element2count.iteritems())))
-        if study in omf_study2element2values2count:
-            output = '' 
-            for element, values2count in omf_study2element2values2count[study].iteritems():
-                output += '\n\t%s\t%s' % (element, (', '.join('"%s": %s' % (value, count) for value, count in values2count.iteritems()) if len(values2count) < 11 else ('#distinct: %s' % (len(values2count)))))
-            log.info('count for this study, %s, for omf elements:%s' % (study, output))
     return clinical_metadata, biospecimen_metadata, exclude_samples
 
 

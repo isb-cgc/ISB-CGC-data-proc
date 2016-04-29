@@ -35,6 +35,8 @@ def addPlatformPipelineFields(config, metadata, seen_bad_codes, log):
     assembly = metadata['GenomeReference']
     try:
         moltype = analyte2strategy2moltype[metadata['analyte_code']][metadata['library_strategy']]
+        if not moltype:
+            log_info(log, 'didn\'t find a useful molecular type for %s:%s' % (metadata['analyte_code'], metadata['library_strategy']))
     except Exception as e:
         log_exception(log, 'problem setting molecular type: \'%s\' \'%s\'' % (metadata['analyte_code'], metadata['library_strategy']))
         raise e
@@ -49,22 +51,24 @@ def addPlatformPipelineFields(config, metadata, seen_bad_codes, log):
     shortname = metadata['DataCenterCode']
     if metadata['analyte_code'] in ('H', 'R', 'T'):
         metadata['DataCenterCode'] = shortname2centercodes[metadata['DataCenterCode']][1]
+        metadata['Datatype'] = 'RNA Sequence-Alignment'
     elif metadata['analyte_code'] in ('D', 'W', 'X'):
         metadata['DataCenterCode'] = shortname2centercodes[metadata['DataCenterCode']][0]
+        metadata['Datatype'] = 'DNA Sequence-Alignment'
     else:
         metadata['DataCenterCode'] = None
     if "00" == metadata['DataCenterCode'] and shortname not in seen_bad_codes:
         log.warning('did not find a proper center code for %s with analyte %s' % (shortname, metadata['analyte_code']))
         seen_bad_codes.add(shortname)
     
-    upload_platforms = config['upload_platforms']
-    deprecated_centers = config['deprecated_centers']
-    deprecated_assemblies = config['deprecated_assemblies']
-    deprecated = False
-    for deprecated_assembly in deprecated_assemblies:
-        if deprecated_assembly in assembly:
-            deprecated = True
 # will let CGHub upload update records (#718)
+#     upload_platforms = config['upload_platforms']
+#     deprecated_centers = config['deprecated_centers']
+#     deprecated_assemblies = config['deprecated_assemblies']
+#     deprecated = False
+#     for deprecated_assembly in deprecated_assemblies:
+#         if deprecated_assembly in assembly:
+#             deprecated = True
 #     if platformName in upload_platforms and centerName not in deprecated_centers and moltype != 'None' and not deprecated:
 #         metadata['DatafileUploaded'] = 'true' if 'Live' == metadata['state'] else 'false'
 #     else:
