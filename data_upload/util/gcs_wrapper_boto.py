@@ -31,7 +31,7 @@ connection = None
 name2bucket = {}
 lock = Lock()
 
-def open_connection():
+def open_connection(config, log):
     global connection
     if connection:
         raise ValueError('the connection to GCS is already open')
