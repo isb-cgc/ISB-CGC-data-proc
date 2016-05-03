@@ -74,8 +74,9 @@ def upload_file(file_path, bucket_name, key_name, log):
                     backoff = min(1, backoff * 1.15)
             log.warning('\tattempt %s had connection error.  backoff at: %s' % (attempt, backoff))
         except Exception as e:
-            log.warning('\tproblem uploading %s due to %s' % (key_name, e))
-    log.warning('\tfailed to upload %s due to multiple connection errors' % (key_name))
+            log.exception('\tproblem uploading %s due to %s' % (key_name, e))
+            time.sleep(1)
+    log.warning('\tfailed to upload %s due to multiple errors' % (key_name))
         
 def __attempt_upload(file_path, bucket_name, key_name, log):
     time.sleep(backoff)
@@ -88,7 +89,7 @@ def __attempt_upload(file_path, bucket_name, key_name, log):
             # make sure can be loaded as ascii!!!
             with open(file_path) as infile:
                 contents = infile.read()
-                key.set_contents_from_string(str(contents.encode('ascii','ignore')))
+                key.set_contents_from_string(str(contents.encode('ascii','replace')))
         else:
             key.set_contents_from_filename(file_path)
     finally:
