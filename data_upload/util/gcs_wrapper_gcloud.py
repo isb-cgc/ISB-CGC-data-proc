@@ -69,10 +69,8 @@ def upload_file(file_path, bucket_name, key_name, log):
                     backoff = min(1, backoff * 1.15)
             log.warning('\tattempt %s had connection error.  backoff at: %s' % (attempt, backoff))
         except Exception as e:
-            log.exception('\tproblem uploading %s' % (key_name))
-            raise e
-    log.error('\tfailed to upload %s' % (key_name))
-    raise ValueError('\tcould not load %s' % (key_name))
+            log.warning('\tproblem uploading %s due to %s' % (key_name, e))
+    log.warning('\tfailed to upload %s due to multiple connection errors' % (key_name))
         
 
 def __attempt_upload(file_path, bucket_name, key_name, log):
