@@ -87,7 +87,7 @@ def upload_run_files(config, path, log):
         bucket_name = config['buckets']['open']
     for (dirpath, _, filenames) in os.walk(path):
         for filename in filenames:
-            if config['upload_etl_files']:
+            if config['upload_etl_files'] or config['upload_files']:
                 filepath = '%s/%s' % (dirpath, filename)
                 upload_file(config, filepath, bucket_name, config['base_run_upload_folder'] + filepath, log)
             else:
