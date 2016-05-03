@@ -721,7 +721,8 @@ def parse_files(config, log, files, archive_path, archive_fields, study, archive
             parse_file(parse_auxiliary, config, archive_path, file_name, study, upload_archive, log, auxiliary_barcode2field2value, 'bcr_patient_barcode')
         elif ssf_pat.match(file_name):
             parse_file(parse_ssf_clinical, config, archive_path, file_name, study, upload_archive, log, ssf_clinical_barcode2field2value, 'bcr_patient_barcode')
-            parse_file(parse_ssf_biospecimen, config, archive_path, file_name, study, upload_archive, log, ssf_sample_uuid2field2value, 'sample:bcr_sample_uuid')
+            # parsing the clinical will upload the file, set upload_archive to False to prevent the 'found <filename> in <bucket>' error
+            parse_file(parse_ssf_biospecimen, config, archive_path, file_name, study, False, log, ssf_sample_uuid2field2value, 'sample:bcr_sample_uuid')
         elif biospecimen_pat.match(file_name):
             parse_file(parse_biospecimen, config, archive_path, file_name, study, upload_archive, log, biospecimen_uuid2field2value, 'sample:bcr_sample_uuid', exclude_samples, sample_code2letter, sample_code2type)
         elif omf_pat.match(file_name):

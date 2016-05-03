@@ -748,14 +748,43 @@ class ISBCGC_database_helper():
             # now save in batches
             batch = 1028
             inserts = []
-            for start in range(0, len(rows), batch):
-                for index in range(batch):
-                    if start + index == len(rows):
-                        break
-                    inserts += [rows[start + index]]
-                log.info('\t\t\tinsert rows %s to %s' % (start, index))
-                cursor.executemany(insert_stmt, inserts)
-                inserts = []
+            for tries in range(3):
+                retrying = False
+                for start in range(0, len(rows), batch):
+                    if retrying:
+                        retrying = False
+                        continue
+                    for index in range(batch):
+                        if start + index == len(rows):
+                            break
+                        inserts += [rows[start + index]]
+                    log.info('\t\t\tinsert rows %s to %s' % (start, index))
+                    try:
+                        cursor.executemany(insert_stmt, inserts)
+                    except MySQLdb.OperationalError as oe:
+                        if oe.errno == 2006 and 2 > tries:
+                            log.warning('\t\t\tupdate had operation error 2006, lost connection for %s, sleeping' % (insert_stmt))
+                            time.sleep(1)
+                            # rollback any previous inserts
+                            cursor.execute("ROLLBACK")
+
+                            # and setup to retry
+                            retrying = True
+                            try:
+                                # make sure connection is closed
+                                db.close()
+                            except:
+                                pass
+                            db = cls.getDBConnection(config, log)
+                            cursor = db.cursor()
+                            cursor.execute("START TRANSACTION")
+                        else:
+                            log.exception('\t\t\tupdate had multiple operation errors 2006 for %s' % (insert_stmt))
+                            raise oe
+                    except Exception as e:
+                        log.exception('problem with update for %s: %s: \n\t\t\t%s\n\t\t\t%s' % (insert_stmt, e))
+                        raise e
+                    inserts = []
             
             cursor.execute("COMMIT")
             log.info('\t\tcompleted insert')

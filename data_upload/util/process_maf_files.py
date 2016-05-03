@@ -179,10 +179,10 @@ def parse_vcf_file(file_name, archive_path, log, archive_fields, archive2metadat
         with gzip.open(archive_path + file_name, 'rb') as vcf_file:
             parse_vcf_contents(vcf_file, file_name, field2value, sdrf_metadata, log)
     else:
-        log.warning('unexpected file exte4nsion in parse vcf: %s' % (file_name))
+        log.warning('unexpected file extension in parse vcf: %s' % (file_name))
     return field2value
             
-def process_files(archive_path, maf_upload_files, log):
+def process_files(archive_path, maf_upload_files, seen_files, log):
     '''
     process the files in the archive downloaded to the archive_path folder for
     whether they should be uploaded or not
@@ -200,7 +200,7 @@ def process_files(archive_path, maf_upload_files, log):
     for nextfile in files:
         try:
             for maf_ext in maf_upload_files:
-                if nextfile.endswith(maf_ext):
+                if nextfile.endswith(maf_ext) and nextfile not in seen_files:
                     filenames.add(nextfile)
                     break
         except Exception as e:
@@ -209,14 +209,15 @@ def process_files(archive_path, maf_upload_files, log):
     
     # setup the directory so only files to be uploaded remain in the directory
     for file_name in files:
-        if file_name not in filenames:
+        if file_name not in filenames or file_name in seen_files:
             os.remove(archive_path + file_name)
             log.info('\t\tskipping %s' % (file_name))
         else:
             log.info('\t\tuploading maf-related file %s' % (file_name))
+            seen_files.add(file_name)
     return filenames
 
-def upload_archive(config, log, archive_fields, archive2metadata, sdrf_metadata, access):
+def upload_archive(config, log, archive_fields, archive2metadata, sdrf_metadata, seen_files, access):
     '''
     uploads and gathers metadata on the maf-related files in the archive
     
@@ -236,7 +237,7 @@ def upload_archive(config, log, archive_fields, archive2metadata, sdrf_metadata,
         if config['download_archives']:
             archive_path = util.setup_archive(archive_fields, log, user_info['user'], user_info['password'])
             maf_upload_files = config['maf_upload_files']
-            filenames = process_files(archive_path, maf_upload_files, log)
+            filenames = process_files(archive_path, maf_upload_files, seen_files, log)
             if 0 < len(filenames):
                 file2metadata = {}
                 for file_name in filenames:
@@ -269,15 +270,18 @@ def process_maf_files(config, maf_archives, sdrf_metadata, archive2metadata, log
     '''
     log.info('start process potential maf archives')
     
+    maf_archives.sort(key=lambda archive_fields: archive2metadata[archive_fields[0]]['DataArchiveVersion'], reverse=True)
+    # track the uploaded file names to avoid uploading duplicates
+    seen_files = set()
     for archive_fields in maf_archives:
         if 'tcga4yeo' in archive_fields[2] and config['upload_controlled']:
             if config['download_archives']:
-                upload_archive(config, log, archive_fields, archive2metadata, sdrf_metadata, 'controlled')
+                upload_archive(config, log, archive_fields, archive2metadata, sdrf_metadata, seen_files, 'controlled')
             else:
                 log.info('\tskipping maf controlled-archive %s download' % (archive_fields[0]))
         if 'tcga4yeo' not in archive_fields[2] and config['upload_open']:
             if config['download_archives']:
-                upload_archive(config, log, archive_fields, archive2metadata, sdrf_metadata, 'open')
+                upload_archive(config, log, archive_fields, archive2metadata, sdrf_metadata, seen_files, 'open')
             else:
                 log.info('\tskipping maf open-archive %s download' % (archive_fields[0]))
     
