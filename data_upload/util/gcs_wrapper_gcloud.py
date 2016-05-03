@@ -52,6 +52,8 @@ def __get_bucket(bucket_name):
 
 def upload_file(file_path, bucket_name, key_name, log):
     global backoff
+    if key_name.startswith('/'):
+        key_name = key_name[1:]
     for attempt in range(1, 4):
         try:
             __attempt_upload(file_path, bucket_name, key_name, log)
