@@ -390,7 +390,7 @@ def validate_files(config, log, log_dir):
                 else:
                     log.info('\t\tempty bucket properly had no files marked uploaded')
                 
-        
+       
         log.info('\tfound %s mismatched datafileupdated and keypath files:\n\t%s' % (len(inconsistent_update_path), '\n\t'.join(list(inconsistent_update_path)[:50])))
         log.info('\tfound %s mismatched datafileuploaded:\n\t%s' % (len(inconsistent_update_not_path), '\n\t'.join(list(inconsistent_update_not_path)[:50])))
         log.info('\tfound %s mismatched keypath:\n\t%s' % (len(inconsistent_not_update_path), '\n\t'.join(list(inconsistent_not_update_path)[:50])))

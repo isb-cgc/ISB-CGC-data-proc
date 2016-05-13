@@ -34,7 +34,7 @@ def updateDatafileUploaded(config, path_file, log):
         found_path_names = []
         notfound_path_names = []
         count = 0
-        log.info('\tprocessing path/name combinations for existence in the database')
+        log.info('\tprocessing path/name combinations from %s for existence in the database' % (path_file))
         for path in path_file:
             path = path.strip()
             filename = path[path.rindex('/') + 1:]
@@ -73,9 +73,9 @@ def main(configfilename):
     log = logging.getLogger(log_name)
     log.info('begin update DatafileUploaded')
     try:
-        for bucket in config['buckets']['update_uploaded']:
-            with open(bucket['outputfile'], 'r') as outfile:
-                updateDatafileUploaded(config, outfile, log)
+        for path_file in config['buckets']['update_uploaded']:
+            with open(path_file, 'r') as paths:
+                updateDatafileUploaded(config, paths, log)
     except Exception as e:
         log.exception('problem updating DatafileUploaded')
         raise e

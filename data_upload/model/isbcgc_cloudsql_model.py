@@ -785,6 +785,8 @@ class ISBCGC_database_helper():
                         log.exception('problem with update for %s: %s' % (insert_stmt, e))
                         raise e
                     inserts = []
+                # successfully looped through so stop trying
+                break
             
             cursor.execute("COMMIT")
             log.info('\t\tcompleted insert')
