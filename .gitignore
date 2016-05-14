@@ -11,6 +11,8 @@ lib-cov
 *.json
 *.db
 *.xlsx
+*.tsv
+*.vcf
 
 pids
 logs
@@ -31,6 +33,9 @@ _public
 2015_*
 2016_*
 transfer
+doc
+temp
+data
 .*
 data_upload/data
 data_upload/ssl
