@@ -152,19 +152,28 @@ class GcsConnector(object):
     # works only in a single bucket
     # set the object metadata
     #----------------------------------------
-    @retry(retry_on_result=retry_if_result_none, wait_exponential_multiplier=2000, wait_exponential_max=10000, stop_max_delay=60000, stop_max_attempt_number=3)
     def convert_df_to_njson_and_upload(self, df, destination_blobname, metadata={}):
 
         log.info("Converting dataframe into a new-line delimited JSON file")
 
         file_to_upload = StringIO()
 
-        for i, rec in df.iterrows():
+        for _, rec in df.iterrows():
             file_to_upload.write(rec.convert_objects(convert_numeric=False).to_json() + "\n")
         file_to_upload.seek(0)
 
         upload_blob = storage.blob.Blob(destination_blobname, bucket=self.bucket)
-        upload_blob.upload_from_string(file_to_upload.getvalue())
+        retry = 0
+        while True:
+            try:
+                upload_blob.upload_from_string(file_to_upload.getvalue())
+                break
+            except Exception as e:
+                if 3 == retry:
+                    log.exception('problem with upload to %s, no more retries' % (destination_blobname))
+                    raise e
+                retry += 1
+                log.exception('problem with upload to %s, retry %s' % (destination_blobname, retry))
         # set blob metadata
         if metadata:
             log.info("Setting object metadata")

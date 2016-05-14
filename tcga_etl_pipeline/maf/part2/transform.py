@@ -189,6 +189,7 @@ def process_oncotator_output(project_id, bucket_name, data_library, bq_columns, 
 
 if __name__ == '__main__':
 
+    log.info('start maf part2 pipeline')
     config = json.load(open(sys.argv[1]))
   
     project_id = config['project_id']
@@ -209,9 +210,11 @@ if __name__ == '__main__':
     bq_columns = transposed.columns.values
 
     # submit threads by disease  code
-    pm = process_manager.ProcessManager(max_workers=33, db='maf.db', table='task_queue_status')
+    pm = process_manager.ProcessManager(max_workers=33, db='maf.db', table='task_queue_status', log=log)
     for idx, df_group in df.groupby(['Study']):
         future = pm.submit(process_oncotator_output, project_id, bucket_name, df_group, bq_columns, sample_code2letter)
         #process_oncotator_output( project_id, bucket_name, df_group, bq_columns, sample_code2letter)
         time.sleep(0.2)
     pm.start()
+    log.info('finished maf part2 pipeline')
+

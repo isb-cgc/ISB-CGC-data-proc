@@ -17,6 +17,7 @@ from pandas import ExcelWriter
 import sqlite3
 from bigquery_etl.execution import process_manager
 from bigquery_etl.extract.gcloud_wrapper import GcsConnector
+from bigquery_etl.utils.logging_manager import configure_logging
 import os.path
 #------------------------------------
 # parse mirna
@@ -41,6 +42,9 @@ def submit_to_queue(queue_df, conn, table_name):
 #-----------------------------------------------------------------------------
 def main(config):
 
+    log_filename = 'etl_download_isoform.log'
+    log_name = 'etl_download_isoform'
+    log = configure_logging(log_name, log_filename)
 #    etl = util.DataETL("isb-cgc", "isb-cgc-open") # this starts a new connectioni
     project_id = config['project_id']
     bucket_name = config['buckets']['open']
@@ -85,7 +89,7 @@ def main(config):
     # -----------------------------------------------------
     # thread this with concurrent futures
     #------------------------------------------------------
-    pm = process_manager.ProcessManager(max_workers=200, db='isoform_download', table='task_queue_status')
+    pm = process_manager.ProcessManager(max_workers=200, db='isoform_download', table='task_queue_status', log=log)
     for i, df in data_library.iterrows():
         row = df.to_dict()
         print  row['DatafileName']

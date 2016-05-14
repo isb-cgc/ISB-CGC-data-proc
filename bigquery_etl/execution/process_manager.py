@@ -22,19 +22,20 @@ import random
 class ProcessManager(object):
     """Concurrent futures - Sqlite3 based task queue system;
     """
-    def __init__(self, max_workers, db, table, resubmit=False):
+    def __init__(self, max_workers, db, table, resubmit=False, log=None):
         self.max_workers = max_workers
         self.db_filename = db
         self.table = table
         self.resubmit = resubmit
         self.executor = concurrent.futures.ProcessPoolExecutor(max_workers=max_workers)
         self.futures = {}
+        self.log = log
 
     def to_db(self, queue_df, conn, table_name):
         """Submit to queue - sqllite database
         """
         queue_df.to_sql(con=conn, name=table_name, if_exists='append', index=False)
-        print 'inserted ' + str(len(queue_df)) + ' records.'
+        self.log.info('inserted ' + str(len(queue_df)) + ' records.')
 
     def connect_db(self):
         """
@@ -52,7 +53,7 @@ class ProcessManager(object):
                 self.futures[future] = (f, args, kwargs)
                 break
             except Exception as e:
-                print e
+                self.log.exception('problem submitting jobs.  try %s' % (n))
                 # sleep exponentially
                 time.sleep((2 ** n) + random.randint(0, 1000) / 1000)
                 pass
@@ -68,10 +69,9 @@ class ProcessManager(object):
 
             res = concurrent.futures.wait(
                 self.futures,
-                return_when=(concurrent.futures.FIRST_COMPLETED),
-                timeout=20)
+                return_when=(concurrent.futures.FIRST_COMPLETED))
 
-            print ('Tasks', 'DONE: ', len(res.done),
+            self.log.info('Tasks', 'DONE: ', len(res.done),
                    ' NOT_DONE:', len(res.not_done),
                    ' EXCEPTIONS:', len(exceptions))
 
@@ -92,23 +92,23 @@ class ProcessManager(object):
                     exceptions.append((future, exc))
                     self.on_error(future, exc, f, *args, **kwargs)
                     if self.resubmit:
-                        print 'Resubmitting'
+                        self.log.warning('Resubmitting')
                         self.submit(f, *args, **kwargs)
 
         if len(exceptions) >= 1:
-            print ("Exceptions: ", "\n".join(map(str, exceptions)))
-            print "Failed: Found exceptions."
-            print "Go/No Go: No Go"
+            self.log.error(("Exceptions: ", "\n".join(map(str, exceptions))))
+            self.log.error("Failed: Found exceptions.")
+            self.log.error("Go/No Go: No Go")
         else:
-            print "Go/No Go: Go"
+            self.log.info("Go/No Go: Go")
         return (results, exceptions)
 
     def on_error(self, future, exc, f, *args, **kwargs):
         """Record if error"""
-        print 'Got exception from', future, exc
+        self.log.error('Got exception from', future, exc)
         # see if you can get the traceback - Todo
         raise Exception("Exception in a future", (future, exc))
 
     def on_success(self, future, exc, f, *args, **kwargs):
         """Record fif success"""
-        print 'Success: Future finished', future.result()
+        self.log.info('Success: Future finished', future.result())
