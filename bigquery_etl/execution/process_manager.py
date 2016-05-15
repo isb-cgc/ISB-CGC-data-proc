@@ -58,12 +58,11 @@ class ProcessManager(object):
                 time.sleep((2 ** n) + random.randint(0, 1000) / 1000)
                 pass
         else:
-            raise
+            raise ValueError('unable to submit job %s' % (f))
 
     def start(self):
         """Start the process manager, check for exceptions
         """
-        results = []
         exceptions = []
         while self.futures:
 
@@ -71,9 +70,7 @@ class ProcessManager(object):
                 self.futures,
                 return_when=(concurrent.futures.FIRST_COMPLETED))
 
-            self.log.info('Tasks', 'DONE: ', len(res.done),
-                   ' NOT_DONE:', len(res.not_done),
-                   ' EXCEPTIONS:', len(exceptions))
+            self.log.info('Tasks DONE: %s  NOT_DONE: %s  EXCEPTIONS: %s' % (len(res.done), len(res.not_done), len(exceptions)))
 
             for future in res.done:
                 f, args, kwargs = self.futures[future]
@@ -86,7 +83,6 @@ class ProcessManager(object):
                 self.to_db(df, self.connect_db(), self.table)
 
                 if exc is None:
-                    results.append(future.result(timeout=20))
                     self.on_success(future, exc, f, *args, **kwargs)
                 else:
                     exceptions.append((future, exc))
@@ -96,19 +92,18 @@ class ProcessManager(object):
                         self.submit(f, *args, **kwargs)
 
         if len(exceptions) >= 1:
-            self.log.error(("Exceptions: ", "\n".join(map(str, exceptions))))
+            self.log.error(("Exceptions: %s" % ("\n".join(map(str, exceptions)))))
             self.log.error("Failed: Found exceptions.")
             self.log.error("Go/No Go: No Go")
         else:
             self.log.info("Go/No Go: Go")
-        return (results, exceptions)
 
     def on_error(self, future, exc, f, *args, **kwargs):
         """Record if error"""
-        self.log.error('Got exception from', future, exc)
+        self.log.error('Got exception from %s: %s' % (future, exc))
         # see if you can get the traceback - Todo
         raise Exception("Exception in a future", (future, exc))
 
     def on_success(self, future, exc, f, *args, **kwargs):
-        """Record fif success"""
-        self.log.info('Success: Future finished', future.result())
+        """Record if success"""
+        self.log.info('Success: Future finished: %s' % (future.result()))
