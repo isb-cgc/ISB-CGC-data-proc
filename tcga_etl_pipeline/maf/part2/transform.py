@@ -18,10 +18,11 @@ from bigquery_etl.utils.logging_manager import configure_logging
 from bigquery_etl.extract.utils import convert_file_to_dataframe
 from bigquery_etl.transform.tools import cleanup_dataframe, remove_duplicates
 from bigquery_etl.execution import process_manager
-import logging
+from bigquery_etl.utils.logging_manager import configure_logging
 
-log = logging.getLogger(__name__)
-
+log_filename = 'etl_maf_part2.log'
+log_name = 'etl_maf_part2.log'
+log = configure_logging(log_name, log_filename)
 #--------------------------------------
 # Format Oncotator output before merging
 #--------------------------------------
@@ -104,7 +105,7 @@ def add_columns(df, sample_code2letter, study):
 # 4. adds new columns
 # 5. removes any duplicate aliqouts
 #----------------------------------------
-def process_oncotator_output(project_id, bucket_name, data_library, bq_columns, sample_code2letter):
+def process_oncotator_output(project_id, bucket_name, data_library, bq_columns, sample_code2letter, oncotator_object_path):
     study = data_library['Study'].iloc[0]
 
     # this needed to stop pandas from converting them to FLOAT
@@ -134,7 +135,7 @@ def process_oncotator_output(project_id, bucket_name, data_library, bq_columns, 
         try:
            gcs = GcsConnector(project_id, bucket_name)
            # covert the file to a dataframe
-           filename = 'tcga/intermediary/MAF/oncotator_output_files/' + oncotator_file
+           filename = oncotator_object_path + oncotator_file
            df = gcutils.convert_blob_to_dataframe(gcs, project_id, bucket_name, filename)
         except Exception as e:
            print e
@@ -158,6 +159,7 @@ def process_oncotator_output(project_id, bucket_name, data_library, bq_columns, 
 
         disease_bigdata_df = disease_bigdata_df.append(df, ignore_index = True)
             
+        log.info('-'*10 + "{0}: Finished file {1}".format(file_count, oncotator_file) + '-'*10)
 
     # this is a merged dataframe
     if not disease_bigdata_df.empty:
@@ -165,9 +167,11 @@ def process_oncotator_output(project_id, bucket_name, data_library, bq_columns, 
         # remove duplicates; various rules; see check duplicates)
         df = check_duplicates.remove_maf_duplicates(df, sample_code2letter)
 
+        # enforce unique mutation--previous
+        # unique_mutation = ['Chromosome', 'Start_Position', 'End_Position', 'Tumor_Seq_Allele1', 'Tumor_Seq_Allele2', 'Tumor_AliquotBarcode']
         # enforce unique mutation
-        unique_mutation = ['Chromosome', 'Start_Position', 'End_Position', 'Tumor_Seq_Allele1', 'Tumor_Seq_Allele2', 'Tumor_AliquotBarcode']
-
+        unique_mutation = ['Hugo_Symbol', 'Entrez_Gene_Id', 'Chromosome', 'Start_position', 'End_position', 'Reference_Allele', 'Tumor_Seq_Allele1', 'Tumor_Seq_Allele2',
+                  'Tumor_AliquotBarcode']
         # merge mutations from multiple centers
         concat_df = []
         for idx, df_group in df.groupby(unique_mutation):
@@ -181,7 +185,7 @@ def process_oncotator_output(project_id, bucket_name, data_library, bq_columns, 
         df = remove_duplicates(df, unique_mutation)
 
         # convert the df to new-line JSON and the upload the file
-        gcs.convert_df_to_njson_and_upload(disease_bigdata_df, "tcga/intermediary/MAF/bigquery_data_files/{0}.json".format(study))
+        gcs.convert_df_to_njson_and_upload(disease_bigdata_df, "tcga-runs/intermediary/MAF/bigquery_data_files/{0}.json".format(study))
 
     else:
         raise Exception('Empty dataframe!')
@@ -212,7 +216,7 @@ if __name__ == '__main__':
     # submit threads by disease  code
     pm = process_manager.ProcessManager(max_workers=33, db='maf.db', table='task_queue_status', log=log)
     for idx, df_group in df.groupby(['Study']):
-        future = pm.submit(process_oncotator_output, project_id, bucket_name, df_group, bq_columns, sample_code2letter)
+        future = pm.submit(process_oncotator_output, project_id, bucket_name, df_group, bq_columns, sample_code2letter, config['maf']['oncotator_object_path'])
         #process_oncotator_output( project_id, bucket_name, df_group, bq_columns, sample_code2letter)
         time.sleep(0.2)
     pm.start()
