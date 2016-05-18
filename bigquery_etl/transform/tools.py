@@ -117,9 +117,6 @@ def remove_duplicates(df, unique_key):
     df['duplicated'] = df.duplicated(unique_key)
     if not df[df.duplicated(unique_key)].empty:
         log.debug("Found duplicate rows")
-        log.debug(df[df.duplicated(unique_key)].to_csv(sep="\t", index=False))
-        df['duplicated'] = df.duplicated(unique_key)
-        # drop duplicates
         df = df.drop_duplicates(unique_key)
         log.debug("Deleted")
     return df

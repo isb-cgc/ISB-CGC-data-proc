@@ -5,12 +5,6 @@ import sys
 import time
 import pandas as pd
 import json
-from gcloud import storage
-from cStringIO import StringIO
-import re
-import os
-from os.path import basename
-import string
 import check_duplicates
 from bigquery_etl.utils import gcutils
 from bigquery_etl.extract.gcloud_wrapper import GcsConnector
@@ -18,7 +12,6 @@ from bigquery_etl.utils.logging_manager import configure_logging
 from bigquery_etl.extract.utils import convert_file_to_dataframe
 from bigquery_etl.transform.tools import cleanup_dataframe, remove_duplicates
 from bigquery_etl.execution import process_manager
-from bigquery_etl.utils.logging_manager import configure_logging
 
 log_filename = 'etl_maf_part2.log'
 log_name = 'etl_maf_part2.log'
@@ -74,20 +67,20 @@ def add_columns(df, sample_code2letter, study):
     tumor_patient_id_bool = (df['Tumor_ParticipantBarcode'] == df['Normal_ParticipantBarcode'])
     df = df[tumor_patient_id_bool]
     if not df[~tumor_patient_id_bool].empty:
-       #print df[~tumor_patient_id_bool].to_dict()
-       raise 
+        log.error('ERROR: did not find all tumors paired with normal samples')
+        raise ValueError('ERROR: did not find all tumors paired with normal samples')
 
     # tumor barcode 14th character must be 0
     tumor_sample_codes = map(lambda x: x.split('-')[3][0], df['Tumor_AliquotBarcode'])
     if '0' not in tumor_sample_codes and len(tumor_sample_codes) > 0:
-       log.error('ERROR: tumor barcode 14th character must be 0')
-       raise 
+        log.error('ERROR: tumor barcode 14th character must be 0')
+        raise ValueError('ERROR: tumor barcode 14th character must be 0')
 
     # normal barcode 14th character must be 1
     norm_sample_codes = map(lambda x: x.split('-')[3][0], df['Normal_AliquotBarcode'])
     if '1' not in norm_sample_codes  and len(norm_sample_codes) > 0:
-       log.error('ERROR: normal barcode 14th character must be 1')
-       raise 
+        log.error('ERROR: normal barcode 14th character must be 1')
+        raise ValueError('ERROR: normal barcode 14th character must be 1')
 
     df['ParticipantBarcode'] = df['Tumor_ParticipantBarcode']
     del df['Tumor_ParticipantBarcode']
@@ -159,32 +152,37 @@ def process_oncotator_output(project_id, bucket_name, data_library, bq_columns, 
 
         disease_bigdata_df = disease_bigdata_df.append(df, ignore_index = True)
             
-        log.info('-'*10 + "{0}: Finished file {1}".format(file_count, oncotator_file) + '-'*10)
+        log.info('-'*10 + "{0}: Finished file {1}. rows: {2}".format(file_count, oncotator_file, len(df)) + '-'*10)
 
     # this is a merged dataframe
     if not disease_bigdata_df.empty:
-        
         # remove duplicates; various rules; see check duplicates)
-        df = check_duplicates.remove_maf_duplicates(df, sample_code2letter)
+        
+        log.info('\tcalling check_duplicates to collapse aliquots with %s rows' % (len(disease_bigdata_df)))
+        disease_bigdata_df = check_duplicates.remove_maf_duplicates(disease_bigdata_df, sample_code2letter)
+        log.info('\tfinished check_duplicates to collapse aliquots with %s rows' % (len(disease_bigdata_df)))
 
         # enforce unique mutation--previous
         # unique_mutation = ['Chromosome', 'Start_Position', 'End_Position', 'Tumor_Seq_Allele1', 'Tumor_Seq_Allele2', 'Tumor_AliquotBarcode']
         # enforce unique mutation
-        unique_mutation = ['Hugo_Symbol', 'Entrez_Gene_Id', 'Chromosome', 'Start_position', 'End_position', 'Reference_Allele', 'Tumor_Seq_Allele1', 'Tumor_Seq_Allele2',
+        unique_mutation = ['Hugo_Symbol', 'Entrez_Gene_Id', 'Chromosome', 'Start_Position', 'End_Position', 'Reference_Allele', 'Tumor_Seq_Allele1', 'Tumor_Seq_Allele2',
                   'Tumor_AliquotBarcode']
         # merge mutations from multiple centers
-        concat_df = []
-        for idx, df_group in df.groupby(unique_mutation):
+        log.info('\tconsolodate the centers for duplicate mutations into list')
+        def concatcenters(df_group):
             if len(df_group) > 1:
-                # tolist; unique list; sort; concat
                 df_group.loc[:,'Center'] = ";".join(map(str,sorted(list(set(df_group['Center'].tolist())))))
-            concat_df.append(df_group)
-        df = pd.concat(concat_df)
+            return df_group
+
+        disease_bigdata_df = disease_bigdata_df.groupby(unique_mutation).apply(concatcenters)
+        log.info('\tfinished consolodating centers for duplicate mutations')
 
         # enforce unique mutation
-        df = remove_duplicates(df, unique_mutation)
+        log.info('\tcalling remove_duplicates to collapse mutations with %s rows' % (len(disease_bigdata_df)))
+        disease_bigdata_df = remove_duplicates(disease_bigdata_df, unique_mutation)
+        log.info('\tfinished remove_duplicates to collapse mutations with %s rows' % (len(disease_bigdata_df)))
 
-        # convert the df to new-line JSON and the upload the file
+        # convert the disease_bigdata_df to new-line JSON and upload the file
         gcs.convert_df_to_njson_and_upload(disease_bigdata_df, "tcga-runs/intermediary/MAF/bigquery_data_files/{0}.json".format(study))
 
     else:
