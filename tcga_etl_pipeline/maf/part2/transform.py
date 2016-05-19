@@ -126,17 +126,19 @@ def process_oncotator_output(project_id, bucket_name, data_library, bq_columns, 
         log.info('-'*10 + "{0}: Processing file {1}".format(file_count, oncotator_file) + '-'*10)
 
         try:
-           gcs = GcsConnector(project_id, bucket_name)
-           # covert the file to a dataframe
-           filename = oncotator_object_path + oncotator_file
-           df = gcutils.convert_blob_to_dataframe(gcs, project_id, bucket_name, filename)
+            gcs = GcsConnector(project_id, bucket_name)
+            # covert the file to a dataframe
+            filename = oncotator_object_path + oncotator_file
+            log.info('%s: converting %s to dataframe' % (study, filename))
+            df = gcutils.convert_blob_to_dataframe(gcs, project_id, bucket_name, filename)
+            log.info('%s: done converting %s to dataframe' % (study, filename))
         except Exception as e:
-           print e
-           raise
+            log.exception('%s: problem converting to dataframe for %s: %s' % (study, filename, e))
+            raise e
            
         if df.empty:
-           log.debug('empty dataframe for file: ' + str(oncotator_file))
-           continue
+            log.warning('%s: empty dataframe for file: %s' % (study, oncotator_file))
+            continue
 
         #------------------------------
         # different operations on the frame
@@ -152,7 +154,7 @@ def process_oncotator_output(project_id, bucket_name, data_library, bq_columns, 
 
         disease_bigdata_df = disease_bigdata_df.append(df, ignore_index = True)
             
-        log.info('-'*10 + "{0}: Finished file {1}. rows: {2}".format(file_count, oncotator_file, len(df)) + '-'*10)
+        log.info('-'*10 + "{0}: Finished file({3}) {1}. rows: {2}".format(file_count, oncotator_file, len(df), study) + '-'*10)
 
     # this is a merged dataframe
     if not disease_bigdata_df.empty:
@@ -183,7 +185,9 @@ def process_oncotator_output(project_id, bucket_name, data_library, bq_columns, 
         log.info('\tfinished remove_duplicates to collapse mutations with %s rows' % (len(disease_bigdata_df)))
 
         # convert the disease_bigdata_df to new-line JSON and upload the file
+        log.info('%s: uploading %s to GCS' % (study, filename))
         gcs.convert_df_to_njson_and_upload(disease_bigdata_df, "tcga-runs/intermediary/MAF/bigquery_data_files/{0}.json".format(study))
+        log.info('%s: done uploading %s to GCS' % (study, filename))
 
     else:
         raise Exception('Empty dataframe!')
