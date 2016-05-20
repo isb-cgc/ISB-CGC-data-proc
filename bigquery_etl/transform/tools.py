@@ -35,7 +35,7 @@ def cleanup_dataframe(df):
     log.info("Cleaning up the dataframe")
 
     if df.empty:
-        raise Exception("Empty dataframe passed to clean_up_dataframe fuction")
+        raise RuntimeError("Empty dataframe passed to clean_up_dataframe fuction")
 
     # why again, we are doing it in convert_to_dataframe, right?
     # because we can call this function separately

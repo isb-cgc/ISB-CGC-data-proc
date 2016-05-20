@@ -130,8 +130,10 @@ def process_oncotator_output(project_id, bucket_name, data_library, bq_columns, 
             # covert the file to a dataframe
             filename = oncotator_object_path + oncotator_file
             log.info('%s: converting %s to dataframe' % (study, filename))
-            df = gcutils.convert_blob_to_dataframe(gcs, project_id, bucket_name, filename)
+            df = gcutils.convert_blob_to_dataframe(gcs, project_id, bucket_name, filename, log = log)
             log.info('%s: done converting %s to dataframe' % (study, filename))
+        except RuntimeError as re:
+            log.warning('%s: problem cleaning dataframe for %s: %s' % (study, filename, re))
         except Exception as e:
             log.exception('%s: problem converting to dataframe for %s: %s' % (study, filename, e))
             raise e
@@ -170,14 +172,21 @@ def process_oncotator_output(project_id, bucket_name, data_library, bq_columns, 
         unique_mutation = ['Hugo_Symbol', 'Entrez_Gene_Id', 'Chromosome', 'Start_Position', 'End_Position', 'Reference_Allele', 'Tumor_Seq_Allele1', 'Tumor_Seq_Allele2',
                   'Tumor_AliquotBarcode']
         # merge mutations from multiple centers
-        log.info('\tconsolodate the centers for duplicate mutations into list')
-        def concatcenters(df_group):
+        log.info('\tconsolodate the centers for duplicate mutations into list for %s' % (study))
+        def concatcenters(df_group, **logmap):
+            log = logmap['log']
             if len(df_group) > 1:
-                df_group.loc[:,'Center'] = ";".join(map(str,sorted(list(set(df_group['Center'].tolist())))))
+                centers = list(set(df_group['Center'].tolist()))
+                uniquecenters = set()
+                for center in centers:
+                    fields = center.split(';')
+                    for field in fields:
+                        uniquecenters.add(field)
+                df_group.loc[:,'Center'] = ";".join(sorted(list(uniquecenters)))
             return df_group
 
-        disease_bigdata_df = disease_bigdata_df.groupby(unique_mutation).apply(concatcenters)
-        log.info('\tfinished consolodating centers for duplicate mutations')
+        disease_bigdata_df = disease_bigdata_df.groupby(unique_mutation).apply(concatcenters, **{'log': log})
+        log.info('\tfinished consolodating centers for duplicate mutations for %s' % (study))
 
         # enforce unique mutation
         log.info('\tcalling remove_duplicates to collapse mutations with %s rows' % (len(disease_bigdata_df)))
@@ -190,7 +199,7 @@ def process_oncotator_output(project_id, bucket_name, data_library, bq_columns, 
         log.info('%s: done uploading %s to GCS' % (study, filename))
 
     else:
-        raise Exception('Empty dataframe!')
+        log.warning('Empty dataframe for %s in %s!' % (oncotator_file, study))
     return True
 
 if __name__ == '__main__':
