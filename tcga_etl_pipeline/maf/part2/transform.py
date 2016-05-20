@@ -189,14 +189,15 @@ def process_oncotator_output(project_id, bucket_name, data_library, bq_columns, 
         log.info('\tfinished consolodating centers for duplicate mutations for %s' % (study))
 
         # enforce unique mutation
-        log.info('\tcalling remove_duplicates to collapse mutations with %s rows' % (len(disease_bigdata_df)))
+        log.info('\tcalling remove_duplicates to collapse mutations with %s rows for %s' % (len(disease_bigdata_df), study))
         disease_bigdata_df = remove_duplicates(disease_bigdata_df, unique_mutation)
-        log.info('\tfinished remove_duplicates to collapse mutations with %s rows' % (len(disease_bigdata_df)))
+        log.info('\tfinished remove_duplicates to collapse mutations with %s rows for %s' % (len(disease_bigdata_df), study))
 
         # convert the disease_bigdata_df to new-line JSON and upload the file
-        log.info('%s: uploading %s to GCS' % (study, filename))
-        gcs.convert_df_to_njson_and_upload(disease_bigdata_df, "tcga-runs/intermediary/MAF/bigquery_data_files/{0}.json".format(study))
-        log.info('%s: done uploading %s to GCS' % (study, filename))
+        uploadpath = "tcga-runs/intermediary/MAF/bigquery_data_files/{0}.json".format(study)
+        log.info('%s: uploading %s to GCS' % (study, uploadpath))
+        gcs.convert_df_to_njson_and_upload(disease_bigdata_df, uploadpath)
+        log.info('%s: done uploading %s to GCS' % (study, uploadpath))
 
     else:
         log.warning('Empty dataframe for %s in %s!' % (oncotator_file, study))

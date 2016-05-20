@@ -31,7 +31,7 @@ def parse_protein(project_id, bucket_name, filename, outfilename, metadata):
        Add Metadata information
     """
     # setup logging
-    configure_logging('protein', "logs/" + metadata['AliquotBarcode'] + '.log')
+    configure_logging('protein', "logs/" + metadata['AliquotBarcode'] + '_protein.log')
 
     # connect to the cloud bucket
     gcs = GcsConnector(project_id, bucket_name)
