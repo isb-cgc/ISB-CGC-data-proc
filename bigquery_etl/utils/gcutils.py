@@ -56,7 +56,7 @@ def convert_blob_to_dataframe(gcs, project_id, bucket_name, filename, skiprows=0
         data_df = cleanup_dataframe(data_df)
         logit(log, 'done calling cleanup_dataframe() for %s' % (filename), 'info')
     except Exception as e:
-        logit(log, 'problem in convert_blob_to_dataframe(): %e' % (e), 'exception')
+        logit(log, 'problem in convert_blob_to_dataframe(): %s' % (e), 'exception')
 
     return data_df
 
