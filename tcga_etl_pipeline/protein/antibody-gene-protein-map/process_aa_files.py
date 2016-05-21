@@ -8,8 +8,9 @@ import os.path
 from os.path import basename
 
 from bigquery_etl.extract.gcloud_wrapper import GcsConnector
+from bigquery_etl.utils.logging_manager import configure_logging
 
-def download_antibody_annotation_files(config):
+def download_antibody_annotation_files(config, log):
     object_key_template = config['maf']['aa_object_key_template']
     aa_file_dir = config['maf']['aa_file_dir']
     gcs = GcsConnector(config['project_id'], config['buckets']['open'])
@@ -19,12 +20,13 @@ def download_antibody_annotation_files(config):
         os.makedirs(aa_file_dir)
     for study in studies:
         keypath = object_key_template % (study.lower(), study.upper())
+        log.info('\tdownloading %s' % (keypath))
         tmpfile = gcs.download_blob_to_file(keypath)
         with open(aa_file_dir + keypath[keypath.rindex('/'):], 'w') as outfile:
             outfile.write(tmpfile.getvalue())
 
 
-def process_antibody_annotation_files(config):
+def process_antibody_annotation_files(config, log):
     # Get protein name from the 'composite element ref', get only for the missing one/ problematic ones
     antibodySource = ['M', 'R', 'G']
     validationStatus = ['V', 'C', 'NA', 'E', 'QC']
@@ -38,6 +40,7 @@ def process_antibody_annotation_files(config):
             a = re.compile("^.*.antibody_annotation.txt$")
             if a.match(aafile):
                 filename = os.path.join(aa_file_dir, aafile)
+                log.info('\tprocess %s' % aafile)
                 print "-" * 30
                 print basename(filename)
                 data_df = pd.read_csv(filename, delimiter='\t', header=0, keep_default_na=False)
@@ -72,11 +75,13 @@ def process_antibody_annotation_files(config):
                 if not os.path.exists(corrected_aa_files_dir):
                     os.makedirs(corrected_aa_files_dir)
                 data_df.to_csv(corrected_aa_files_dir + aafile, sep='\t', index=False)
+                log.info('\tdone processing %s' % aafile)
 
 #------------------------------------------
 # Get HGNC approved, alias, previous symbols
 #------------------------------------------
-def parse_hgnc(hgnc_file):
+def parse_hgnc(hgnc_file, log):
+    log.info('\t\tparse hgnc records')
     hgnc_json_data=open(hgnc_file)
     data = json.load(hgnc_json_data)
     
@@ -98,6 +103,7 @@ def parse_hgnc(hgnc_file):
                       )
     # create a dataframe with HGNC information; use this to query information about HGNC genes
     hgnc_df = pd.DataFrame(row_list)
+    log.info('\t\tcompleted hgnc records')
     return hgnc_df
 
 #-------------------------------------------------
@@ -191,16 +197,18 @@ def rank_dataframe(data_library):
     return data_library
 
 
-def get_antibody_gene_protein_map(config):
+def get_antibody_gene_protein_map(config, log):
     antibody_to_protein_map = {}
     antibody_to_gene_map = {}
     
     # collect gene and protein information for missing one
+    log.info('\t\tcreate antibody to protein and gene maps')
     corrected_aa_files_dir = config['maf']['corrected_aa_file_dir']
     for files in os.listdir(corrected_aa_files_dir):
         for aafile in files:
             a = re.compile("^.*.antibody_annotation.txt$")
             if a.match(aafile):
+                log.info('\t\t\tgetting antibody map from %s' % (aafile))
                 filename = os.path.join(corrected_aa_files_dir, aafile)
     
                 # convert the file into a dataframe
@@ -217,18 +225,22 @@ def get_antibody_gene_protein_map(config):
                     if not antibody_to_gene_map.get('composite_element_ref'):
                         antibody_to_gene_map[record['composite_element_ref']] =  []
                     antibody_to_gene_map[record['composite_element_ref']].append(record['gene_name'].strip())
+                log.info('\t\tdone getting antibody map from %s' % (aafile))
+    log.info('\t\tfinished antibody to protein and gene maps')
     
     return antibody_to_gene_map, antibody_to_protein_map
 
 
-def fix_gene_protein_inconsistencies(config, hgnc_df_filename):
+def fix_gene_protein_inconsistencies(config, hgnc_df_filename, log):
     # create a excel spreadsheet with the HGNC and antibody-gene-p map
+    log.info('\tstart fixing gene/protein inconsistencies')
     corrected_aa_files_dir = config['maf']['corrected_aa_file_dir']
     writer = ExcelWriter(corrected_aa_files_dir + 'antibody-gene-protein-map.xlsx')
 
-    antibody_to_gene_map, antibody_to_protein_map = get_antibody_gene_protein_map(config)
+    antibody_to_gene_map, antibody_to_protein_map = get_antibody_gene_protein_map(config, log)
 
     # create a dataframe to work with
+    log.info('\t\tcreate combined antibody to gene/protein map')
     aa_map = []
     for i in antibody_to_gene_map:
         num_gene_names  = len(filter(len, antibody_to_gene_map[i]))
@@ -257,11 +269,12 @@ def fix_gene_protein_inconsistencies(config, hgnc_df_filename):
    
     #--------------------------part 2 ----------------------------------------
     # HGNC validation 
-    hgnc_df = parse_hgnc(hgnc_df_filename)
+    hgnc_df = parse_hgnc(hgnc_df_filename, log)
     hgnc_df.to_excel(writer,'HGNC_validated_genes')
     writer.save()
 
     # this is an hack if we find multiple genes 
+    log.info('\t\tcombine multiple genes in record')
     for idx, row in data_library.iterrows():
         record = row.to_dict()
     
@@ -289,19 +302,31 @@ def fix_gene_protein_inconsistencies(config, hgnc_df_filename):
 
     # -----------------Rank the dataframe----------------------------------#    
     # rank the data frame 
+    log.info('\t\trank records')
     data_library = rank_dataframe(data_library)
     data_library = data_library.sort(['row_rank'], ascending=[1])
     col_order = ['composite_element_ref', 'num_genes', 'num_proteins', 'gene_name', 'protein_name', 'HGNC_validation_status', 'other_protein_names', 'other_gene_names', 'final_curated_gene', 'final_curated_protein', 'row_rank', 'notes', 'additional_notes'] 
     data_library.to_excel(writer,'antibody-gene-protein-map', index=False, columns= col_order)
     writer.save()
+    log.info('\tdone fixing gene/protein inconsistencies')
     
-def main(configfilename):
+def main(configfilename, hgnc_df_filename):
     # go through the AA files and create corrected files. 
-    with open(configfilename) as configfile:
-        config = json.load(configfile)
-    download_antibody_annotation_files(config)
-    process_antibody_annotation_files(config)
-    fix_gene_protein_inconsistencies(config) 
+    try:
+        log_filename = 'etl_process_antibody_files.log'
+        log_name = 'etl_process_antibody_files'
+        log = configure_logging(log_name, log_filename)
+        
+        log.info('start processing antibody annotation files')
+        with open(configfilename) as configfile:
+            config = json.load(configfile)
+        download_antibody_annotation_files(config, log)
+        process_antibody_annotation_files(config, log)
+        fix_gene_protein_inconsistencies(config, hgnc_df_filename, log)
+        log.info('done processing antibody annotation files')
+    except Exception as e:
+        log.exception('fatal problem processing antibody files')
+        raise e
 
 if __name__ == '__main__':
     main(sys.argv[1], sys.argv[2])
