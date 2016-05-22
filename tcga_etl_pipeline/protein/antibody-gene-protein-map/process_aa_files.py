@@ -15,67 +15,77 @@ def download_antibody_annotation_files(config, log):
     aa_file_dir = config['maf']['aa_file_dir']
     gcs = GcsConnector(config['project_id'], config['buckets']['open'])
     studies = config['all_tumor_types']
+    nonrppa_studies = config['protein']['nonrppa']
     
+    log.info('\tstart downloading antibody annotation files to %s from %s:%s' % (aa_file_dir, config['project_id'], config['buckets']['open']))
     if not os.path.isdir(aa_file_dir):
         os.makedirs(aa_file_dir)
     for study in studies:
+        if study in nonrppa_studies:
+            continue
         keypath = object_key_template % (study.lower(), study.upper())
-        log.info('\tdownloading %s' % (keypath))
+        log.info('\t\tdownloading %s' % (keypath))
         tmpfile = gcs.download_blob_to_file(keypath)
         with open(aa_file_dir + keypath[keypath.rindex('/'):], 'w') as outfile:
             outfile.write(tmpfile.getvalue())
+    log.info('\tdone downloading antibody annotation files')
 
 
 def process_antibody_annotation_files(config, log):
     # Get protein name from the 'composite element ref', get only for the missing one/ problematic ones
+    log.info('\tstart processing antibody annotation files')
     antibodySource = ['M', 'R', 'G']
     validationStatus = ['V', 'C', 'NA', 'E', 'QC']
     substrings = ["-".join(["", ads, vds + ".*"]) for ads in antibodySource for vds in validationStatus]
     protein_substrings = re.compile("|".join(substrings))
     
     # collect gene and protein information for missing one
+    corrected_aa_files_dir = config['maf']['corrected_aa_file_dir']
+    if not os.path.exists(corrected_aa_files_dir):
+        os.makedirs(corrected_aa_files_dir)
+
     aa_file_dir = config['maf']['aa_file_dir']
-    for files in os.listdir(aa_file_dir):
-        for aafile in files:
-            a = re.compile("^.*.antibody_annotation.txt$")
-            if a.match(aafile):
-                filename = os.path.join(aa_file_dir, aafile)
-                log.info('\tprocess %s' % aafile)
-                print "-" * 30
-                print basename(filename)
-                data_df = pd.read_csv(filename, delimiter='\t', header=0, keep_default_na=False)
-                column_names = list(data_df.columns.values)
+    a = re.compile("^.*.antibody_annotation.txt$")
+    files = os.listdir(aa_file_dir)
+    for aafile in files:
+        if a.match(aafile):
+            filename = os.path.join(aa_file_dir, aafile)
+            log.info('\t\tprocess %s' % aafile)
+            data_df = pd.read_csv(filename, delimiter='\t', header=0, keep_default_na=False)
+            column_names = list(data_df.columns.values)
             # fix antibody_validation_status column, this can be a dict in case there are more than one substitutions
-                column_names = map(lambda x:x.replace('Val.Stat', 'antibody_validation_status'), column_names)
-                column_names = map(lambda x:x.replace(" ", "_"), column_names)
-                pattern = re.compile(r"\.+")
-                column_names = map(lambda x:pattern.sub("_", x), column_names)
-                column_names = map(lambda x:x.strip("_"), column_names)
-                column_names = map(lambda x:x.lower(), column_names)
-                data_df.columns = column_names
+            column_names = map(lambda x:x.replace('Val.Stat', 'antibody_validation_status'), column_names)
+            column_names = map(lambda x:x.replace(" ", "_"), column_names)
+            pattern = re.compile(r"\.+")
+            column_names = map(lambda x:pattern.sub("_", x), column_names)
+            column_names = map(lambda x:x.strip("_"), column_names)
+            column_names = map(lambda x:x.lower(), column_names)
+            data_df.columns = column_names
             # Fix minor data inconsistencies in the antibody_validation_status values
-                if 'antibody_validation_status' in column_names:
-                    data_df['antibody_validation_status'].replace({'UsewithCaution':'Use with Caution', 'UnderEvaluation':'Under Evaluation'}, inplace=True)
-                else:
-                    print "No antibody_validation_status in file"
-                # Check if the file has composite_element_ref, else create one
-                if 'composite_element_ref' not in column_names:
-                    print "The file doesnt have a composite_element_ref" % filename
-                    data_df['antibody_origin_abbv'] = map(lambda x:x[0], data_df['antibody_origin'])
-                    data_df['composite_element_ref'] = data_df['protein_name'] + "-" + data_df['antibody_origin_abbv'] + "-" + data_df['antibody_validation_status']
-                    del data_df['antibody_origin_abbv']
-                # get protein name from the 'composite column ref'
-                if 'protein_name' not in column_names:
-                    data_df['protein_name'] = map(lambda x:protein_substrings.sub("", x), data_df['composite_element_ref'])
-                # strip each value of the empty space
-                data_df['gene_name'] = map(lambda x:x.strip(), data_df['gene_name'])
-                data_df['protein_name'] = map(lambda x:x.strip(), data_df['protein_name'])
-                # create corrected Antibody Annotation files
-                corrected_aa_files_dir = config['maf']['corrected_aa_file_dir']
-                if not os.path.exists(corrected_aa_files_dir):
-                    os.makedirs(corrected_aa_files_dir)
-                data_df.to_csv(corrected_aa_files_dir + aafile, sep='\t', index=False)
-                log.info('\tdone processing %s' % aafile)
+            if 'antibody_validation_status' in column_names:
+                data_df['antibody_validation_status'].replace({'UsewithCaution':'Use with Caution', 'UnderEvaluation':'Under Evaluation'}, inplace=True)
+            else:
+                log.info("No antibody_validation_status in file")
+            # Check if the file has composite_element_ref, else create one
+            if 'composite_element_ref' not in column_names:
+                log.warning("The file doesn\'t have a composite_element_ref" % (filename))
+                data_df['antibody_origin_abbv'] = map(lambda x:x[0], data_df['antibody_origin'])
+                data_df['composite_element_ref'] = data_df['protein_name'] + "-" + data_df['antibody_origin_abbv'] + "-" + data_df['antibody_validation_status']
+                del data_df['antibody_origin_abbv']
+            # get protein name from the 'composite column ref'
+            if 'protein_name' not in column_names:
+                data_df['protein_name'] = map(lambda x:protein_substrings.sub("", x), data_df['composite_element_ref'])
+            # strip each value of the empty space
+            data_df['gene_name'] = map(lambda x:x.strip(), data_df['gene_name'])
+            data_df['protein_name'] = map(lambda x:x.strip(), data_df['protein_name'])
+            # create corrected Antibody Annotation files
+            corrected_aa_files_dir = config['maf']['corrected_aa_file_dir']
+            if not os.path.exists(corrected_aa_files_dir):
+                os.makedirs(corrected_aa_files_dir)
+            data_df.to_csv(corrected_aa_files_dir + aafile, sep='\t', index=False)
+            log.info('\t\tdone processing %s' % aafile)
+
+    log.info('\tdone processing antibody annotation files')
 
 #------------------------------------------
 # Get HGNC approved, alias, previous symbols
@@ -203,29 +213,29 @@ def get_antibody_gene_protein_map(config, log):
     
     # collect gene and protein information for missing one
     log.info('\t\tcreate antibody to protein and gene maps')
+    a = re.compile("^.*.antibody_annotation.txt$")
     corrected_aa_files_dir = config['maf']['corrected_aa_file_dir']
-    for files in os.listdir(corrected_aa_files_dir):
-        for aafile in files:
-            a = re.compile("^.*.antibody_annotation.txt$")
-            if a.match(aafile):
-                log.info('\t\t\tgetting antibody map from %s' % (aafile))
-                filename = os.path.join(corrected_aa_files_dir, aafile)
-    
-                # convert the file into a dataframe
-                data_df  = pd.read_csv(filename, delimiter='\t', header=0, keep_default_na=False)
-    
-                # collect information to create a map
-                for _, row in data_df.iterrows():
-                    record = row.to_dict()
-    
-                    if not antibody_to_protein_map.get('composite_element_ref'):
-                        antibody_to_protein_map[record['composite_element_ref']] =  []
-                    antibody_to_protein_map[record['composite_element_ref']].append(record['protein_name'].strip())
-    
-                    if not antibody_to_gene_map.get('composite_element_ref'):
-                        antibody_to_gene_map[record['composite_element_ref']] =  []
-                    antibody_to_gene_map[record['composite_element_ref']].append(record['gene_name'].strip())
-                log.info('\t\tdone getting antibody map from %s' % (aafile))
+    files = os.listdir(corrected_aa_files_dir)
+    for aafile in files:
+        if a.match(aafile):
+            log.info('\t\t\tgetting antibody map from %s' % (aafile))
+            filename = os.path.join(corrected_aa_files_dir, aafile)
+
+            # convert the file into a dataframe
+            data_df  = pd.read_csv(filename, delimiter='\t', header=0, keep_default_na=False)
+
+            # collect information to create a map
+            for _, row in data_df.iterrows():
+                record = row.to_dict()
+
+                if not antibody_to_protein_map.get('composite_element_ref'):
+                    antibody_to_protein_map[record['composite_element_ref']] =  []
+                antibody_to_protein_map[record['composite_element_ref']].append(record['protein_name'].strip())
+
+                if not antibody_to_gene_map.get('composite_element_ref'):
+                    antibody_to_gene_map[record['composite_element_ref']] =  []
+                antibody_to_gene_map[record['composite_element_ref']].append(record['gene_name'].strip())
+            log.info('\t\tdone getting antibody map from %s' % (aafile))
     log.info('\t\tfinished antibody to protein and gene maps')
     
     return antibody_to_gene_map, antibody_to_protein_map
