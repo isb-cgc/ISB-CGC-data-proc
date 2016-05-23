@@ -11,8 +11,8 @@ from bigquery_etl.extract.gcloud_wrapper import GcsConnector
 from bigquery_etl.utils.logging_manager import configure_logging
 
 def download_antibody_annotation_files(config, log):
-    object_key_template = config['maf']['aa_object_key_template']
-    aa_file_dir = config['maf']['aa_file_dir']
+    object_key_template = config['protein']['aa_object_key_template']
+    aa_file_dir = config['protein']['aa_file_dir']
     gcs = GcsConnector(config['project_id'], config['buckets']['open'])
     studies = config['all_tumor_types']
     nonrppa_studies = config['protein']['nonrppa']
@@ -40,11 +40,11 @@ def process_antibody_annotation_files(config, log):
     protein_substrings = re.compile("|".join(substrings))
     
     # collect gene and protein information for missing one
-    corrected_aa_files_dir = config['maf']['corrected_aa_file_dir']
+    corrected_aa_files_dir = config['protein']['corrected_aa_file_dir']
     if not os.path.exists(corrected_aa_files_dir):
         os.makedirs(corrected_aa_files_dir)
 
-    aa_file_dir = config['maf']['aa_file_dir']
+    aa_file_dir = config['protein']['aa_file_dir']
     a = re.compile("^.*.antibody_annotation.txt$")
     files = os.listdir(aa_file_dir)
     for aafile in files:
@@ -79,7 +79,7 @@ def process_antibody_annotation_files(config, log):
             data_df['gene_name'] = map(lambda x:x.strip(), data_df['gene_name'])
             data_df['protein_name'] = map(lambda x:x.strip(), data_df['protein_name'])
             # create corrected Antibody Annotation files
-            corrected_aa_files_dir = config['maf']['corrected_aa_file_dir']
+            corrected_aa_files_dir = config['protein']['corrected_aa_file_dir']
             if not os.path.exists(corrected_aa_files_dir):
                 os.makedirs(corrected_aa_files_dir)
             data_df.to_csv(corrected_aa_files_dir + aafile, sep='\t', index=False)
@@ -214,7 +214,7 @@ def get_antibody_gene_protein_map(config, log):
     # collect gene and protein information for missing one
     log.info('\t\tcreate antibody to protein and gene maps')
     a = re.compile("^.*.antibody_annotation.txt$")
-    corrected_aa_files_dir = config['maf']['corrected_aa_file_dir']
+    corrected_aa_files_dir = config['protein']['corrected_aa_file_dir']
     files = os.listdir(corrected_aa_files_dir)
     for aafile in files:
         if a.match(aafile):
@@ -244,7 +244,7 @@ def get_antibody_gene_protein_map(config, log):
 def fix_gene_protein_inconsistencies(config, hgnc_df_filename, log):
     # create a excel spreadsheet with the HGNC and antibody-gene-p map
     log.info('\tstart fixing gene/protein inconsistencies')
-    corrected_aa_files_dir = config['maf']['corrected_aa_file_dir']
+    corrected_aa_files_dir = config['protein']['corrected_aa_file_dir']
     writer = ExcelWriter(corrected_aa_files_dir + 'antibody-gene-protein-map.xlsx')
 
     antibody_to_gene_map, antibody_to_protein_map = get_antibody_gene_protein_map(config, log)
