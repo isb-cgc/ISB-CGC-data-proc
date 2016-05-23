@@ -36,7 +36,7 @@ def load(config):
         'genomic_reference',
         config['protein']['bq_table'],
         schemas_dir + config['protein']['schema_file'],
-        'gs://' + config['buckets']['open'] + '/' + config['protein']['output_file'],
+        'gs://' + config['buckets']['open'] + '/' + config['protein']['output_dir'] + '*',
         'NEWLINE_DELIMITED_JSON',
         'WRITE_EMPTY'
     )

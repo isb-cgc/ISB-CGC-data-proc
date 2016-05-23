@@ -1,4 +1,4 @@
-{
+[
     {
         "type": "STRING",
         "name": "AliquotBarcode"
@@ -171,4 +171,4 @@
         "type": "STRING",
         "name": "GG_readgroupset_id"
     }
-}
+]
