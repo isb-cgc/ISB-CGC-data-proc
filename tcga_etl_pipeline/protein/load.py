@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Script to load Clinical and Biospecimen data
+"""Script to parse protein file
 To run: python load.py config_file
 """
 import sys
@@ -31,38 +31,12 @@ def load(config):
 
     schemas_dir = os.environ.get('SCHEMA_DIR', 'schemas/')
 
-    print "Loading Clinical data into BigQuery..."
     load_data_from_file.run(
         config['project_id'],
-        config['bq_dataset'],
-        config['clinical']['bq_table'],
-        schemas_dir + config['clinical']['schema_file'],
-        'gs://' + config['buckets']['open'] + '/' +\
-            config['clinical']['output_dir'] + '*',
-        'NEWLINE_DELIMITED_JSON',
-        'WRITE_EMPTY'
-    )
-    print "*"*30
-    print "Loading Biospecimen data into BigQuery..."
-    load_data_from_file.run(
-        config['project_id'],
-        config['bq_dataset'],
-        config['biospecimen']['bq_table'],
-        schemas_dir + config['biospecimen']['schema_file'],
-        'gs://' + config['buckets']['open'] + '/' +\
-            config['biospecimen']['output_dir'] + '*',
-        'NEWLINE_DELIMITED_JSON',
-        'WRITE_EMPTY'
-    )
-    print "*"*30
-    print "Loading Data data into BigQuery..."
-    load_data_from_file.run(
-        config['project_id'],
-        config['bq_dataset'],
-        config['data']['bq_table'],
-        schemas_dir + config['data']['schema_file'],
-        'gs://' + config['buckets']['open'] + '/' +\
-            config['biospecimen']['output_dir'] + '*',
+        'genomic_reference',
+        config['protein']['bq_table'],
+        schemas_dir + config['protein']['schema_file'],
+        'gs://' + config['buckets']['open'] + '/' + config['protein']['output_file'],
         'NEWLINE_DELIMITED_JSON',
         'WRITE_EMPTY'
     )
