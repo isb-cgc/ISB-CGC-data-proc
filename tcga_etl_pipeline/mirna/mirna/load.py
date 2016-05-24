@@ -46,7 +46,7 @@ def load(config):
         'NEWLINE_DELIMITED_JSON',
         'WRITE_EMPTY'
     )
-    log.info("\t*"*30)
+    log.info("*"*30)
     log.info("\tLoading mirna GA data into BigQuery..")
     load_data_from_file.run(
         config['project_id'],

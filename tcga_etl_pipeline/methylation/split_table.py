@@ -85,13 +85,13 @@ def split_table_by_chr(chromosome, project_id, dataset_id, log):
                                      jobId=insertResponse['jobReference']['jobId']).execute()
             status = result['status']
             if 'DONE' == status['state']:
-                if status['errorResult']:
+                if 'errorResult' in status and status['errorResult']:
                     log.error('an error occurred completing import at \'%s\': %s \'%s\' for chormosome %s' % 
                         (status['errorResult']['location'], status['errorResult']['reason'], status['errorResult']['message'], chromosome))
                 else:
                     log.info('completed import chromosome %s' % (chromosome))
                 break
-            if status['errors'] and 0 < len(status['errors']):
+            if 'errors' in status and status['errors'] and 0 < len(status['errors']):
                 for error in status['errors']:
                     log.warning('\terror while importing chromosome %s: %s' % (chromosome, error))
             log.info('\tWaiting for the import to complete for chromosome %s...' % (chromosome))
