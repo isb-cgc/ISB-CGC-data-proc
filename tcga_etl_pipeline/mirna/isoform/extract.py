@@ -82,7 +82,7 @@ def identify_data(config):
 
     log.info("\tAfter filtering: Found {0} rows, columns." .format(str(metadata_df.shape)))
 
-    log.info('finished methylation extract')
+    log.info('finished mirna isoform extract')
     return metadata_df
 
 if __name__ == '__main__':
