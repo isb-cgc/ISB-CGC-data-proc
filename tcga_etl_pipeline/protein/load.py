@@ -33,7 +33,7 @@ def load(config):
 
     load_data_from_file.run(
         config['project_id'],
-        'genomic_reference',
+        config['bq_dataset'],
         config['protein']['bq_table'],
         schemas_dir + config['protein']['schema_file'],
         'gs://' + config['buckets']['open'] + '/' + config['protein']['output_dir'] + '*',

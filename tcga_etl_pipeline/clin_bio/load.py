@@ -62,7 +62,7 @@ def load(config):
         config['data']['bq_table'],
         schemas_dir + config['data']['schema_file'],
         'gs://' + config['buckets']['open'] + '/' +\
-            config['biospecimen']['output_dir'] + '*',
+            config['data']['output_dir'] + '*',
         'NEWLINE_DELIMITED_JSON',
         'WRITE_EMPTY'
     )
