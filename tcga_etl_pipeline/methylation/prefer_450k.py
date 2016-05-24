@@ -17,10 +17,6 @@
 """
 import json
 import sys
-import sqlite3
-import time
-from bigquery_etl.execution import process_manager
-import os
 import methylation.extract
 import methylation.transform
 from bigquery_etl.extract.gcloud_wrapper import GcsConnector

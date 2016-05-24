@@ -31,7 +31,7 @@ def parse_protein(project_id, bucket_name, filename, outfilename, metadata):
        Add Metadata information
     """
     # setup logging
-    log = configure_logging('protein', "logs/protein_transform" + metadata['AliquotBarcode'] + '.log')
+    log = configure_logging('protein', "logs/protein_transform_" + metadata['AliquotBarcode'] + '.log')
     try:
         log.info('start transform of %s' % (metadata['AliquotBarcode']))
         # connect to the cloud bucket

@@ -32,6 +32,10 @@ from retrying import retry
 
 log = logging.getLogger(__name__)
 
+def retry_if_result_none(result):
+    """Callback function for retrying.  Return True if we should retry (in this case when result is None), False otherwise"""
+    return result is not True
+
 class GcsConnector(object):
     """Google Cloud Storage Connector
     """
@@ -121,10 +125,6 @@ class GcsConnector(object):
         df = pd.DataFrame(files_info)
         log.info('Found {0} files in the bucket matching the pattern'.format(len(df.index)))
         return df
-
-    def retry_if_result_none(result):
-        """Return True if we should retry (in this case when result is None), False otherwise"""
-        return result is not True
 
     @retry(retry_on_result=retry_if_result_none, wait_exponential_multiplier=2000, wait_exponential_max=10000, stop_max_delay=60000, stop_max_attempt_number=3)
     def upload_blob_from_string(self, blobname, df_stringIO, metadata={}):
