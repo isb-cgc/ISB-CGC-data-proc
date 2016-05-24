@@ -31,7 +31,7 @@ def load(config):
     project_id, dataset_id, table_name, schema_file, data_path,
           source_format, write_disposition, poll_interval, num_retries
     """
-    log = configure_logging('methylation_split', "logs/methylation_load" + '.log')
+    log = configure_logging('methylation_split', 'logs/methylation_load.log')
     log.info('begin load of methylation into bigquery')
     
     schemas_dir = os.environ.get('SCHEMA_DIR', 'schemas/')
@@ -47,7 +47,7 @@ def load(config):
     #    'CSV',
     #    'WRITE_EMPTY'
     #)
-    log.info("Loading Methylation data into BigQuery...")
+    log.info("\tLoading Methylation data into BigQuery...")
     load_data_from_file.run(
         config['project_id'],
         config['bq_dataset'],
@@ -59,7 +59,6 @@ def load(config):
         'WRITE_APPEND'
     )
     
-    log.info("Splitting Methylation data by chromosome into BigQuery...")
     main(config, log)
     
     log.info('finished load of methylation into bigquery')
