@@ -21,6 +21,9 @@ from bigquery_etl.load import load_data_from_file
 import json
 import os
 
+from bigquery_etl.utils.logging_manager import configure_logging
+from methylation.split_table import main
+
 def load(config):
     """
     Load the bigquery table
@@ -28,7 +31,9 @@ def load(config):
     project_id, dataset_id, table_name, schema_file, data_path,
           source_format, write_disposition, poll_interval, num_retries
     """
-
+    log = configure_logging('methylation_split', "logs/methylation_load" + '.log')
+    log.info('begin load of methylation into bigquery')
+    
     schemas_dir = os.environ.get('SCHEMA_DIR', 'schemas/')
 
     #print "Loading Methylation 450K data into BigQuery.."
@@ -42,18 +47,22 @@ def load(config):
     #    'CSV',
     #    'WRITE_EMPTY'
     #)
-    print "*"*30
-    print "Loading Methylation 27K data into BigQuery.."
+    log.info("Loading Methylation data into BigQuery...")
     load_data_from_file.run(
         config['project_id'],
         config['bq_dataset'],
         config['methylation']['bq_table'],
         schemas_dir + config['methylation']['schema_file'],
         'gs://' + config['buckets']['open'] + '/' +\
-            config['methylation']['output_dir'] + 'HumanMethylation27/*',
+            config['methylation']['output_dir'] + '*',
         'CSV',
         'WRITE_APPEND'
     )
+    
+    log.info("Splitting Methylation data by chromosome into BigQuery...")
+    main(config, log)
+    
+    log.info('finished load of methylation into bigquery')
 
 
 if __name__ == '__main__':
