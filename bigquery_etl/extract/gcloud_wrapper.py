@@ -28,7 +28,6 @@ import logging
 import tempfile
 import chardet
 import traceback
-from retrying import retry
 
 log = logging.getLogger(__name__)
 
@@ -126,11 +125,22 @@ class GcsConnector(object):
         log.info('Found {0} files in the bucket matching the pattern'.format(len(df.index)))
         return df
 
-    @retry(retry_on_result=retry_if_result_none, wait_exponential_multiplier=2000, wait_exponential_max=10000, stop_max_delay=60000, stop_max_attempt_number=3)
     def upload_blob_from_string(self, blobname, df_stringIO, metadata={}):
         # upload the file
         upload_blob = storage.blob.Blob(blobname, bucket=self.bucket)
-        upload_blob.upload_from_string(df_stringIO)
+        tries = 0
+        while True:
+            try:
+                upload_blob.upload_from_string(df_stringIO)
+                break
+            except Exception as e:
+                if 3 == tries:
+                    traceback.print_exc(10)
+                    raise e
+                time.sleep(1)
+                tries += 1
+                print '\tretry %s for upload of %s' % (tries, blobname)
+
         # set blob metadata
         if metadata:
             log.info("Setting object metadata")
