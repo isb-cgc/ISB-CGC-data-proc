@@ -18,7 +18,6 @@
 from bigquery_etl.utils import gcutils
 from bigquery_etl.extract.gcloud_wrapper import GcsConnector
 from bigquery_etl.utils.logging_manager import configure_logging
-import sys
 
 def parse_cnv(project_id, bucket_name, filename, outfilename, metadata):
     """Download and convert blob into dataframe
@@ -51,7 +50,7 @@ def additional_changes(data_df):
     """Make additional data transformations on the dataframe
     """
     data_df['Segment_Mean'] = data_df['Segment_Mean'].map(lambda x: "{0:.4f}".format(float(x)))
-    data_df['Num_Probes'] = data_df['Num_Probes'].map(lambda x: int(float(x)))
+    data_df['Num_Probes'] = data_df['Num_Probes'].map(lambda x: str(int(float(x))))
 
     return data_df
 
