@@ -38,7 +38,7 @@ def main(configfilename):
     gcs = GcsConnector(project_id, bucket_name)
     for _, row in IlluminaHiSeq_GA_df.iterrows():
         blob = row.to_dict()['OutDatafileNameKey']
-        print gcs.delete_blob(blob)
+        gcs.delete_blob(blob)
 
 if __name__ == '__main__':
     main(sys.argv[1])
