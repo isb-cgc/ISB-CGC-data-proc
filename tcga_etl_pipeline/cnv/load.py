@@ -57,7 +57,7 @@ def load(config):
             schemas_dir + config['cnv']['schema_file'],
             'gs://' + config['buckets']['open'] + '/' +\
                 dir_prefix + dir_suffix + '*',
-            'CSV',
+            'NEWLINE_DELIMITED_JSON',
             'WRITE_APPEND'
         )
         log.info("*"*30)
