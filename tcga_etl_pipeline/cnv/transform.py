@@ -51,6 +51,8 @@ def additional_changes(data_df):
     """
     data_df['Segment_Mean'] = data_df['Segment_Mean'].map(lambda x: "{0:.4f}".format(float(x)))
     data_df['Num_Probes'] = data_df['Num_Probes'].map(lambda x: str(int(float(x))))
+    data_df['Start'] = data_df['Num_Probes'].map(lambda x: str(int(float(x))))
+    data_df['End'] = data_df['Num_Probes'].map(lambda x: str(int(float(x))))
 
     return data_df
 
