@@ -13,13 +13,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Script to load Clinical and Biospecimen data
+"""Script to load Data data
 To run: python load.py config_file
 """
 import sys
 from bigquery_etl.load import load_data_from_file
 import json
 import os
+
+from bigquery_etl.utils.logging_manager import configure_logging
+from methylation.split_table import main
 
 def load(config):
     """
@@ -28,32 +31,28 @@ def load(config):
     project_id, dataset_id, table_name, schema_file, data_path,
           source_format, write_disposition, poll_interval, num_retries
     """
-
+    log = configure_logging('data_load', 'logs/data_load.log')
+    log.info('begin load of data into bigquery')
+    
     schemas_dir = os.environ.get('SCHEMA_DIR', 'schemas/')
 
-    print "Loading Clinical data into BigQuery..."
+    log.info("\tLoading Data data into BigQuery...")
     load_data_from_file.run(
         config['project_id'],
         config['bq_dataset'],
-        config['clinical']['bq_table'],
-        schemas_dir + config['clinical']['schema_file'],
+        config['data']['bq_table'],
+        schemas_dir + config['data']['schema_file'],
         'gs://' + config['buckets']['open'] + '/' +\
-            config['clinical']['output_dir'] + '*',
+            config['data']['output_dir'] + '*',
         'NEWLINE_DELIMITED_JSON',
         'WRITE_EMPTY'
     )
-    print "*"*30
-    print "Loading Biospecimen data into BigQuery..."
-    load_data_from_file.run(
-        config['project_id'],
-        config['bq_dataset'],
-        config['biospecimen']['bq_table'],
-        schemas_dir + config['biospecimen']['schema_file'],
-        'gs://' + config['buckets']['open'] + '/' +\
-            config['biospecimen']['output_dir'] + '*',
-        'NEWLINE_DELIMITED_JSON',
-        'WRITE_EMPTY'
-    )
+
+    
+    main(config, log)
+    
+    log.info('finished load of data into bigquery')
+
 
 if __name__ == '__main__':
     load(json.load(open(sys.argv[1])))
