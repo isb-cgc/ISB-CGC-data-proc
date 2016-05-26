@@ -50,7 +50,7 @@ def identify_data(config):
             DataCenterCode,
             DataCenterName,
             DataCenterType,
-            DatafileMD,
+            DatafileMD5,
             DatafileName,
             DatafileNameKey,
             DatafileUploaded,
@@ -83,27 +83,27 @@ def identify_data(config):
             GG_readgroupset_id
         FROM metadata_data
         WHERE Project = 'TCGA'
+            AND study = '%s'
             AND DatafileUploaded='true'
             AND DatafileNameKey is not null
             AND IncludeForAnalysis='yes'
         """
 
-    # connect to db and get results in a dataframe
-    metadata_df = read_mysql_query(host, database, user, passwd, sqlquery)
-    log.info("\tFound {0} rows, columns." .format(str(metadata_df.shape)))
-
-    metadata_df.loc[:, 'SampleTypeLetterCode'] = metadata_df['SampleTypeCode'].map(lambda code: config['sample_code2letter'][code])
-
-    project_id = config['project_id']
-    bucket_name = config['buckets']['open']
-    gcs = GcsConnector(project_id, bucket_name)
-    log.info("\tupload data to GCS.")
-    gcs.convert_df_to_njson_and_upload(metadata_df, config['data']['output_dir'] + config['data']['bq_table'])
-
-
+    studies = config['all_tumor_types']
+    for study in studies:
+        # connect to db and get results in a dataframe
+        log.info("\tselect data records from db for %s" % (study))
+        metadata_df = read_mysql_query(host, database, user, passwd, sqlquery % (study))
+        log.info("\tFound {0} rows, columns." .format(str(metadata_df.shape)))
+    
+        project_id = config['project_id']
+        bucket_name = config['buckets']['open']
+        gcs = GcsConnector(project_id, bucket_name)
+        log.info("\tupload data to GCS.")
+        gcs.convert_df_to_njson_and_upload(metadata_df, config['data']['output_dir'] + config['data']['bq_table'] + '_%s.json' % (study))
+    
     log.info('finished extract and transform')
-    return metadata_df
 
 if __name__ == '__main__':
-    print identify_data(json.load(open(sys.argv[1])))
+    identify_data(json.load(open(sys.argv[1])))
 

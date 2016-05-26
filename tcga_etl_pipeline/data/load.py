@@ -22,7 +22,6 @@ import json
 import os
 
 from bigquery_etl.utils.logging_manager import configure_logging
-from methylation.split_table import main
 
 def load(config):
     """
@@ -47,9 +46,6 @@ def load(config):
         'NEWLINE_DELIMITED_JSON',
         'WRITE_EMPTY'
     )
-
-    
-    main(config, log)
     
     log.info('finished load of data into bigquery')
 
