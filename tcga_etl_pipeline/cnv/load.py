@@ -47,7 +47,7 @@ def load(config):
     #    'WRITE_EMPTY'
     #)
     dir_prefix = config['cnv']['output_dir_prefix']
-    dir_suffixes = config['cnv']['output_dir_suffices']
+    dir_suffixes = config['cnv']['output_dir_suffixes']
     for dir_suffix in dir_suffixes:
         log.info("\tLoading CNV data into BigQuery from %s..." % (dir_prefix + dir_suffix))
         load_data_from_file.run(
@@ -57,7 +57,7 @@ def load(config):
             schemas_dir + config['cnv']['schema_file'],
             'gs://' + config['buckets']['open'] + '/' +\
                 dir_prefix + dir_suffix + '*',
-            'CSV',
+            'NEWLINE_DELIMITED_JSON',
             'WRITE_APPEND'
         )
         log.info("*"*30)

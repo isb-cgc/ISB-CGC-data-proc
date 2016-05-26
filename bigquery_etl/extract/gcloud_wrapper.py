@@ -31,17 +31,23 @@ import traceback
 
 log = logging.getLogger(__name__)
 
-def retry_if_result_none(result):
-    """Callback function for retrying.  Return True if we should retry (in this case when result is None), False otherwise"""
-    return result is not True
-
 class GcsConnector(object):
     """Google Cloud Storage Connector
     """
     def __init__(self, project, bucket_name, tempdir='/tmp'):
         # connect to the cloud bucket
         self.client = storage.Client(project)
-        self.bucket = self.client.get_bucket(bucket_name)
+        retry = 0
+        while True:
+            try:
+                self.bucket = self.client.get_bucket(bucket_name)
+                break
+            except Exception as e:
+                if 3 == retry:
+                    print 'could not get bucket %s' % (bucket_name)
+                    raise e
+                retry += 1
+                time.sleep(1)
         self.tempdir = tempdir
 
     #--------------------------------------
