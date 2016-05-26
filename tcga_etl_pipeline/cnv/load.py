@@ -47,7 +47,7 @@ def load(config):
     #    'WRITE_EMPTY'
     #)
     dir_prefix = config['cnv']['output_dir_prefix']
-    dir_suffixes = config['cnv']['output_dir_suffices']
+    dir_suffixes = config['cnv']['output_dir_suffixes']
     for dir_suffix in dir_suffixes:
         log.info("\tLoading CNV data into BigQuery from %s..." % (dir_prefix + dir_suffix))
         load_data_from_file.run(

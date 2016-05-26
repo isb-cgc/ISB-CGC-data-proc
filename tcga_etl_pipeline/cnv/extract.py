@@ -51,7 +51,7 @@ def identify_data(config):
     # rename platforms in rows.  because number of rows exceed import limitation for GCS to BigQuery, rotate into multiple
     # virtual directories
     dir_prefix = config['cnv']['output_dir_prefix']
-    dir_suffixes = config['cnv']['output_dir_suffices']
+    dir_suffixes = config['cnv']['output_dir_suffixes']
     num_suffix = len(dir_suffixes)
     for i, row in metadata_df.iterrows():
         metadata = row.to_dict()
