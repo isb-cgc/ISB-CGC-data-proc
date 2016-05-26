@@ -19,7 +19,6 @@ run stand alone since it combines the extract and transform steps into one.
 """
 import sys
 import json
-import re
 
 from bigquery_etl.utils.logging_manager import configure_logging
 from bigquery_etl.extract.gcloud_wrapper import GcsConnector
@@ -36,7 +35,7 @@ def identify_data(config):
     user = config['cloudsql']['user']
     passwd = config['cloudsql']['passwd']
 
-    log.info("\tselect file names from db")
+    log.info("\tselect data records from db")
     sqlquery = """
         SELECT 
             ParticipantBarcode,
@@ -91,17 +90,18 @@ def identify_data(config):
 
     # connect to db and get results in a dataframe
     metadata_df = read_mysql_query(host, database, user, passwd, sqlquery)
+    log.info("\tFound {0} rows, columns." .format(str(metadata_df.shape)))
 
     metadata_df.loc[:, 'SampleTypeLetterCode'] = metadata_df['SampleTypeCode'].map(lambda code: config['sample_code2letter'][code])
 
     project_id = config['project_id']
     bucket_name = config['buckets']['open']
     gcs = GcsConnector(project_id, bucket_name)
-    status = gcs.convert_df_to_njson_and_upload(metadata_df, config['data']['output_dir'] + config['data']['bq_table'])
+    log.info("\tupload data to GCS.")
+    gcs.convert_df_to_njson_and_upload(metadata_df, config['data']['output_dir'] + config['data']['bq_table'])
 
-    log.info("\tAfter filtering: Found {0} rows, columns." .format(str(metadata_df.shape)))
 
-    log.info('finished cnv extract')
+    log.info('finished extract and transform')
     return metadata_df
 
 if __name__ == '__main__':
