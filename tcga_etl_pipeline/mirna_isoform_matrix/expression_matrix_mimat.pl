@@ -83,9 +83,9 @@ foreach my $sample (sort keys %sample_names) {
 $header .= "\n";
 
 #Write expression matrix
-open RAW, ">$opt_o/expn_matrix_mimat_$opt_n.txt" or die "Can't write out expression matrix $opt_p/expn_matrix_mimat_$opt_n.txt: $!\n";
-open NORM, ">$opt_o/expn_matrix_mimat_norm_$opt_n.txt" or die "Can't write out expression matrix $opt_p/expn_matrix_mimat_norm_$opt_n.txt: $!\n";
-open LOG, ">$opt_o/expn_matrix_mimat_norm_log_$opt_n.txt" or die "Can't write out expression matrix $opt_p/expn_matrix_mimat_norm_log_$opt_n.txt: $!\n";
+open RAW, ">$opt_o/expn_matrix_mimat_$opt_n.txt" or die "Can't write out expression matrix $opt_o/expn_matrix_mimat_$opt_n.txt: $!\n";
+open NORM, ">$opt_o/expn_matrix_mimat_norm_$opt_n.txt" or die "Can't write out expression matrix $opt_o/expn_matrix_mimat_norm_$opt_n.txt: $!\n";
+open LOG, ">$opt_o/expn_matrix_mimat_norm_log_$opt_n.txt" or die "Can't write out expression matrix $opt_o/expn_matrix_mimat_norm_log_$opt_n.txt: $!\n";
 print RAW $header;
 print NORM $header;
 print LOG $header;

@@ -17,6 +17,7 @@
 import sys
 import re
 from gcloud import storage
+import traceback
 import json
 import pandas as pd
 import time
@@ -25,17 +26,23 @@ from bigquery_etl.execution import process_manager
 from bigquery_etl.extract.gcloud_wrapper import GcsConnector
 from bigquery_etl.utils.logging_manager import configure_logging
 import os.path
+import os
+
 #------------------------------------
 # parse mirna
 #------------------------------------
-def download_file(project_id, bucket_name, blobname, outfilename, dummy, log):
-#    gcs.download_to_filename("/mnt/datadisk-3/isoform_files/" + Study + "/" + basename(blobname))
-    log.info('\tstart download of %s' % outfilename)
-    client = storage.Client(project_id)
-    bucket = client.get_bucket(bucket_name)
-    blob = bucket.get_blob(blobname)
-    blob.download_to_filename(outfilename)
-    log.info('\tfinished download of %s' % outfilename)
+def download_file(project_id, bucket_name, blobname, outfilename, dummy):
+    filename = outfilename.split('/')[-1]
+    try:
+        print '\tstart download of %s' % outfilename
+        client = storage.Client(project_id)
+        bucket = client.get_bucket(bucket_name)
+        blob = bucket.get_blob(blobname)
+        blob.download_to_filename(outfilename)
+        print '\tfinished download of %s' % outfilename
+    except Exception as e:
+        traceback.print_exc(6)
+        raise e
     return True
 
 def submit_to_queue(queue_df, conn, table_name, log):
@@ -59,7 +66,7 @@ def main(config):
     # connect to bucket to get files 
     gcs = GcsConnector(project_id, bucket_name)
     isoform_file = re.compile("^.*.isoform.quantification.txt.json$")
-    data_library = gcs.search_files(search_patterns=['.isoform.quantification.txt'], regex_search_pattern=isoform_file, prefixes=['tcga/intermediary/mirna/isoform/'])
+    data_library = gcs.search_files(search_patterns=['.isoform.quantification.txt'], regex_search_pattern=isoform_file, prefixes=[config['mirna_isoform_matrix']['isoform_gcs_dir']])
     # we are eliminating bad files - size 0; could be hg18 etc
     data_library.loc[:, 'basefilename'] = data_library['filename'].map(lambda x: os.path.splitext(os.path.basename(x))[0].replace('.json', ''))
     data_library = data_library.query('size > 0')
@@ -73,7 +80,7 @@ def main(config):
     log.info('\tfinished selecting isoform files')
 
     log.info('\tbegin reading from down loaded files')
-    with open('downloadedfiles.txt') as f:
+    with open(config['mirna_isoform_matrix']['isoform_download_prev_files']) as f:
         lines = f.read().splitlines()
     log.info('\tfinished reading from down loaded files')
 
@@ -95,20 +102,26 @@ def main(config):
         queue_df = queue_df[ ~(queue_df.DatafileNameKey.isin(queue_df2.DatafileNameKey))]
         log.info('\tso far not completed: ' % (len(queue_df)))
     except Exception:
-        log.error('\n++++++++++++++++++++++\n\tproblem filtering completed jobs, ignoring\n++++++++++++++++++++++\n')
+        log.exception('\n++++++++++++++++++++++\n\tproblem filtering completed jobs, ignoring\n++++++++++++++++++++++\n')
 
 
     # -----------------------------------------------------
     # thread this with concurrent futures
     #------------------------------------------------------
     log.info('\tsubmit jobs to process manager')
-    pm = process_manager.ProcessManager(max_workers=200, db='isoform_download', table='task_queue_status', log=log)
-    for _, df in data_library.iterrows():
+    pm = process_manager.ProcessManager(max_workers=200, db='isoform_download.db', table='task_queue_status', log=log)
+    for count, df in data_library.iterrows():
         row = df.to_dict()
-        print  row['DatafileName']
+        if 0 == count % 512:
+            time.sleep(10)
+        if 0 == count % 2048:
+            log.info('\t\tsubmitting %s file: %s' % (count, row['DatafileName']))
+        if not os.path.isdir(config['mirna_isoform_matrix']['isoform_download_dir'] + row['Platform']):
+            os.makedirs(config['mirna_isoform_matrix']['isoform_download_dir'] + row['Platform'])
         outfilename = config['mirna_isoform_matrix']['isoform_download_dir'] + row['Platform'] + "/" + row['DatafileName'] 
         pm.submit(download_file, project_id, bucket_name, row['DatafileNameKey'], outfilename, '')
         time.sleep(0.2)
+    log.info('\tsubmitted %s total jobs to process manager' % (count))
 
     log.info('\tstart process manager completion check')
     pm.start()
