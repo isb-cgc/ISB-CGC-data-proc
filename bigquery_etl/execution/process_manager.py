@@ -102,7 +102,7 @@ class ProcessManager(object):
         """Record if error"""
         self.log.error('Got exception from %s: %s' % (future, exc))
         # see if you can get the traceback - Todo
-        raise Exception("Exception in a future", (future, exc))
+        # raise Exception("Exception in a future", (future, exc))
 
     def on_success(self, future, exc, f, *args, **kwargs):
         """Record if success"""
