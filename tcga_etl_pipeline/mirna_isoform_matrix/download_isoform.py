@@ -96,6 +96,7 @@ def main(config):
 
     # restart ETL; this gets the diff; also takes care of errors
     try:
+        conn = sqlite3.connect('isoform_download.db')
         sql = 'SELECT * from task_queue_status where errors="None"'
         queue_df2 = pd.read_sql_query(sql, conn)
         log.info('\tso far completed: ' % (len(queue_df2)))
