@@ -182,6 +182,9 @@ def merge_metadata_current_metadata(sdrf_metadata, barcode2metadata, log):
         except Exception as e:
             if '20' == aliquot[13:15]:
                 continue
+            # it looks like this occurs for samples that have annotations like 'Biospecimen identity unknown', where
+            # they wouldn't be assigned a UUID.  we get here if the aliquot should have been marked as bad by
+            # annotation but wasn't!?
             log.warning('problem with annotations for %s(%s) for type %s' % (aliquot, e, field2values['Datatype']))
     
 def store_metadata(config, log, table, key2metadata):   
