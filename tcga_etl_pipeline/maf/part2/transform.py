@@ -98,7 +98,7 @@ def add_columns(df, sample_code2letter, study):
 # 4. adds new columns
 # 5. removes any duplicate aliqouts
 #----------------------------------------
-def process_oncotator_output(project_id, bucket_name, data_library, bq_columns, sample_code2letter, oncotator_object_path):
+def process_oncotator_output(project_id, bucket_name, data_library, bq_columns, sample_code2letter, oncotator_object_path, oncotator_object_output_path):
     study = data_library['Study'].iloc[0]
 
     # this needed to stop pandas from converting them to FLOAT
@@ -126,9 +126,9 @@ def process_oncotator_output(project_id, bucket_name, data_library, bq_columns, 
         log.info('-'*10 + "{0}: Processing file {1}".format(file_count, oncotator_file) + '-'*10)
 
         try:
-            gcs = GcsConnector(project_id, bucket_name)
             # covert the file to a dataframe
             filename = oncotator_object_path + oncotator_file
+            gcs = GcsConnector(project_id, bucket_name)
             log.info('%s: converting %s to dataframe' % (study, filename))
             df = gcutils.convert_blob_to_dataframe(gcs, project_id, bucket_name, filename, log = log)
             log.info('%s: done converting %s to dataframe' % (study, filename))
@@ -194,7 +194,7 @@ def process_oncotator_output(project_id, bucket_name, data_library, bq_columns, 
         log.info('\tfinished remove_duplicates to collapse mutations with %s rows for %s' % (len(disease_bigdata_df), study))
 
         # convert the disease_bigdata_df to new-line JSON and upload the file
-        uploadpath = "tcga-runs/intermediary/MAF/bigquery_data_files/{0}.json".format(study)
+        uploadpath = oncotator_object_output_path + "{0}.json".format(study)
         log.info('%s: uploading %s to GCS' % (study, uploadpath))
         gcs.convert_df_to_njson_and_upload(disease_bigdata_df, uploadpath)
         log.info('%s: done uploading %s to GCS' % (study, uploadpath))
@@ -228,7 +228,7 @@ if __name__ == '__main__':
     # submit threads by disease  code
     pm = process_manager.ProcessManager(max_workers=33, db='maf.db', table='task_queue_status', log=log)
     for idx, df_group in df.groupby(['Study']):
-        future = pm.submit(process_oncotator_output, project_id, bucket_name, df_group, bq_columns, sample_code2letter, config['maf']['oncotator_object_path'])
+        future = pm.submit(process_oncotator_output, project_id, bucket_name, df_group, bq_columns, sample_code2letter, config['maf']['oncotator_object_path'], config['maf']['oncotator_object_output_path'])
         #process_oncotator_output( project_id, bucket_name, df_group, bq_columns, sample_code2letter)
         time.sleep(0.2)
     pm.start()
