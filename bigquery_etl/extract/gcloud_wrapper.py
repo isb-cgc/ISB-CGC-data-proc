@@ -172,16 +172,24 @@ class GcsConnector(object):
 
         log.info("Converting dataframe into a new-line delimited JSON file to save as %s" % (destination_blobname))
 
-        file_to_upload = StringIO()
-
         log.info('\tstart conversion of %s' % (destination_blobname))
+
+        dfjson = json.loads(df.to_json(orient='records'))
+        file_to_upload = StringIO()
         modcount = len(df) / 20
         count = 0
-        for _, rec in df.iterrows():
+
+        for rec in dfjson:
             if 0 == count % modcount:
                 log.info('\t\tconverted %s rows' % (count))
             count += 1
-            file_to_upload.write(rec.convert_objects(convert_numeric=False).to_json() + "\n")
+            file_to_upload.write(rec + "\n")
+        
+#         for _, rec in df.iterrows():
+#             if 0 == count % modcount:
+#                 log.info('\t\tconverted %s rows' % (count))
+#             count += 1
+#             file_to_upload.write(rec.convert_objects(convert_numeric=False).to_json() + "\n")
         file_to_upload.seek(0)
         log.info('\tcompleted conversion.  converted %s total rows for %s' % (count, destination_blobname))
 
