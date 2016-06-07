@@ -45,12 +45,13 @@ def melt_matrix(matrix_file, Platform, studies_map, config, log):
             buf.write("\t".join(map(str,(ParticipantBarcode, SampleBarcode, aliquot, SampleTypeLetterCode,  Study, Platform, i.split(".")[0], i.split(".")[1],  m))) + '\n')
     log.info('\t\tprocessed %s total lines' % (count))
             
-    log.info('\t\tsave to GCS')
+    file_name = matrix_file.split('/')[-1]
+    log.info('\t\tsave %s to GCS' % file_name)
     buf.seek(0)
     df = convert_file_to_dataframe(buf)
     df = cleanup_dataframe(df)
     gcs = GcsConnector(config['project_id'], config['buckets']['open'])
-    gcs.convert_df_to_njson_and_upload(df, config['mirna_isoform_matrix'][Platform]['output_dir'])
+    gcs.convert_df_to_njson_and_upload(df, config['mirna_isoform_matrix'][Platform]['output_dir'] + file_name)
     log.info('\t\tcompleted save to GCS')
     log.info('\tfinished melt matrix')
 
@@ -59,7 +60,7 @@ if __name__ == '__main__':
     matrix_file = sys.argv[1]
     Platform = sys.argv[2]
     config_file = sys.argv[3]
-    log_filename = 'etl_upload_isoform_matrix.log'
+    log_filename = 'etl_upload_isoform_matrix_%s.log' % (Platform)
     log_name = 'etl_upload_isoform_matrix'
     log = configure_logging(log_name, log_filename)
     log.info('begin uploading isoform %s matrix' % (Platform))
