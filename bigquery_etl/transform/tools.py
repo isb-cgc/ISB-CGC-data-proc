@@ -44,7 +44,7 @@ def cleanup_dataframe(df):
     for rep in na_values:
         df = df.replace(rep, np.nan)
 
-    log.info('\tremove empty spaces(this removes more than 1 space')
+    log.info('\tremove empty spaces(this removes more than 1 space)')
     df = df.applymap(lambda x: np.nan if isinstance(x, basestring) and x.isspace() else x)
 
     log.info('\tprevent problems with nan(numpy.nan) in the convert and strip step by replacing with \'_mv_\'')
