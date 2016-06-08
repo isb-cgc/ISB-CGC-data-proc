@@ -163,7 +163,7 @@ def process_oncotator_output(project_id, bucket_name, data_library, bq_columns, 
         # remove duplicates; various rules; see check duplicates)
         
         log.info('\tcalling check_duplicates to collapse aliquots with %s rows' % (len(disease_bigdata_df)))
-        disease_bigdata_df = check_duplicates.remove_maf_duplicates(disease_bigdata_df, sample_code2letter)
+        disease_bigdata_df = check_duplicates.remove_maf_duplicates(disease_bigdata_df, sample_code2letter, log)
         log.info('\tfinished check_duplicates to collapse aliquots with %s rows' % (len(disease_bigdata_df)))
 
         # enforce unique mutation--previous
