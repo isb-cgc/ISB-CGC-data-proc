@@ -172,21 +172,26 @@ def process_oncotator_output(project_id, bucket_name, data_library, bq_columns, 
         unique_mutation = ['Hugo_Symbol', 'Entrez_Gene_Id', 'Chromosome', 'Start_Position', 'End_Position', 'Reference_Allele', 'Tumor_Seq_Allele1', 'Tumor_Seq_Allele2',
                   'Tumor_AliquotBarcode']
         # merge mutations from multiple centers
-        log.info('\tconsolodate the centers for duplicate mutations into list for %s' % (study))
-        def concatcenters(df_group, **logmap):
-            log = logmap['log']
+        log.info('\tconsolidate the centers for duplicate mutations into list for %s' % (study))
+        seencenters = set()
+        def concatcenters(df_group):
             if len(df_group) > 1:
                 centers = list(set(df_group['Center'].tolist()))
                 uniquecenters = set()
+                delim = config['maf']['center_delim']
                 for center in centers:
-                    fields = center.split(';')
+                    fields = center.split(delim)
                     for field in fields:
                         uniquecenters.add(field)
-                df_group.loc[:,'Center'] = ";".join(sorted(list(uniquecenters)))
+                sortedunique = delim.join(sorted(list(uniquecenters)))
+                df_group.loc[:,'Center'] = sortedunique
+                if sortedunique not in seencenters:
+                    log.info('unique centers: %s' % sortedunique)
+                    seencenters.add(sortedunique)
             return df_group
 
-        disease_bigdata_df = disease_bigdata_df.groupby(unique_mutation).apply(concatcenters, **{'log': log})
-        log.info('\tfinished consolodating centers for duplicate mutations for %s' % (study))
+        disease_bigdata_df = disease_bigdata_df.groupby(unique_mutation).apply(concatcenters)
+        log.info('\tfinished consolidating centers for duplicate mutations for %s' % (study))
 
         # enforce unique mutation
         log.info('\tcalling remove_duplicates to collapse mutations with %s rows for %s' % (len(disease_bigdata_df), study))
