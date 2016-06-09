@@ -160,7 +160,7 @@
         "name": "Mutation_Status"
     }, 
     {
-        "type": "INTEGER", 
+        "type": "STRING", 
         "name": "NCBI_Build"
     }, 
     {
