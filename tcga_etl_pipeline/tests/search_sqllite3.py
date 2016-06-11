@@ -7,11 +7,11 @@ from datetime import datetime
 import sys
 import sqlite3
 
-def main(dbname, tablename):
+def main(dbname, sql):
     con = sqlite3.connect(dbname)
     try:
         cursor = con.cursor()
-        cursor.execute('select * from %s' % (tablename))
+        cursor.execute(sql)
         print '%s' % ('\t'.join(x[0] for x in cursor.description))
         count = 20
         for row in cursor:
