@@ -101,6 +101,7 @@ def merge_cghup(config, master_metadata, cghub_records, log):
                                 cghub_record[key] = dcc_metadata[key]
                             elif 'IncludeForAnalysis' == key:
                                 log.warning('\tIncludeForAnalysis mismatched values for %s:%s:%s\tcghub: %s\tdcc: %s' % (aliquot, filename, key, cghub_record[key], dcc_metadata[key]))
+                                cghub_record[key] = 'no'
                             else:
                                 log.warning('\tmismatched values for %s:%s:%s\n\t\tcghub:%s\n\t\tdcc:  %s' % (aliquot, filename, key, cghub_record[key], dcc_metadata[key]))
                 #now to merge the info
