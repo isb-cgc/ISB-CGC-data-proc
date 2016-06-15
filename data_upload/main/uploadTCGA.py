@@ -122,7 +122,8 @@ def merge_cghup(config, master_metadata, cghub_records, log):
 
 def process_platform(config, log_dir, log_name, tumor_type, platform, archive2metadata, archive_types2archives, barcode2annotations, exclude_samples):
     '''
-    
+    process the archives associated with the platform to obtain metadata from the sdrf archives and to upload the appropriate files from the 
+    exploded downloaded archives
     
     parameters:
         config: the configuration map
@@ -519,7 +520,6 @@ def uploadTCGA(configFileName):
             log.warning('\n\t====================\n\tnot processing annotations this run!\n\t====================')
             barcode2annotations = {}
         process_tumortypes(config, run_dir, tumor_type2platform2archive_types2archives, platform2archive2metadata, tumor_type2cghub_records, barcode2metadata, barcode2annotations, log)
-        
         
         # print out the stats
         metadata_modules = config['metadata_modules']
