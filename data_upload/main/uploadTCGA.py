@@ -101,6 +101,7 @@ def merge_cghup(config, master_metadata, cghub_records, log):
                                 cghub_record[key] = dcc_metadata[key]
                             elif 'IncludeForAnalysis' == key:
                                 log.warning('\tIncludeForAnalysis mismatched values for %s:%s:%s\tcghub: %s\tdcc: %s' % (aliquot, filename, key, cghub_record[key], dcc_metadata[key]))
+                                cghub_record[key] = 'no'
                             else:
                                 log.warning('\tmismatched values for %s:%s:%s\n\t\tcghub:%s\n\t\tdcc:  %s' % (aliquot, filename, key, cghub_record[key], dcc_metadata[key]))
                 #now to merge the info
@@ -121,7 +122,8 @@ def merge_cghup(config, master_metadata, cghub_records, log):
 
 def process_platform(config, log_dir, log_name, tumor_type, platform, archive2metadata, archive_types2archives, barcode2annotations, exclude_samples):
     '''
-    
+    process the archives associated with the platform to obtain metadata from the sdrf archives and to upload the appropriate files from the 
+    exploded downloaded archives
     
     parameters:
         config: the configuration map
@@ -182,6 +184,9 @@ def merge_metadata_current_metadata(sdrf_metadata, barcode2metadata, log):
         except Exception as e:
             if '20' == aliquot[13:15]:
                 continue
+            # it looks like this occurs for samples that have annotations like 'Biospecimen identity unknown', where
+            # they wouldn't be assigned a UUID.  we get here if the aliquot should have been marked as bad by
+            # annotation but wasn't!?
             log.warning('problem with annotations for %s(%s) for type %s' % (aliquot, e, field2values['Datatype']))
     
 def store_metadata(config, log, table, key2metadata):   
@@ -515,7 +520,6 @@ def uploadTCGA(configFileName):
             log.warning('\n\t====================\n\tnot processing annotations this run!\n\t====================')
             barcode2annotations = {}
         process_tumortypes(config, run_dir, tumor_type2platform2archive_types2archives, platform2archive2metadata, tumor_type2cghub_records, barcode2metadata, barcode2annotations, log)
-        
         
         # print out the stats
         metadata_modules = config['metadata_modules']

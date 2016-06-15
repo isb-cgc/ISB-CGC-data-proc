@@ -38,7 +38,9 @@ def store_metadata(config, log, table, key_metadata):
     field_names = datastore.ISBCGC_database_helper.field_names(table)
     field_name2column = dict([(column_name, index) for index, column_name in enumerate(field_names)])
     list_fields = config['list_fields']
-    log.info('\tstarting store metadata')
+    log.info('\tstarting store metadata for %s' % (table))
+    # test issue 758
+    maftype2protocol2count = {}
     for metadata in key_metadata.itervalues():
         try:
             # skip cellline/control samples:
@@ -76,6 +78,20 @@ def store_metadata(config, log, table, key_metadata):
                     else:
                         not_data_fields.add(field)
                     
+                    # test issue 758
+                    if 'SecurityProtocol' == field:
+                        protocol2count = None
+                        if metadata['DatafileName'].endswith('protected.maf'):
+                            protocol2count = maftype2protocol2count.setdefault('protected', {})
+                        elif metadata['DatafileName'].endswith('somatic.maf'):
+                            protocol2count = maftype2protocol2count.setdefault('somatic', {})
+                        elif metadata['DatafileName'].endswith('vcf'):
+                            protocol2count = maftype2protocol2count.setdefault('vcf', {})
+                        
+                        if dict == type(protocol2count):
+                            newcount = protocol2count.setdefault(metadata['SecurityProtocol'], 0) + 1
+                            protocol2count[metadata['SecurityProtocol']] = newcount
+                    
                     if 'DatafileUploaded' == field and 'true' == value:
                         log.log_info('DatafileUploaded should not be true for %s:%s' % (metadata['Platform'], metadata['DatafileName']))
                         count_upload += 1
@@ -100,6 +116,13 @@ def store_metadata(config, log, table, key_metadata):
             log.exception('problem in store_metadata()')
             raise e
     log.info('\tsetup %s total records, %s to upload with extensions %s' % (count, count_upload, ','.join(upload_exts)))
+
+    # test issue 758
+    if 0 < len(maftype2protocol2count):
+        log.info('\tmaf security binning:')
+        for filetype, protocol2count in maftype2protocol2count.iteritems():
+            for protocol, count in protocol2count.iteritems():
+                log.info('\t\t%s: %s\t%s' % (filetype, protocol, count))
 
     # now save to cloudsql
     datastore.ISBCGC_database_helper.insert(config, insert_str_listlist, table, log)

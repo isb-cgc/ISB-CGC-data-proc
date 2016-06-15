@@ -91,7 +91,7 @@ def upload_run_files(config, path, log):
                 filepath = '%s/%s' % (dirpath, filename)
                 upload_file(config, filepath, bucket_name, config['base_run_upload_folder'] + filepath, log)
             else:
-                print '\t\t%s %s/%s' % (config['base_run_upload_folder'], dirpath, filename)
+                log.info('\t\tfolder: %s path: %s/%s' % (config['base_run_upload_folder'], dirpath, filename))
     log.info('finished upload of run files')
 
 
