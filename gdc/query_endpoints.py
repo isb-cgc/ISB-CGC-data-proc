@@ -21,13 +21,16 @@ import uuid
 cases_fields = []
 files_fields = []
 
+verboseFlag = 1
+
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 def get_all_case_ids ( cases_endpt ):
 
-    print " "
-    print " >>> in get_all_case_ids ... ", cases_endpt
-    print " "
+    if ( verboseFlag >= 1 ):
+        print " "
+        print " >>> in get_all_case_ids ... ", cases_endpt
+        print " "
 
     maxSize = 1000
     ## maxSize = 10
@@ -43,10 +46,10 @@ def get_all_case_ids ( cases_endpt ):
                    'from': fromStart, 
                    'size': maxSize }
 
-        ## print " get request ", cases_endpt, params
+        if ( verboseFlag >= 3 ): print " get request ", cases_endpt, params
         response = requests.get ( cases_endpt, params=params )
         rj = response.json()
-        ## print json.dumps ( rj, indent=4 )
+        if ( verboseFlag >= 3 ): print json.dumps ( rj, indent=4 )
 
         ## expecting something like this in each rj['data']['hits']:
         ##    {
@@ -61,24 +64,25 @@ def get_all_case_ids ( cases_endpt ):
             iPages = rj['data']['pagination']['pages']
             iTotal = rj['data']['pagination']['total']
             iSize  = rj['data']['pagination']['size']
-            ## print iCount, iFrom, iPages, iTotal, iSize
+            if ( verboseFlag >= 3 ): print iCount, iFrom, iPages, iTotal, iSize
 
             fromStart += iCount
             if ( iCount == 0 ):
-                ## print " got nothing back ... (?) "
+                if ( verboseFlag >= 2 ): print " got nothing back ... (?) "
                 done = 1
 
             for ii in range(iCount):
-                ## print ii, rj['data']['hits'][ii]
+                if ( verboseFlag >= 3 ): print ii, rj['data']['hits'][ii]
                 case_id = rj['data']['hits'][ii]['case_id']
                 submitter_id = rj['data']['hits'][ii]['submitter_id']
-                ## print case_id, submitter_id
+                if ( verboseFlag >= 3 ): print case_id, submitter_id
                 if ( case_id not in caseID_map ):
                     caseID_map[case_id] = submitter_id
                 else:
-                    print " already have this one in dict ?!?! ", ii, iCount, case_id, submitter_id
+                    if ( verboseFlag >= 3 ): 
+                        print " already have this one in dict ?!?! ", ii, iCount, case_id, submitter_id
 
-            print "         ", len(caseID_map)
+            if ( verboseFlag >= 1 ): print "         ", len(caseID_map)
 
         except:
             done = 1
@@ -86,17 +90,16 @@ def get_all_case_ids ( cases_endpt ):
         ## temporary hack for early exist ...
         ## done = 1
 
-    print " returning map with %d case ids " % len(caseID_map)
+    if ( verboseFlag >= 1 ): print " returning map with %d case ids " % len(caseID_map)
 
-    ## TODO: write out this mapping as a two-column output file
-    fName = "mapID." + uuid.uuid1().hex + ".tsv"
+    ## write out this mapping as a two-column output file
+    fName = "caseIDmap." + uuid.uuid1().hex + ".tsv"
     fh = file ( fName, 'w' )
     allKeys = caseID_map.keys()
     allKeys.sort()
     for aKey in allKeys:
         fh.write ( '%s\t%s\n' % ( aKey, caseID_map[aKey] ) )
     fh.close()
-    sys.exit(-1)
 
     return ( caseID_map )
 
@@ -104,9 +107,10 @@ def get_all_case_ids ( cases_endpt ):
 
 def getCaseAndFileInfo ( cases_endpt, files_endpt, caseID_map ):
 
-    print " "
-    print " >>> in getCaseAndFileInfo ... ", cases_endpt, files_endpt, len(caseID_map)
-    print " "
+    if ( verboseFlag >= 1 ):
+        print " "
+        print " >>> in getCaseAndFileInfo ... ", cases_endpt, files_endpt, len(caseID_map)
+        print " "
 
     allCases = caseID_map.keys()
     allCases.sort()
@@ -116,9 +120,10 @@ def getCaseAndFileInfo ( cases_endpt, files_endpt, caseID_map ):
 
     for case_id in allCases:
 
-        print " "
-        print " "
-        print " in getCaseAndFileInfo ... looping over allCases ... ", case_id
+        if ( verboseFlag >= 3 ):
+            print " "
+            print " "
+            print " in getCaseAndFileInfo ... looping over allCases ... ", case_id
         caseInfo = get_case_info ( cases_endpt, case_id )
 
 ##        try:
@@ -130,8 +135,9 @@ def getCaseAndFileInfo ( cases_endpt, files_endpt, caseID_map ):
 ##            print " NO sample_ids FOUND in caseInfo "
 
         if ( case_id not in caseID_dict ):
-            print case_id
-            print " creating caseID_entry for this case ", case_id
+            if ( verboseFlag >= 3 ):
+                print case_id
+                print " creating caseID_entry for this case ", case_id
             caseID_dict[case_id] = [ caseInfo ]
         else:
             print " already know about this case ??? !!! "
@@ -143,48 +149,53 @@ def getCaseAndFileInfo ( cases_endpt, files_endpt, caseID_map ):
         filesInfo = get_files_by_case_id ( files_endpt, case_id )
 
         # parse the files returned above ...
-        print " --> got back %d files for this CASE " % len ( filesInfo )
-        ## print filesInfo
+        if ( verboseFlag >= 3 ):
+            print " --> got back %d files for this CASE " % len ( filesInfo )
+        if ( verboseFlag >= 4 ):
+            print filesInfo
         for aFile in filesInfo:
             file_id = aFile['file_id']
             if ( file_id not in fileID_dict ):
-                print file_id
-                print " creating fileID_dict entry for this case ", case_id, file_id
                 fileID_dict[file_id] = [ aFile, [ case_id ], [], [] ]
-                print fileID_dict[file_id]
+                if ( verboseFlag >= 3 ):
+                    print file_id
+                    print " creating fileID_dict entry for this case ", case_id, file_id
+                    print fileID_dict[file_id]
             else:
-                print " already know about this file ... ", file_id
                 curInfo = fileID_dict[file_id][0]
                 curCaseList = fileID_dict[file_id][1]
                 curSampleList = fileID_dict[file_id][2]
                 curSampleList2 = fileID_dict[file_id][3]
                 curCaseList += [ case_id ]
                 fileID_dict[file_id] = [ curInfo, curCaseList, curSampleList, curSampleList2 ]
-                print " AAA " , file_id, len(curCaseList), len(curSampleList)
-                print fileID_dict[file_id]
+                if ( verboseFlag >= 3 ): 
+                    print " already know about this file ... ", file_id
+                    print " AAA " , file_id, len(curCaseList), len(curSampleList)
+                    print fileID_dict[file_id]
 
         try:
-            print " "
-            print " "
-            print " SAMPLES for this CASE : "
-            print caseInfo['sample_ids']
-            print " looping over samples ... "
+            if ( verboseFlag >= 4 ):
+                print " "
+                print " "
+                print " SAMPLES for this CASE : "
+                print caseInfo['sample_ids']
+                print " looping over samples ... "
             numSamples = len ( caseInfo['sample_ids'] )
             for ii in range(numSamples):
                 aSample = caseInfo['sample_ids'][ii]
                 aSample2 = caseInfo['submitter_sample_ids'][ii]
-                print aSample, aSample2
+                if ( verboseFlag >= 4 ): print aSample, aSample2
                 filesInfoB = get_files_by_sample_id ( files_endpt, aSample )
-                print " --> got back %d files for this SAMPLE " % len ( filesInfoB )
+                if ( verboseFlag >= 4 ): print " --> got back %d files for this SAMPLE " % len ( filesInfoB )
                 for bFile in filesInfoB:
                     file_id = bFile['file_id']
                     if ( file_id not in fileID_dict ):
-                        print file_id
-                        print " creating fileID_dict entry for this sample ", aSample, file_id
                         fileID_dict[file_id] = [ aFile, [], [ aSample ], [ aSample2 ] ]
-                        print fileID_dict[file_id]
+                        if ( verboseFlag >= 4 ):
+                            print file_id
+                            print " creating fileID_dict entry for this sample ", aSample, file_id
+                            print fileID_dict[file_id]
                     else:
-                        print " already know about this file ... ", file_id
                         curInfo = fileID_dict[file_id][0]
                         curCaseList = fileID_dict[file_id][1]
                         curSampleList = fileID_dict[file_id][2]
@@ -192,15 +203,18 @@ def getCaseAndFileInfo ( cases_endpt, files_endpt, caseID_map ):
                         curSampleList += [ aSample ]
                         curSampleList2 += [ aSample2 ]
                         fileID_dict[file_id] = [ curInfo, curCaseList, curSampleList, curSampleList2 ]
-                        print " BBB ", file_id, len(curCaseList), len(curSampleList)
-                        print fileID_dict[file_id]
+                        if ( verboseFlag >= 4 ):
+                            print " already know about this file ... ", file_id
+                            print " BBB ", file_id, len(curCaseList), len(curSampleList)
+                            print fileID_dict[file_id]
                     
         except:
             pass
 
-    print " "
-    print " returning dicts with %d cases and %d files " % ( len(caseID_dict), len(fileID_dict) )
-    print " " 
+    if ( verboseFlag >= 1 ):
+        print " "
+        print " returning dicts with %d cases and %d files " % ( len(caseID_dict), len(fileID_dict) )
+        print " " 
 
     return ( caseID_dict, fileID_dict )
 
@@ -208,9 +222,10 @@ def getCaseAndFileInfo ( cases_endpt, files_endpt, caseID_map ):
 
 def get_case_info ( cases_endpt, case_id ):
 
-    print " "
-    print " >>> in get_case_info ... ", cases_endpt, case_id
-    print " "
+    if ( verboseFlag >= 3 ):
+        print " "
+        print " >>> in get_case_info ... ", cases_endpt, case_id
+        print " "
 
     global cases_fields
 
@@ -221,10 +236,12 @@ def get_case_info ( cases_endpt, case_id ):
 
     params = { 'filters': json.dumps(filt) }
 
-    print " get request ", cases_endpt, params
+    if ( verboseFlag >= 4 ): 
+        print " get request ", cases_endpt, params
     response = requests.get ( cases_endpt, params=params )
     rj = response.json()
-    ## print json.dumps ( rj, indent=4 )
+    if ( verboseFlag >= 5 ): 
+        print json.dumps ( rj, indent=4 )
 
     try:
         if ( len ( rj['data']['hits'] ) != 1 ):
@@ -239,7 +256,7 @@ def get_case_info ( cases_endpt, case_id ):
 
         for aField in fields:
             if ( aField not in cases_fields ): 
-                print " adding new field to cases_fields list : ", aField
+                ## print " adding new field to cases_fields list : ", aField
                 cases_fields += [ aField ]
 
         return ( caseInfo )
@@ -255,9 +272,10 @@ def get_case_info ( cases_endpt, case_id ):
 
 def get_files_by_case_id ( files_endpt, case_id ):
 
-    print " "
-    print " >>> in get_files_by_case_id ... ", files_endpt, case_id
-    print " "
+    if ( verboseFlag >= 4 ):
+        print " "
+        print " >>> in get_files_by_case_id ... ", files_endpt, case_id
+        print " "
 
     global files_fields
 
@@ -271,10 +289,10 @@ def get_files_by_case_id ( files_endpt, case_id ):
                'from': 1,
                'size': 1000 }
 
-    print " get request ", files_endpt, params
+    if ( verboseFlag >= 5 ): print " get request ", files_endpt, params
     response = requests.get ( files_endpt, params=params )
     rj = response.json()
-    ## print json.dumps ( rj, indent=4 )
+    if ( verboseFlag >= 5 ): print json.dumps ( rj, indent=4 )
 
     try:
         for ii in range(len(rj['data']['hits'])):
@@ -282,7 +300,7 @@ def get_files_by_case_id ( files_endpt, case_id ):
             fields.sort()
             for aField in fields:
                 if ( aField not in files_fields ): 
-                    print " adding new field to files_fields list : ", aField
+                    ## print " adding new field to files_fields list : ", aField
                     files_fields += [ aField ]
     except:
         pass
@@ -298,9 +316,10 @@ def get_files_by_case_id ( files_endpt, case_id ):
 
 def get_files_by_sample_id ( files_endpt, sample_id ):
 
-    print " "
-    print " >>> in get_files_by_sample_id ... ", files_endpt, sample_id
-    print " "
+    if ( verboseFlag >=3 ):
+        print " "
+        print " >>> in get_files_by_sample_id ... ", files_endpt, sample_id
+        print " "
 
     global files_fields
 
@@ -314,10 +333,10 @@ def get_files_by_sample_id ( files_endpt, sample_id ):
                'from': 1,
                'size': 1000 }
 
-    print " get request ", files_endpt, params
+    if ( verboseFlag >= 4 ): print " get request ", files_endpt, params
     response = requests.get ( files_endpt, params=params )
     rj = response.json()
-    ## print json.dumps ( rj, indent=4 )
+    if ( verboseFlag >= 4 ): print json.dumps ( rj, indent=4 )
 
     try:
         for ii in range(len(rj['data']['hits'])):
@@ -325,7 +344,7 @@ def get_files_by_sample_id ( files_endpt, sample_id ):
             fields.sort()
             for aField in fields:
                 if ( aField not in files_fields ): 
-                    print " adding new field to files_fields list : ", aField
+                    ## print " adding new field to files_fields list : ", aField
                     files_fields += [ aField ]
     except:
         pass
@@ -338,9 +357,10 @@ def get_files_by_sample_id ( files_endpt, sample_id ):
 
 def examineCasesInfo ( caseID_dict ):
 
-    print " "
-    print " >>> in examineCasesInfo ... ", len(caseID_dict)
-    print " "
+    if ( verboseFlag >= 1 ):
+        print " "
+        print " >>> in examineCasesInfo ... ", len(caseID_dict)
+        print " "
 
     ## let's explore the various properties that have been collected
     ## for each of the CASEs ...
@@ -366,10 +386,11 @@ def examineCasesInfo ( caseID_dict ):
     for aField in cases_fields:
         numV = len ( caseFieldValues[aField] )
         if ( numV > 0 and numV < 50 ):
-            print aField, caseFieldValues[aField]
+            if ( verboseFlag >= 2 ): print aField, caseFieldValues[aField]
             
-    print " "
-    print " "
+    if ( verboseFlag >= 1 ):
+        print " "
+        print " "
 
     return
 
@@ -377,9 +398,10 @@ def examineCasesInfo ( caseID_dict ):
 
 def examineFilesInfo ( fileID_dict ):
 
-    print " "
-    print " >>> in examineFilesInfo ... ", len(fileID_dict)
-    print " "
+    if ( verboseFlag >= 1 ):
+        print " "
+        print " >>> in examineFilesInfo ... ", len(fileID_dict)
+        print " "
 
     ## and now let's do the same for each of the FILEs ...
 
@@ -403,17 +425,18 @@ def examineFilesInfo ( fileID_dict ):
     for aField in files_fields:
         numV = len ( fileFieldValues[aField] )
         if ( numV > 0 and numV < 50 ):
-            print aField, fileFieldValues[aField]
+            if ( verboseFlag >= 2 ): print aField, fileFieldValues[aField]
 
     return 
 
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-def writeTable4BigQuery ( caseID_dict, fileID_dict ):
+def writeTable4BigQuery ( fh, dbName, caseID_dict, fileID_dict ):
 
-    print " "
-    print " >>> in writeTables4BigQuery ... ", len(caseID_dict), len(fileID_dict)
-    print " "
+    if ( verboseFlag >= 1 ):
+        print " "
+        print " >>> in writeTables4BigQuery ... ", len(caseID_dict), len(fileID_dict)
+        print " "
 
     for file_id in fileID_dict:
         fileInfo  = fileID_dict[file_id][0]
@@ -421,33 +444,36 @@ def writeTable4BigQuery ( caseID_dict, fileID_dict ):
         sampList  = fileID_dict[file_id][2]
         sampList2 = fileID_dict[file_id][3]
 
-        print " file_id : ", file_id
-        print " fileInfo : ", fileInfo
-        print " caseList : ", caseList
-        print " sampList : ", sampList
-        print " sampList2: ", sampList2
-
-        for case_id in caseList:
-            print case_id
-            print caseID_dict[case_id]
-
-        stopNOW = 0
+        if ( verboseFlag >= 3 ):
+            print " file_id : ", file_id
+            print " fileInfo : ", fileInfo
+            print " caseList : ", caseList
+            for case_id in caseList:
+                print "     ", case_id
+                print "         ", caseID_dict[case_id]
+            print " sampList : ", sampList
+            print " sampList2: ", sampList2
 
         ## built up the output line ...
         ## TODO: write this properly to an output file ... also if a value is "None", then do not echo
 
-        outLine = ''
-        outLine += '%s' % file_id
+        outLine = '%s' % dbName
+        outLine += '\t%s' % file_id
         for aField in [ 'submitter_id', 'data_category', 'data_type', 'type', 'file_name', 'experimental_strategy', 'platform', 'access', 'state', 'data_format', 'file_state', 'updated_datetime', 'created_datetime', 'file_size', 'md5sum' ]:
             try:
-                outLine += '\t%s' % fileInfo[aField]
+                if ( fileInfo[aField] != "None" ):
+                    outLine += '\t%s' % fileInfo[aField]
+                else:
+                    outLine += '\t'
             except:
                 outLine += '\t'
         outLine += '\t'
+
         aclInfo = fileInfo['acl']
         for ii in range(len(aclInfo)):
             outLine += '%s' % aclInfo[ii]
             if ( ii < len(aclInfo)-1 ): outLine += ';'
+
         if ( len(caseList) == 1 ):
             case_id = caseList[0]
             caseInfo = caseID_dict[case_id][0]
@@ -456,37 +482,48 @@ def writeTable4BigQuery ( caseID_dict, fileID_dict ):
             outLine += '\t\t'
         else:
             outLine += '\tmulti\tmulti'
+
         if ( len(sampList) == 1 ):
             sample_id = sampList[0]
             sample_id2 = sampList2[0]
-            stopNOW = 1
             outLine += '\t%s\t%s' % ( sample_id, sample_id2 )
         elif ( len(sampList) == 0 ):
             outLine += '\t\t'
         else:
             outLine += '\tmulti\tmulti'
 
-        print "OUTLINE:", outLine
-
-        ## if ( stopNOW ): sys.exit(-1)
+        fh.write ( "%s\n" % outLine )
 
 
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 def main():
 
-    if ( 0 ):
-        cases_endpt = "https://gdc-api.nci.nih.gov/legacy/cases"
-        files_endpt = "https://gdc-api.nci.nih.gov/legacy/files"
-    else:
-        cases_endpt = "https://gdc-api.nci.nih.gov/cases"
-        files_endpt = "https://gdc-api.nci.nih.gov/files"
+    ## define where the data is going to come from ...
+    GDC_endpts = {}
+    GDC_endpts['current'] = {}
+    GDC_endpts['current']['cases'] = "https://gdc-api.nci.nih.gov/cases"
+    GDC_endpts['current']['files'] = "https://gdc-api.nci.nih.gov/files"
+    GDC_endpts['legacy'] = {}
+    GDC_endpts['legacy']['cases'] = "https://gdc-api.nci.nih.gov/legacy/cases"
+    GDC_endpts['legacy']['files'] = "https://gdc-api.nci.nih.gov/legacy/files"
 
-    if ( 1 ):
-        caseID_map = get_all_case_ids ( cases_endpt )
-        ( caseID_dict, fileID_dict ) = getCaseAndFileInfo ( cases_endpt, files_endpt, caseID_map )
+    fName = "bqData." + uuid.uuid1().hex + ".tsv"
+    fh = file ( fName, 'w' )
 
-        print " DONE "
+    for dbName in GDC_endpts.keys():
+
+        print " "
+        print " "
+        print " Querying GDC database %s for all cases and files " % dbName
+
+        caseID_map = get_all_case_ids ( GDC_endpts[dbName]['cases'] )
+        ( caseID_dict, fileID_dict ) = \
+            getCaseAndFileInfo ( GDC_endpts[dbName]['cases'], \
+                                 GDC_endpts[dbName]['files'], \
+                                 caseID_map )
+
+        print " DONE processing %s database " % dbName
         print " "
         cases_fields.sort()
         files_fields.sort()
@@ -499,13 +536,15 @@ def main():
             print "     ", aField
         print " "
 
-    print " "
-    print " "
+        print " "
+        print " "
 
-    examineCasesInfo ( caseID_dict )
-    examineFilesInfo ( fileID_dict )
+        examineCasesInfo ( caseID_dict )
+        examineFilesInfo ( fileID_dict )
 
-    writeTable4BigQuery ( caseID_dict, fileID_dict )
+        writeTable4BigQuery ( fh, dbName, caseID_dict, fileID_dict )
+
+    fh.close()
 
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
