@@ -66,40 +66,45 @@ Notification    3
 Redaction    5
 
 Annotation Category    Id
+annotationClassification    annotationCategoryName    annotationCategoryId
+CenterNotification:Center QC failed    28
+CenterNotification:Item Flagged Low Quality    465
+CenterNotification:Item flagged DNU    29
+Notification:Acceptable treatment for TCGA tumor    355
+Notification:Alternate sample pipeline    205
+Notification    BCR Notification:    38
+Notification:Barcode incorrect    243
+Notification:Case submitted is found to be a recurrence after submission    203
+Notification:Duplicate item    11
+Notification:History of acceptable prior treatment related to a prior/other malignancy    202
+Notification:History of unacceptable prior treatment related to a prior/other malignancy    201
+Notification:Item does not meet study protocol    15
+Notification:Item in special subset    17
+Notification:Item is noncanonical    21
+Notification    Molecular analysis outside specification:    10
+Notification:Neoadjuvant therapy    7
+Notification:Normal tissue origin incorrect    35
+Notification:Pathology outside specification    9
+Notification:Permanently missing item or object    36
+Notification:Prior malignancy    6
+Notification    Qualification:metrics changed    8
+Notification:Qualified in error    18
+Notification:Sample compromised    13
+Notification:Synchronous malignancy    204
+Notification:WGA Failure    181
+Observation:General    30
+Observation:Item may not meet study protocol    25
+Observation:Normal class but appears diseased    24
+Observation:Tumor class but appears normal    23
+*Redaction:Administrative Compliance    37
+*Redaction:Biospecimen identity unknown    242
+*Redaction:Duplicate case    27
+*Redaction:Genotype mismatch    3
+*Redaction:Inadvertently shipped    241
+*Redaction:Subject identity unknown    5
+*Redaction:Subject withdrew consent    4
 *Redaction:Tumor tissue origin incorrect    1
 *Redaction:Tumor type incorrect    2
-*Redaction:Genotype mismatch    3
-*Redaction:Subject withdrew consent    4
-*Redaction:Subject identity unknown    5
-Notification:Prior malignancy    6
-Notification:Neoadjuvant therapy    7
-Notification:Qualification metrics changed    8
-Notification:Pathology outside specification    9
-Notification:Molecular analysis outside specification    10
-Notification:Duplicate item    11
-Notification:Sample compromised    13
-Notification:Clinical data insufficient    14
-*Notification:Item does not meet study protocol    15
-Notification:Item in special subset    17
-Notification:Qualified in error    18
-Notification:Item is noncanonical    21
-Notification:New notification type    22
-Observation:Tumor class but appears normal    23
-Observation:Normal class but appears diseased    24
-Observation:Item may not meet study protocol    25
-Observation:New observation type    26
-Redaction:Duplicate case    27
-CenterNotification:Center QC failed    28
-*CenterNotification:Item flagged DNU    29
-Observation:General    30
-Permanently missing item or object    36
-Notification:WGA Failure    181
-Normal tissue origin incorrect    35
-Redaction:Administrative Compliance    37
-*Notification:History of unacceptable prior treatment related to a prior/other malignancy    201
-Notification:History of acceptable prior treatment related to a prior/other malignancy    202
-Notification:Case submitted is found to be a recurrence after submission    203
-Notification:Synchronous malignancy    204
 
 *indicates do not include
 '''
@@ -134,7 +139,7 @@ def process_annotations(config, run_dir, log_name):
     post_run_file(run_dir, 'dcc_annotations.json', pprint.pformat(annotations, width = 300))
     log.info('\tfinish read annotations')
     
-    exclude_annotation_catagories = [1,2,3,4,5,15,29,201]
+    exclude_annotation_catagories = config['exclude_annotation_catagories']
     barcode2annotation = {}
     count = 0
     count_bad = 0
