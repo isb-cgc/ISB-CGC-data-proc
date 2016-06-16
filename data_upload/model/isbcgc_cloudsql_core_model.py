@@ -20,9 +20,9 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 '''
-from isbcgc_cloudsql_model import ISBCGC_database_helper
+import isbcgc_cloudsql_model
 
-class ISBCGC_core(ISBCGC_database_helper):
+class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
     """
     this class manages the cloud sql metadata upload
     """
@@ -501,12 +501,22 @@ class ISBCGC_core(ISBCGC_database_helper):
         ]
     }
     
-    metadata_tables = {
+    isbcgc_cloudsql_model.ISBCGC_database_helper.metadata_tables = {
         'metadata_clinical': metadata_clinical,
         'metadata_biospecimen': metadata_biospecimen,
         'metadata_data': metadata_data,
         'metadata_samples': metadata_samples
     }
 
+    self = None
+
     def __init__(self, config, log):
-        ISBCGC_database_helper.__init__(self, config, log, self.metadata_tables)
+        isbcgc_cloudsql_model.ISBCGC_database_helper.__init__(self, config, log)
+
+    @classmethod
+    def initialize(cls, config, log):
+        if cls.self:
+            log.warning('class has already been initialized')
+        else:
+            cls.self = ISBCGC_database_helper(config, log)
+

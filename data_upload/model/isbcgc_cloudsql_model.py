@@ -34,6 +34,8 @@ class ISBCGC_database_helper():
         'key': ssl_dir + 'client-key.pem' 
     }
 
+    metadata_tables = None
+
     @classmethod
     def getDBConnection(cls, config, log):
         try:
@@ -55,7 +57,7 @@ class ISBCGC_database_helper():
             
         return db
 
-    def __init__(self, config, log, metadata_tables):
+    def __init__(self, config, log):
         db = None
         cursor = None
         try:
@@ -64,21 +66,21 @@ class ISBCGC_database_helper():
             db = self.getDBConnection(config, log)
             cursor = db.cursor()
             cursor.execute('select table_name from information_schema.tables where table_schema = "%s"' % (config['cloudsql']['db']))
-            not_found = dict(metadata_tables)
+            not_found = dict(self.metadata_tables)
             found = {}
             for next_row in cursor:
                 print next_row[0]
-                if next_row[0] in metadata_tables:
-                    found[next_row[0]] = metadata_tables[next_row[0]]
+                if next_row[0] in self.metadata_tables:
+                    found[next_row[0]] = self.metadata_tables[next_row[0]]
                     not_found.pop(next_row[0])
             if 0 != len(found) and config['cloudsql']['update_schema']:
                 # need to delete in foreign key dependency order
                 found_list = []
-                for table_name in metadata_tables:
+                for table_name in self.metadata_tables:
                     if table_name in found:
                         found_list += [found[table_name]]
                 self._drop_schema(cursor, config, found_list, log)
-                self._create_schema(cursor, config, metadata_tables.values(), log)
+                self._create_schema(cursor, config, self.metadata_tables.values(), log)
             elif 0 != len(not_found):
                 log.info('\tcreating table(s) %s' % (', '.join(not_found)))
                 self._create_schema(cursor, config, not_found.values(), log)
@@ -91,13 +93,6 @@ class ISBCGC_database_helper():
             if db:
                 db.close()
 
-    @classmethod
-    def initialize(cls, config, log):
-        if cls.self:
-            log.warning('class has already been initialized')
-        else:
-            cls.self = ISBCGC_database_helper(config, log)
-    
     def _drop_schema(self, cursor, config, tables, log):
         drop_schema_template = 'DROP TABLE %s.%s'
         
@@ -319,3 +314,4 @@ class ISBCGC_database_helper():
     @classmethod
     def field_names(cls, table):
         return [field_parts[0] for field_parts in cls.metadata_tables[table]['columns']]
+

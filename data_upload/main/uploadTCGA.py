@@ -529,8 +529,6 @@ def uploadTCGA(configFileName):
     finally:
         if executor:
             executor.shutdown(wait=False)
-        if gcs_wrapper:
-            gcs_wrapper.close_connection()
     log.info('finish uploadTCGA()')
     
     try:
@@ -538,6 +536,9 @@ def uploadTCGA(configFileName):
         upload_run_files(config, run_dir, log)
     except Exception as e:
         log.exception('problem moving the logs and run files to GCS')
+    finally:
+        if gcs_wrapper:
+            gcs_wrapper.close_connection()
 
     print datetime.now(), 'finish uploadTCGA()'
 
