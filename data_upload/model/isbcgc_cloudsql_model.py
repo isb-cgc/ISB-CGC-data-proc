@@ -22,6 +22,7 @@ limitations under the License.
 '''
 import MySQLdb
 import time
+from collections import OrderedDict
 
 class ISBCGC_database_helper():
     """
@@ -62,12 +63,13 @@ class ISBCGC_database_helper():
         cursor = None
         try:
             if not config['process_bio']:
+                log.warning('process_bio must be true for initialization to proceed')
                 return
             db = self.getDBConnection(config, log)
             cursor = db.cursor()
             cursor.execute('select table_name from information_schema.tables where table_schema = "%s"' % (config['cloudsql']['db']))
-            not_found = dict(self.metadata_tables)
-            found = {}
+            not_found = OrderedDict(self.metadata_tables)
+            found = OrderedDict()
             for next_row in cursor:
                 print next_row[0]
                 if next_row[0] in self.metadata_tables:
@@ -76,12 +78,12 @@ class ISBCGC_database_helper():
             if 0 != len(found) and config['cloudsql']['update_schema']:
                 # need to delete in foreign key dependency order
                 found_list = []
-                for table_name in self.metadata_tables:
+                for table_name in reversed(self.metadata_tables):
                     if table_name in found:
                         found_list += [found[table_name]]
                 self._drop_schema(cursor, config, found_list, log)
                 self._create_schema(cursor, config, self.metadata_tables.values(), log)
-            elif 0 != len(not_found):
+            if 0 != len(not_found):
                 log.info('\tcreating table(s) %s' % (', '.join(not_found)))
                 self._create_schema(cursor, config, not_found.values(), log)
             else:
@@ -113,7 +115,9 @@ class ISBCGC_database_helper():
         foreign_key_template = 'CONSTRAINT %s FOREIGN KEY (%s) REFERENCES %s(%s),\n\t'
 
         for table in tables:
-            columnDefinitions = primary_key_template % (table['primary_key_name'])
+            columnDefinitions = ''
+            if 'primary_key_name' in table:
+                columnDefinitions = primary_key_template % (table['primary_key_name'])
             columnDefinitions += ''.join([create_col_template % (column[0], column[1], column[2]) for column in table['columns']])
             if 'natural_key_cols' in table and 0 < table['natural_key_cols']:
                 index_cols = ','.join(table['natural_key_cols'])
@@ -124,9 +128,10 @@ class ISBCGC_database_helper():
                     index_cols = ','.join(index_def)
                     columnDefinitions += index_template % (table['table_name'] + str(count), index_cols)
                     count += 1
-            if 'foreign_key' in table:
-                columnDefinitions += foreign_key_template % ('fk_' + table['table_name'] + '_' + table['foreign_key'][1], 
-                                            table['foreign_key'][0], table['foreign_key'][1], table['foreign_key'][2])
+            if 'foreign_keys' in table:
+                for index in range(len(table['foreign_keys'])):
+                    columnDefinitions += foreign_key_template % ('fk_' + table['table_name'] + '_' + table['foreign_keys'][index][1], 
+                                                table['foreign_keys'][index][0], table['foreign_keys'][index][1], table['foreign_keys'][index][2])
             columnDefinitions = columnDefinitions[:-3]
             table_statement = create_table_template % (config['cloudsql']['db'], table['table_name'], columnDefinitions)
             log.info('\tcreating table %s:\n%s' % (config['cloudsql']['db'], table_statement))
@@ -206,12 +211,13 @@ class ISBCGC_database_helper():
             count = 0
             report = len(params) / 20
             for paramset in params:
-                if 0 == count % report:
+                if 0 == report or 0 == count % report:
                     log.info('\t\t\tupdated %s records' % (count))
                 count += 1
                 try:
                     cursor.execute(stmt, paramset)
                 except MySQLdb.OperationalError as oe:
+                    log.warning('checking operation error: %s' % (oe))
                     if oe.errno == 1205:
                         log.warning('\t\t\tupdate had operation error (%s:%s) on %s, sleeping' % (stmt, count, paramset))
                         time.sleep(1)
@@ -221,9 +227,9 @@ class ISBCGC_database_helper():
                 except Exception as e:
                     log.exception('problem with update(%s): \n\t\t\t%s\n\t\t\t%s' % (count, stmt, paramset))
                     raise e
-            cursor.execute("COMMIT")
             if verbose:
-                log.info('\t\tcompleted update.  updated %s record', count)
+                log.info('\t\tcompleted update.  updated %s:%s record', count, cursor.rowcount)
+            cursor.execute("COMMIT")
         except Exception as e:
             log.exception('\t\tupdate failed')
             if cursor:

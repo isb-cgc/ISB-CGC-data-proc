@@ -1,8 +1,6 @@
 '''
 a wrapper to google cloud sql.
 
-TODO: refactor this with isbcgc_cloudsql_model.py
-
 the MySQLdb module is thread safe but the connections to the database are not.  so the
 recommendation is that each thread have an independent connection.
 

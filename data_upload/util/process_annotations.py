@@ -51,6 +51,7 @@ json return layout
             "noteText":"TSS confirmed that submitted tumor is a recurrence and patient had 2 prior resections before tumor submitted to BCR. Submitted tumor was in same tumor bed as primary. The patient had no prior chemo/radiation treatment. ",
             "addedBy":"LeraasK",
             "dateAdded":"2015-03-06T14:42:56-05:00"
+            "dateEdited":"2015-03-07T14:42:56-05:00"
         } ],
         "approved":true,
         "rescinded":false
@@ -113,7 +114,87 @@ import logging
 import pprint
 import urllib
 
+from isbcgc_cloudsql_annotation_model import ISBCGC_database_helper
 from util import post_run_file
+
+def associate_metadata2annotation(config, log):
+    associate_statements = [
+        "insert into metadata_annotation2data " \
+            "(metadata_annotation_id, metadata_data_id) " \
+        "select a.metadata_annotation_id, s.metadata_data_id " \
+        "from metadata_annotation a join metadata_data s on " \
+            "0 < instr(s.aliquotbarcode, a.itembarcode) ",
+        "insert into metadata_annotation2clinical " \
+            "(metadata_annotation_id, metadata_clinical_id) " \
+        "select a.metadata_annotation_id, s.metadata_clinical_id " \
+        "from metadata_annotation a join metadata_clinical s on " \
+            "s.participantbarcode = a.itembarcode ",
+        "insert into metadata_annotation2biospecimen "  \
+            "(metadata_annotation_id, metadata_biospecimen_id) " \
+        "select a.metadata_annotation_id, s.metadata_biospecimen_id " \
+        "from metadata_annotation a join metadata_biospecimen s on " \
+            "0 < instr(s.samplebarcode, a.itembarcode) ",
+        "insert into metadata_annotation2samples " \
+            "(metadata_annotation_id, metadata_samples_id) " \
+        "select a.metadata_annotation_id, s.metadata_samples_id " \
+        "from metadata_annotation a join metadata_samples s on " \
+            "0 < instr(s.samplebarcode, a.itembarcode) "
+    ]
+    
+    for statement in associate_statements:
+        ISBCGC_database_helper.update(config, statement, log, [[]], True)
+
+def parse_derived(annotation, derived_keys, length, log):
+    derived = parse_item(annotation, derived_keys, log)
+    fields = derived.split('-')
+    if not 'TCGA' == fields[0] or 2 >= len(fields):
+        # unexpected value!
+        log.exception('unexpected derived value: %s' % (derived))
+        raise ValueError('unexpected derived value: %s' % (derived))
+    if len(fields) >= length:
+        return '-'.join(fields[:length])
+    else:
+        return None
+
+def parse_item(annotation, keys, log):
+    try:
+        retval = None
+        if 'derived' == keys[0]:
+            retval = parse_derived(annotation, keys[2:], keys[1], log)
+        elif 'optional' == keys[0]:
+            if 4 != len(keys):
+                # need to add new case!
+                log.exception('unexpected optional specification: %s:%s' % (annotation, keys))
+                raise ValueError('unexpected optional specification: %s:%s' % (annotation, keys))
+            if keys[1] in annotation and keys[3] in annotation[keys[1]][keys[2]]:
+                retval = annotation[keys[1]][keys[2]][keys[3]]
+        elif 1 == len(keys):
+            retval = annotation[keys[0]]
+        elif 2 == len(keys):
+            retval = annotation[keys[0]][keys[1]]
+        elif 3 == len(keys):
+            retval = annotation[keys[0]][keys[1]][keys[2]]
+        elif 4 == len(keys):
+            retval = annotation[keys[0]][keys[1]][keys[2]][keys[3]]
+        else:
+            # need to add new case!
+            log.exception('unexpected specification: %s:%s' % (annotation, keys))
+            raise ValueError('unexpected specification: %s:%s' % (annotation, keys))
+        if keys[-1].startswith('date') and retval:
+            retval = '-'.join(retval.split('-')[:3]).replace('T', ' ')
+        return retval
+    except Exception as e:
+        log.exception('error parsing annotation: %s:%s' % (annotation, keys))
+        raise e
+        
+def parse_annotation(ann_config, annotation, log):
+    annotationList = [None] * len(ann_config)
+    keys = ann_config.keys()
+    keys.sort()
+    for index, key in enumerate(keys):
+        annotationList[index] = parse_item(annotation, ann_config[key], log)
+    
+    return [annotationList]
 
 def process_annotations(config, run_dir, log_name):
     log = logging.getLogger(log_name)
@@ -140,7 +221,9 @@ def process_annotations(config, run_dir, log_name):
     log.info('\tfinish read annotations')
     
     exclude_annotation_catagories = config['exclude_annotation_catagories']
+    ann_config = config['annotation_mapping']
     barcode2annotation = {}
+    annotation_lists = []
     count = 0
     count_bad = 0
     log.info('\tstart check annotations')
@@ -148,19 +231,39 @@ def process_annotations(config, run_dir, log_name):
         if 0 == count % 2048:
             log.info('\t\tchecked %s annotations' % (count))
         count += 1
-        annotationCategory = annotation['annotationCategory']
-        if annotationCategory['categoryId'] in exclude_annotation_catagories:
-            if not barcode2annotation.has_key(annotation['items'][0]['item']):
-                count_bad += 1
-            annotations = barcode2annotation.setdefault(annotation['items'][0]['item'], {})
-# AnnotationCategory
-# AnnotationClassification
-            annotationCategories = annotations.setdefault('AnnotationCategory', [])
-            if annotationCategory['categoryName'] not in annotationCategories:
-                annotationCategories += [annotationCategory['categoryName']]
-            annotationClassification = annotations.setdefault('AnnotationClassification', [])
-            if annotationCategory['annotationClassification']['annotationClassificationName'] not in annotationClassification:
-                annotationClassification += [annotationCategory['annotationClassification']['annotationClassificationName']]
+        
+        # sanity check assumptions
+        try:
+            if annotation['rescinded'] or 'Approved' != annotation['status']:
+                log.info('skipping rescinded or non-approved annotation:%s' % (annotation))
+                continue
+            
+            if 1 != len(annotation['items']):
+                log.exception('items has unexpected length: %s' % (annotation))
+                raise ValueError('items has unexpected length: %s' % (annotation))
+            if 'notes' in annotation and 1 != len(annotation['notes']):
+                log.warning('\t\tfound multiple notes: \n\t\t\t%s' % ('\n\t\t\t'.join(notes['noteText'].strip() for notes in annotation['notes'])))
+            
+            annotation_lists += parse_annotation(ann_config, annotation, log)
+            annotationCategory = annotation['annotationCategory']
+            if annotationCategory['categoryId'] in exclude_annotation_catagories:
+                if not barcode2annotation.has_key(annotation['items'][0]['item']):
+                    count_bad += 1
+                annotations = barcode2annotation.setdefault(annotation['items'][0]['item'], {})
+                annotationCategories = annotations.setdefault('AnnotationCategory', [])
+                if annotationCategory['categoryName'] not in annotationCategories:
+                    annotationCategories += [annotationCategory['categoryName']]
+                annotationClassification = annotations.setdefault('AnnotationClassification', [])
+                if annotationCategory['annotationClassification']['annotationClassificationName'] not in annotationClassification:
+                    annotationClassification += [annotationCategory['annotationClassification']['annotationClassificationName']]
+        except Exception as e:
+            log.exception('exception occurred on line %s for %s' % (count, annotation))
+            raise e
+
+    # now create the annotation related tables and save to the cloudsql annotation table
+    ISBCGC_database_helper.initialize(config, log)
+    ISBCGC_database_helper.column_insert(config, annotation_lists, "metadata_annotation", sorted(ann_config.keys()), log)
+
 
     log.info('\tfinished processing annotations')
     return barcode2annotation

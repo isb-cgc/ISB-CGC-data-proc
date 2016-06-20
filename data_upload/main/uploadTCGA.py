@@ -31,6 +31,7 @@ import sys
 from parse_bio import parse_bio
 from prepare_upload import prepare_upload
 from process_annotations import process_annotations
+from process_annotations import associate_metadata2annotation
 from process_latestarchive import process_latestarchive
 from process_metadata_current import process_metadata_current
 from process_sdrf import process_sdrf
@@ -290,7 +291,7 @@ def process_tumortype(config, log_dir, tumor_type, platform2archive_types2archiv
         biospecimen_metadata: metadata from the biospecimen bio files
         flattened_data_map: metadata from the file paths and SDRF files
     '''
-    print '\t', datetime.now(), 'processing tumor type %s' % (tumor_type)
+    print '\t', datetime.now(), '\tprocessing tumor type %s' % (tumor_type)
     log_name = create_log(log_dir + tumor_type + '/', tumor_type)
     log = logging.getLogger(log_name)
     log.info( '\tprocessing tumor type %s' % (tumor_type))
@@ -380,7 +381,8 @@ def process_tumortypes(config, log_dir, tumor_type2platform2archive_types2archiv
         platform2archive2metadata: map of platforms to archive name to the archive metadata
         tumor_type2cghub_records: map tumor type to cghub metadata
         barcode2metadata: metadata from metadata.current.txt
-        barcode2annotations: map of barcodes to TCGA annotations
+        barcode2annotations: map of barcodes to TCGA annotations--note: these are no longer saved to the database but it does no harm to 
+            pass them along as metadata
         log: logger to log any messages
     '''
     log.info('begin process_tumortypes()')
@@ -520,6 +522,9 @@ def uploadTCGA(configFileName):
             log.warning('\n\t====================\n\tnot processing annotations this run!\n\t====================')
             barcode2annotations = {}
         process_tumortypes(config, run_dir, tumor_type2platform2archive_types2archives, platform2archive2metadata, tumor_type2cghub_records, barcode2metadata, barcode2annotations, log)
+        
+        # associate the annotation metadata with the other metadata tables
+        associate_metadata2annotation(config, log)
         
         # print out the stats
         metadata_modules = config['metadata_modules']
