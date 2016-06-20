@@ -141,6 +141,8 @@ def parse_sdrf(config, log, file_name, archive2metadata, barcode2files2term2valu
                         
                         
                         if 'DataArchiveName' in term2value:
+                            # the archive2metadata will set the following fields: DataArchiveURL, DataArchiveVersion, DataCenterName, DataCenterType, 
+                            #   Pipeline, Platform, Project, SecurityProtocol 
                             term2value.update(archive2metadata[term2value['DataArchiveName']])
                         else:
                             term2value.update(centerfields2values)
@@ -149,6 +151,8 @@ def parse_sdrf(config, log, file_name, archive2metadata, barcode2files2term2valu
                                 term2value['DataLevel'] = 'Level 1'
                             if 'Datatype' not in term2value:
                                 term2value['Datatype'] = 'DNA Sequence-Alignment' if 'DNA' in term2value['Platform'] else 'RNA Sequence-Alignment'
+                            term2value['SecurityProtocol'] = config['access_tags']['controlled']
+                        if term2value['DatafileName'].endswith('vcf') or term2value['DatafileName'].endswith('protected.maf') or 'wig' in term2value['DatafileName']:
                             term2value['SecurityProtocol'] = config['access_tags']['controlled']
                         node2term2value[nodeInstance.name] = term2value
                         term2value['SDRFFileNameKey'] = getSDRFKeyName(sdrf_file_name, term2value, log)

@@ -31,29 +31,35 @@ def parse_protein(project_id, bucket_name, filename, outfilename, metadata):
        Add Metadata information
     """
     # setup logging
-    configure_logging('protein', "logs/" + metadata['AliquotBarcode'] + '.log')
-
-    # connect to the cloud bucket
-    gcs = GcsConnector(project_id, bucket_name)
-
-    #main steps: download, convert to df, cleanup, transform, add metadata
-    data_df = gcutils.convert_blob_to_dataframe(gcs, project_id, bucket_name, filename, skiprows=1)
-    data_df = additional_changes(data_df)
-    data_df = add_metadata(data_df, metadata)
-
-    # validation
-    tests.assert_notnull_property(data_df, columns_list=['Protein_Name'])
-
-    # upload the contents of the dataframe in njson format
-    status = gcs.convert_df_to_njson_and_upload(data_df, outfilename, metadata=metadata)
+    log = configure_logging('protein', "logs/protein_transform_" + metadata['AliquotBarcode'] + '.log')
+    try:
+        log.info('start transform of %s' % (metadata['AliquotBarcode']))
+        # connect to the cloud bucket
+        gcs = GcsConnector(project_id, bucket_name)
+    
+        #main steps: download, convert to df, cleanup, transform, add metadata
+        data_df = gcutils.convert_blob_to_dataframe(gcs, project_id, bucket_name, filename, skiprows=1, log=log)
+        log.info('\tadd changes and metadata for %s' % (metadata['AliquotBarcode']))
+        data_df = additional_changes(data_df)
+        data_df = add_metadata(data_df, metadata)
+    
+        # validation
+        tests.assert_notnull_property(data_df, columns_list=['Protein_Name'])
+    
+        # upload the contents of the dataframe in njson format
+        status = gcs.convert_df_to_njson_and_upload(data_df, outfilename, metadata=metadata)
+        log.info('finished transform of %s' % (metadata['AliquotBarcode']))
+    except Exception as e:
+        log.exception('problem transforming %s' % (metadata['AliquotBarcode']))
+        raise e
     return status
 
 def additional_changes(data_df):
     """Make additional data transformations on the dataframe
     """
     # need to change the curated file loading logic
-    # antibody annotaion mapping
-    manual_curated_file = 'docs/antibody-gene-protein-map.txt' # bad hardcoded link
+    # antibody annotation mapping
+    manual_curated_file = 'protein/antibody-gene-protein-map/2016_05_21_antibody-gene-protein-map.txt' # bad hardcoded link
     aa_df = pd.read_csv(manual_curated_file, delimiter='\t', header=0, keep_default_na=False)
     aa_df = aa_df.set_index('composite_element_ref')
 

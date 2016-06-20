@@ -31,17 +31,17 @@ def load(config):
 
     schemas_dir = os.environ.get('SCHEMA_DIR', 'schemas/')
 
-    #print "Loading mRNA unc HiSeq data into BigQuery.."
-    #load_data_from_file.run(
-    #    config['project_id'],
-    #    config['bq_dataset'],
-    #    config['mrna']['unc']['bq_table_hiseq'],
-    #    schemas_dir + config['mrna']['unc']['schema_file'],
-    #    'gs://' + config['buckets']['open'] + '/' +\
-    #        config['mrna']['unc']['output_dir'] + 'IlluminaHiSeq/*',
-    #    'NEWLINE_DELIMITED_JSON',
-    #    'WRITE_EMPTY'
-    #)
+    print "Loading mRNA unc HiSeq data into BigQuery.."
+    load_data_from_file.run(
+        config['project_id'],
+        config['bq_dataset'],
+        config['mrna']['unc']['bq_table_hiseq'],
+        schemas_dir + config['mrna']['unc']['schema_file'],
+        'gs://' + config['buckets']['open'] + '/' +\
+            config['mrna']['unc']['output_dir'] + 'IlluminaHiSeq/*',
+        'NEWLINE_DELIMITED_JSON',
+        'WRITE_EMPTY'
+    )
     print "*"*30
     print "Loading mRNA unc GA data into BigQuery.."
     load_data_from_file.run(

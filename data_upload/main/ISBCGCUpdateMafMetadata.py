@@ -2,7 +2,7 @@
 Created on May 6, 2016
 
 parses the data ETL files from both the open and protected uploads to find
-protected entries not in th eopen.  the metadata for these are then saved to 
+protected entries not in the open.  the metadata for these are then saved to 
 the metadata_data table
 
 Copyright 2015, Institute for Systems Biology.

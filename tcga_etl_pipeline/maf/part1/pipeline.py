@@ -24,8 +24,10 @@ from bigquery_etl.execution import process_manager
 import os.path
 from pandas import ExcelWriter
 import extract
+import time
 import transform
 import sys
+from bigquery_etl.utils.logging_manager import configure_logging
 
 #----------------------------------
 # Config
@@ -54,7 +56,11 @@ writer.save()
 #-----------------------------------------------------
 # Execution 
 #------------------------------------------------------
-pm = process_manager.ProcessManager(max_workers=20)
+log_filename = 'etl_maf_part1.log'
+log_name = 'etl_maf_part1.log'
+log = configure_logging(log_name, log_filename)
+log.info('start maf part1 pipeline')
+pm = process_manager.ProcessManager(max_workers=20, db='maf1.db', table='task_queue_status', log=log)
 for index, row in data_library.iterrows():
     inputfilename = row['filename']
     outputfilename =  oncotator_input_files_dest + row['unique_filename'].replace(".maf", ".txt")
@@ -62,4 +68,5 @@ for index, row in data_library.iterrows():
     future = pm.submit(transform.generate_oncotator_inputfiles, project_id, bucket_name, inputfilename, outputfilename, oncotator_columns)
     time.sleep(0.2)
 pm.start()
+log.info('finished maf part1 pipeline')
 

@@ -25,22 +25,27 @@ def parse_methylation(project_id, bucket_name, filename, outfilename, metadata):
        Add Metadata information
     """
     # setup logging
-    configure_logging('mirna.isoform', "logs/" + metadata['AliquotBarcode'] + '.log')
-
-    # connect to the cloud bucket
-    gcs = GcsConnector(project_id, bucket_name)
-
-    #main steps: download, convert to df, cleanup, transform, add metadata
-    data_df = gcutils.convert_blob_to_dataframe(gcs, project_id, bucket_name, filename, skiprows=1)
-    data_df.columns = ['Probe_Id', "Beta_Value", "Gene_Symbol", "Chromosome", "Genomic_Coordinate"]
-
-    data_df = add_metadata(data_df, metadata)
-    data_df = additional_changes(data_df)
-
-    # upload the contents of the dataframe in njson format
-    df_string = data_df.to_csv(index=False, header=False, float_format='%.2f')
-    status = gcs.upload_blob_from_string(outfilename, df_string)
-
+    log = configure_logging('mirna.isoform', "logs/methylation_transform_" + metadata['AliquotBarcode'] + '.log')
+    try:
+        log.info('start transform of %s' % (metadata['AliquotBarcode']))
+        # connect to the cloud bucket
+        gcs = GcsConnector(project_id, bucket_name)
+    
+        #main steps: download, convert to df, cleanup, transform, add metadata
+        data_df = gcutils.convert_blob_to_dataframe(gcs, project_id, bucket_name, filename, skiprows=1, log=log)
+        data_df.columns = ['Probe_Id', "Beta_Value", "Gene_Symbol", "Chromosome", "Genomic_Coordinate"]
+    
+        log.info('\tadd changes and metadata for %s' % (metadata['AliquotBarcode']))
+        data_df = add_metadata(data_df, metadata)
+        data_df = additional_changes(data_df)
+    
+        # upload the contents of the dataframe in njson format
+        df_string = data_df.to_csv(index=False, header=False, float_format='%.2f')
+        status = gcs.upload_blob_from_string(outfilename, df_string)
+        log.info('finished transform of %s' % (metadata['AliquotBarcode']))
+    except Exception as e:
+        log.exception('problem transforming %s' % (metadata['AliquotBarcode']))
+        raise e
     return status
 
 def additional_changes(data_df):
