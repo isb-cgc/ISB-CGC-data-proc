@@ -23,6 +23,7 @@ limitations under the License.
 import base64
 from copy import deepcopy
 from cStringIO import StringIO
+import importlib
 import json
 import logging
 from multiprocessing import Lock
@@ -284,7 +285,7 @@ def merge_metadata(master_metadata, current_metadata, platform, log):
     log.info('\t\tmerge_metadata(%s): found %s matching aliquots and %s additional aliquots.  total of %s files' % (platform, count_exist, count_new, len(total_files)))
     
 def import_module(metadata_module):
-    mod = __import__(metadata_module)
+    mod = importlib.import_module(metadata_module)
     return mod
 
 def getTumorTypes(config, log):

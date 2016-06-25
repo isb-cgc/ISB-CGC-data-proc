@@ -28,19 +28,19 @@ class ISBCGC_database_helper():
     """
     this class is the base class to manage subclass the CloudSQL  uploads
     """
-    ssl_dir = 'ssl/'
-    ssl = {
-#             'ca': ssl_dir + 'server-ca.pem',
-        'cert': ssl_dir + 'client-cert.pem',
-        'key': ssl_dir + 'client-key.pem' 
-    }
 
     metadata_tables = None
 
     @classmethod
     def getDBConnection(cls, config, log):
         try:
-            db = MySQLdb.connect(host=config['cloudsql']['host'], db=config['cloudsql']['db'], user=config['cloudsql']['user'], passwd=config['cloudsql']['passwd'], ssl = cls.ssl)
+            ssl_dir = config['cloudsql']['ssl_dir']
+            ssl = {
+        #             'ca': ssl_dir + 'server-ca.pem',
+                'cert': ssl_dir + 'client-cert.pem',
+                'key': ssl_dir + 'client-key.pem' 
+            }
+            db = MySQLdb.connect(host=config['cloudsql']['host'], db=config['cloudsql']['db'], user=config['cloudsql']['user'], passwd=config['cloudsql']['passwd'], ssl = ssl)
         except Exception as e:
             # if connection requests are made too close together over a period of time, the connection attempt might fail
             count = 4
@@ -49,7 +49,7 @@ class ISBCGC_database_helper():
                 time.sleep(1)
                 log.warning('\n\n!!!!!!sleeping on error to reattempt db connection!!!!!!\n')
                 try:
-                    db = MySQLdb.connect(host=config['cloudsql']['host'], db=config['cloudsql']['db'], user=config['cloudsql']['user'], passwd=config['cloudsql']['passwd'], ssl = cls.ssl)
+                    db = MySQLdb.connect(host=config['cloudsql']['host'], db=config['cloudsql']['db'], user=config['cloudsql']['user'], passwd=config['cloudsql']['passwd'], ssl = ssl)
                     break
                 except Exception as e:
                     if 1 == count:
