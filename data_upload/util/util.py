@@ -273,11 +273,10 @@ def getTumorTypes(config, log):
     return processAll, process
 
 def print_list_synopsis(fulllist, label, log, count = 2):
-    log.info(label)
     if (count * 2) + 1 > len(fulllist):
-        log.info("\n%s" % (json.dumps (fulllist, indent=4)))
+        log.info("%s\n%s" % (label, json.dumps (fulllist, indent=4)))
     else:
-        log.info("\n%s\n\t...\n%s\n\n" % (json.dumps (fulllist[:count], indent=4), json.dumps (fulllist[-count:], indent=4)))
+        log.info("%s\n%s\n\t...\n%s\n\n" % (label, json.dumps (fulllist[:count], indent=4), json.dumps (fulllist[-count:], indent=4)))
 
 def __recurse_filter_map(retmap, origmap, thefilter):
     if 'value' in thefilter:
