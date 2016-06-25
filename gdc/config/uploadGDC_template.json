@@ -42,17 +42,13 @@
         "Biospecimen",
         "Clinical"
     ],
-    "type2category": {
-        "Copy Number Segment": "Copy Number Variation", 
-        "Annotated Somatic Mutation": "Simple Nucleotide Variation", 
-        "Masked Copy Number Segment": "Copy Number Variation", 
-        "miRNA Expression Quantification": "Transcriptome Profiling", 
-        "Aligned Reads": "Raw Sequencing Data", 
-        "Isoform Expression Quantification": "Transcriptome Profiling", 
-        "Gene Expression Quantification": "Transcriptome Profiling", 
-        "Raw Simple Somatic Mutation": "Simple Nucleotide Variation",
-        "Biospecimen": "Biospecimen",
-        "Clinical": "Clinical"
+    "category2type": {
+        "Simple Nucleotide Variation": ["Annotated Somatic Mutation", "Raw Simple Somatic Mutation"],
+        "Transcriptome Profiling": ["miRNA Expression Quantification", "Isoform Expression Quantification", "Gene Expression Quantification"],
+        "Raw Sequencing Data": ["Aligned Reads"],
+        "Copy Number Variation": ["Copy Number Segment", "Masked Copy Number Segment"],
+        "Biospecimen": ["Biospecimen"],
+        "Clinical": ["Clinical"]
     },
     "metadata_modules": [
         "store_metadata_cloudsql"
@@ -66,13 +62,14 @@
         "query_partial": "?expand=annotations,samples,samples.annotations,samples.portions.analytes.aliquots,samples.portions.analytes.aliquots.center,samples.portions.analytes.aliquots.annotation&pretty=true",
         "query": "?expand=annotations,project,samples,samples.annotations,samples.portions,samples.portions.center,samples.portions.analytes,samples.portions.analytes.aliquots,samples.portions.analytes.aliquots.center,samples.portions.analytes.aliquots.annotation&pretty=true"
     },
-    "database_module": "isbcgc_cloudsql_model",
+    "database_module": "gdc.model.isbcgc_cloudsql_gdc_model",
     "cloudsql": {
         "host": "xxx.xxx.xxx.xxx",
         "db": "db",
         "user": "user",
         "passwd": "passwd",
-        "update_schema": true
+        "update_schema": false,
+        "ssl_dir": "../../ssl/"
     },
     "log_dir_tag": "run",
     "process_cases": {
