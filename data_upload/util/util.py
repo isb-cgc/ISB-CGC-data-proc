@@ -21,6 +21,7 @@ limitations under the License.
 '''
 # import boto
 import base64
+from copy import deepcopy
 from cStringIO import StringIO
 import json
 import logging
@@ -270,3 +271,39 @@ def getTumorTypes(config, log):
     else:
         log.info('\tprocessing %s tumor types' % (', '.join(process)))
     return processAll, process
+
+def print_list_synopsis(fulllist, label, log, count = 2):
+    log.info(label)
+    if (count * 2) + 1 > len(fulllist):
+        log.info("\n%s" % (json.dumps (fulllist, indent=4)))
+    else:
+        log.info("\n%s\n\t...\n%s\n\n" % (json.dumps (fulllist[:count], indent=4), json.dumps (fulllist[-count:], indent=4)))
+
+def __recurse_filter_map(retmap, origmap, thefilter):
+    if 'value' in thefilter:
+        for value in thefilter['value']:
+            newlabel = thefilter['value'][value]
+            retmap[newlabel] = origmap[value]
+    
+    if 'list' in thefilter:
+        for value in thefilter['list']:
+            newlabel = thefilter['list'][value]
+            retmap[newlabel] = deepcopy(origmap[value])
+    
+    if 'map' in thefilter:
+        for value in thefilter['map']:
+            newlabel = thefilter['map'][value][value]
+            retmap[newlabel] = __recurse_filter_map({}, origmap[value], thefilter['map'][value])
+    
+    if 'map_list' in thefilter:
+        for value in thefilter['map_list']:
+            newfilter = thefilter['map_list'][value]
+            newlabel = newfilter[value]
+            retmap[newlabel] = []
+            for nextmap in origmap[value]:
+                retmap[newlabel] += [__recurse_filter_map({}, nextmap, newfilter)]
+
+    return retmap
+
+def filter_map(origmap, thefilter):
+    return __recurse_filter_map({}, origmap, thefilter)

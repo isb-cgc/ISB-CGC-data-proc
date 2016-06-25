@@ -1,3 +1,4 @@
+from datetime import datetime
 import json
 import requests
 import sys
@@ -20,8 +21,9 @@ import uuid
 
 cases_fields = []
 files_fields = []
+data_types = set()
 
-verboseFlag = 1
+verboseFlag = 5
 
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
@@ -29,7 +31,7 @@ def get_all_case_ids ( cases_endpt ):
 
     if ( verboseFlag >= 1 ):
         print " "
-        print " >>> in get_all_case_ids ... ", cases_endpt
+        print "%s >>> in get_all_case_ids ... " % (datetime.now()), cases_endpt
         print " "
 
     maxSize = 1000
@@ -105,11 +107,33 @@ def get_all_case_ids ( cases_endpt ):
 
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+def get_expanded_case_info ( cases_endpt, case_id ):
+
+    print " "
+    print " >>> in get_expanded_case_info ... ", cases_endpt, case_id
+    print " "
+
+    filt = { 'op': '=',
+             'content': {
+                 'field': 'case_id',
+                 'value': [case_id] } } 
+
+    params = { 'filters': json.dumps(filt) }
+
+    query = "?expand=archive,project,samples.portions.analytes.aliquots&pretty=true"
+    url = cases_endpt + query
+    print "\n=================================\nget expanded case request ", url, params
+    response = requests.get ( url, params=params )
+    rj = response.json()
+    print json.dumps ( rj, indent=4 ) + "\n=================================\n"
+
+## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
 def getCaseAndFileInfo ( cases_endpt, files_endpt, caseID_map ):
 
     if ( verboseFlag >= 1 ):
         print " "
-        print " >>> in getCaseAndFileInfo ... ", cases_endpt, files_endpt, len(caseID_map)
+        print "%s >>> in getCaseAndFileInfo ... " % (datetime.now()), cases_endpt, files_endpt, len(caseID_map)
         print " "
 
     allCases = caseID_map.keys()
@@ -118,7 +142,11 @@ def getCaseAndFileInfo ( cases_endpt, files_endpt, caseID_map ):
     caseID_dict = {}
     fileID_dict = {}
 
+    count = 0
     for case_id in allCases:
+        if 0 == count % 500:
+            print "%s\t >>> looping on %s case_id" % (datetime.now(), count)
+        count += 1
 
         if ( verboseFlag >= 3 ):
             print " "
@@ -145,6 +173,9 @@ def getCaseAndFileInfo ( cases_endpt, files_endpt, caseID_map ):
             print caseID_dict[case_id]
             print caseInfo
             sys.exit(-1)
+        
+        if ( verboseFlag >= 5 ):
+             get_expanded_case_info ( cases_endpt, case_id )
 
         filesInfo = get_files_by_case_id ( files_endpt, case_id )
 
@@ -314,6 +345,26 @@ def get_files_by_case_id ( files_endpt, case_id ):
 
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+def get_expanded_file_info ( files_endpt, file_id ):
+    filt = { 'op': '=',
+             'content': {
+                 'field': 'file_id',
+                 'value': [file_id] } } 
+
+    params = { 'filters': json.dumps(filt),
+               'sort': 'file_id:asc',
+               'from': 1,
+               'size': 1000 }
+
+    query = "?expand=archive,cases,cases.samples.portions.analytes.aliquots,center&pretty=true"
+    url = files_endpt + query
+    print "\n=================================\nget request for expanded file info", url, params
+    response = requests.get ( url, params=params )
+    rj = response.json()
+    print json.dumps ( rj, indent=4 ) + "\n=================================\n"
+    
+## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
 def get_files_by_sample_id ( files_endpt, sample_id ):
 
     if ( verboseFlag >=3 ):
@@ -338,14 +389,19 @@ def get_files_by_sample_id ( files_endpt, sample_id ):
     rj = response.json()
     if ( verboseFlag >= 4 ): print json.dumps ( rj, indent=4 )
 
+    global data_types
     try:
         for ii in range(len(rj['data']['hits'])):
             fields = rj['data']['hits'][ii].keys()
+            if ( verboseFlag >= 5 ): 
+                get_expanded_file_info(files_endpt, rj['data']['hits'][ii]['file_id'])
             fields.sort()
             for aField in fields:
                 if ( aField not in files_fields ): 
                     ## print " adding new field to files_fields list : ", aField
                     files_fields += [ aField ]
+                if 'data_type' == aField:
+                    data_types.add(rj['data']['hits'][ii][aField])
     except:
         pass
 
@@ -515,7 +571,7 @@ def main():
 
         print " "
         print " "
-        print " Querying GDC database %s for all cases and files " % dbName
+        print "%s: Querying GDC database %s for all cases and files " % (datetime.now(), dbName)
 
         caseID_map = get_all_case_ids ( GDC_endpts[dbName]['cases'] )
         ( caseID_dict, fileID_dict ) = \
@@ -523,7 +579,7 @@ def main():
                                  GDC_endpts[dbName]['files'], \
                                  caseID_map )
 
-        print " DONE processing %s database " % dbName
+        print "%s: DONE processing %s database " % (datetime.now(), dbName)
         print " "
         cases_fields.sort()
         files_fields.sort()
@@ -533,6 +589,10 @@ def main():
         print " "
         print " files fields : "
         for aField in files_fields:
+            print "     ", aField
+        print " "
+        print " data type values : "
+        for aField in data_types:
             print "     ", aField
         print " "
 
@@ -549,6 +609,11 @@ def main():
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 if __name__ == '__main__':
-  main()
+    try:
+        main()
+    except:
+        print "data types:", data_types
+        sys.stdout.flush()
+        raise
 
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=

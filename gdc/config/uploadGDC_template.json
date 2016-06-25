@@ -1,0 +1,149 @@
+{
+    "mode": "test",
+    "threads": 40,
+    "upload_files": false,
+    "upload_etl_files": false,
+    "upload_open": false,
+    "upload_controlled": true,
+    "program_names": [
+        "TCGA",
+        "TARGET"
+    ],
+    "project_names": [
+        "TCGA-ACC"
+    ],
+    "project_names_test": [
+        "TCGA-ACC",
+        "TCGA-UCS",
+        "TCGA-DLBC",
+        "TCGA-LUSC",
+        "TCGA-PRAD",
+        "TCGA-KICH",
+        "TCGA-PAAD",
+        "TCGA-CHOL"
+    ],
+    "data_types": [
+        "Copy Number Segment", 
+        "Annotated Somatic Mutation", 
+        "Masked Copy Number Segment", 
+        "miRNA Expression Quantification", 
+        "Aligned Reads", 
+        "Isoform Expression Quantification", 
+        "Gene Expression Quantification", 
+        "Raw Simple Somatic Mutation",
+        "Biospecimen",
+        "Clinical"
+    ],
+    "data_categories": [
+        "Simple Nucleotide Variation",
+        "Transcriptome Profiling",
+        "Raw Sequencing Data",
+        "Copy Number Variation",
+        "Biospecimen",
+        "Clinical"
+    ],
+    "type2category": {
+        "Copy Number Segment": "Copy Number Variation", 
+        "Annotated Somatic Mutation": "Simple Nucleotide Variation", 
+        "Masked Copy Number Segment": "Copy Number Variation", 
+        "miRNA Expression Quantification": "Transcriptome Profiling", 
+        "Aligned Reads": "Raw Sequencing Data", 
+        "Isoform Expression Quantification": "Transcriptome Profiling", 
+        "Gene Expression Quantification": "Transcriptome Profiling", 
+        "Raw Simple Somatic Mutation": "Simple Nucleotide Variation",
+        "Biospecimen": "Biospecimen",
+        "Clinical": "Clinical"
+    },
+    "metadata_modules": [
+        "store_metadata_cloudsql"
+    ],
+    "projects_endpt": {
+        "endpt": "https://gdc-api.nci.nih.gov/projects",
+        "query": "?expand=program,summary,summary.experimental_strategies,summary.data_categories&pretty=true"
+    },
+    "cases_endpt": {
+        "endpt": "https://gdc-api.nci.nih.gov/cases",
+        "query_partial": "?expand=annotations,samples,samples.annotations,samples.portions.analytes.aliquots,samples.portions.analytes.aliquots.center,samples.portions.analytes.aliquots.annotation&pretty=true",
+        "query": "?expand=annotations,project,samples,samples.annotations,samples.portions,samples.portions.center,samples.portions.analytes,samples.portions.analytes.aliquots,samples.portions.analytes.aliquots.center,samples.portions.analytes.aliquots.annotation&pretty=true"
+    },
+    "database_module": "isbcgc_cloudsql_model",
+    "cloudsql": {
+        "host": "xxx.xxx.xxx.xxx",
+        "db": "db",
+        "user": "user",
+        "passwd": "passwd",
+        "update_schema": true
+    },
+    "log_dir_tag": "run",
+    "process_cases": {
+        "case_fetch_size": 1000,
+        "filter_result": {
+            "value": {
+                "submitter_id": "tcga_barcode", 
+                "case_id": "case_id"
+            },
+            "list": {
+                "sample_ids": "sample_ids"
+            },
+            "map_list": {
+                "samples": {
+                    "samples": "samples",
+                    "value": {
+                        "submitter_id": "tcga_barcode", 
+                        "sample_id": "sample_id", 
+                        "is_ffpe": "is_ffpe" 
+                    },
+                    "list": {
+                    },
+                    "map_list": {
+                        "portions": {
+                            "portions": "portions",
+                            "value": {
+                                "submitter_id": "tcga_barcode", 
+                                "portion_id": "portion_id", 
+                                "is_ffpe": "is_ffpe" 
+                            },
+                            "list": {
+                            },
+                            "map_list": {
+                                "analytes": {
+                                    "analytes": "analytes",
+                                    "value": {
+                                        "submitter_id": "tcga_barcode", 
+                                        "analyte_id": "analyte_id", 
+                                        "analyte_type": "analyte_type", 
+                                        "a260_a280_ratio": "a260_a280_ratio"
+                                    },
+                                    "list": {
+                                    },
+                                    "map_list": {
+                                        "aliquots": {
+                                            "aliquots": "aliquots",
+                                            "value": {
+                                                "submitter_id": "submitter_id", 
+                                                "aliquot_id": "aliquot_id", 
+                                                "concentration": "concentration", 
+                                                "source_center": "source_center"
+                                            },
+                                            "map": {
+                                                "center": {
+                                                    "center": "center",
+                                                    "value": {
+                                                        "code": "code", 
+                                                        "short_name": "short_name", 
+                                                        "namespace": "namespace", 
+                                                        "center_type": "center_type"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
