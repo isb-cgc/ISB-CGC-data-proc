@@ -22,6 +22,8 @@ limitations under the License.
 '''
 import MySQLdb
 
+from isbcgc_cloudsql_model import ISBCGC_database_helper
+
 class ISBCGC_metadata_database_helper():
     """
     this class manages the cloud sql metadata datadictionary upload
@@ -33,7 +35,7 @@ class ISBCGC_metadata_database_helper():
             ['MetadataFieldName', 'VARCHAR(70)', 'NULL'],
             ['ISBCGCTerm', 'VARCHAR(90)', 'NULL'],
             ['MetadataTable', 'VARCHAR(22)', 'NULL'],
-            ['Source', 'VARCHAR(120)', 'NULL'],
+            ['Source', 'VARCHAR(200)', 'NULL'],
             ['SourceComment', 'VARCHAR(200)', 'NULL'],
             ['ValueType', 'VARCHAR(30)', 'NULL'],
             ['Definition', 'VARCHAR(1000)', 'NULL'],
@@ -66,7 +68,7 @@ class ISBCGC_metadata_database_helper():
         cursor = None
         try:
             log.info('\tconnecting to database %s' % (config['cloudsql']['db']))
-            db = MySQLdb.connect(host = config['cloudsql']['host'], db = config['cloudsql']['db'], user = config['cloudsql']['user'], passwd = config['cloudsql']['passwd'])
+            db = ISBCGC_database_helper.getDBConnection(config, log)
             cursor = db.cursor()
             cursor.execute('select table_name from information_schema.tables where table_schema = "%s"' % (config['cloudsql']['db']))
             not_found = dict(self.metadata_tables)
@@ -154,7 +156,7 @@ class ISBCGC_metadata_database_helper():
             log.info('\t\tstarting insert for %s' % (table))
             field_names = cls.field_names(table)
             insert_stmt = 'insert into %s.%s\n\t(%s)\nvalues\n\t(%s)' % (config['cloudsql']['db'], table, ', '.join(field_names), ', '.join(['%s']*len(field_names)))
-            db = MySQLdb.connect(host = config['cloudsql']['host'], db = config['cloudsql']['db'], user = config['cloudsql']['user'], passwd = config['cloudsql']['passwd'])
+            db = ISBCGC_database_helper.getDBConnection(config, log)
             cursor = db.cursor()
             cursor.execute("START TRANSACTION")
             # now save in batches

@@ -19,9 +19,13 @@ from util import import_module
 
 lock = Lock()
 
+fields2value = {}
+fields2maxlength = {}
+
 def store_metadata(config, log, table, key_metadata):
     if not config['process_bio']:
         return
+    
     count = 0
     count_upload = 0
     not_data_fields = set()
@@ -46,9 +50,11 @@ def store_metadata(config, log, table, key_metadata):
                 # make sure every string field is stored as a string rather than unicode
                 # unicode is stored as a blob in the datastore
                 try:
-                    if value in (None, '->'):
+                    if value in (None, '->', '', 'None'):
                         metadata[field] = None
                     else:
+                        fields2value[field] = fields2value.setdefault(field, 0) + 1
+                        fields2maxlength[field] = max(fields2maxlength.setdefault(field, 0), len(value))
                         if field in list_fields:
                             metadata[field] = [str(v.encode('ascii', 'ignore').strip()) for v in value]
                             try:
@@ -71,6 +77,7 @@ def store_metadata(config, log, table, key_metadata):
                         not_data_fields.add(field)
                     
                     if 'DatafileUploaded' == field and 'true' == value:
+                        log.log_info('DatafileUploaded should not be true for %s:%s' % (metadata['Platform'], metadata['DatafileName']))
                         count_upload += 1
                         upload_exts.add(metadata['DatafileName'][metadata['DatafileName'].rfind('.') + 1:])
                 except Exception as e:
@@ -114,3 +121,10 @@ def store_metadata(config, log, table, key_metadata):
             log.warning( '\tfiles with no sdrf file(%s):\n\t\t%s' % (len(nosdrf), '\n\t\t'.join(list(nosdrf)[:150])))
     
     log.info('\tfinished store metadata.  stored %s total records' % (count))
+
+def print_combined_stats(log):
+    fields = fields2value.keys()
+    fields.sort()
+    log.info('metadata stats over all studies:')
+    for field in fields:
+        log.info('\t%s: %s max length: %s' % (field, fields2value[field], fields2maxlength[field]))

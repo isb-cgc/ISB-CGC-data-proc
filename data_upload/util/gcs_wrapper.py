@@ -31,6 +31,8 @@ connection = None
 name2bucket = {}
 lock = Lock()
 
+google_storage = 'gs'
+
 def open_connection():
     global connection
     if connection:
@@ -67,8 +69,8 @@ def upload_file(file_path, bucket_name, key_name, log):
     log.error('\tfailed to upload %s' % (key_name))
     raise ValueError('\tcould not load %s' % (key_name))
         
-def __attempt_upload(file_path, bucket_name, key_name, log):
-    time.sleep(backoff)
+
+def get_bucket(bucket_name):
     if bucket_name in name2bucket:
         bucket = name2bucket[bucket_name]
     else:
@@ -78,6 +80,11 @@ def __attempt_upload(file_path, bucket_name, key_name, log):
             else:
                 bucket = connection.get_bucket(bucket_name)
                 name2bucket[bucket_name] = bucket
+    return bucket
+
+def __attempt_upload(file_path, bucket_name, key_name, log):
+    time.sleep(backoff)
+    bucket = get_bucket(bucket_name)
     if key_name in bucket:
         raise ValueError('found %s in %s' % (key_name, bucket_name))
     key = boto.gs.key.Key(bucket, key_name)
@@ -85,3 +92,17 @@ def __attempt_upload(file_path, bucket_name, key_name, log):
         key.set_contents_from_filename(file_path)
     finally:
         key.close()
+
+def get_bucket_contents(bucket_name, log):
+    log.info('\tstart getting %s\'s contents' % (bucket_name))
+    bucket = get_bucket(bucket_name)
+    bucket_contents = []
+    count = 0
+    for key in bucket.list('/tcga/'):
+        name = key.name
+        if 0 == count % 1028:
+            log.info('\t\tprocessing \'%s\' key: \'%s\'' % (name, name[name.rindex['/'] + 1:]))
+        count += 1
+        bucket_contents += [[name, name[name.rindex['/'] + 1:]]]
+    log.info('\tfinished getting %s\'s contents. total of %s keys processed' % (bucket_name, count))
+    return bucket_contents

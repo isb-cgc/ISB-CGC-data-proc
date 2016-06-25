@@ -1,6 +1,6 @@
 '''
 Created on May 27, 2015
-a wrapper to google cloud storage using boto.
+a wrapper to google cloud storage.
 
 Copyright 2015, Institute for Systems Biology.
 
@@ -18,30 +18,25 @@ limitations under the License.
 
 @author: michael
 '''
-import boto.gs.connection
-import boto.gs.key
 from multiprocessing import Lock
 import time
-
 import requests
 
+from gcloud import storage
 # value to delay resubmitting
 backoff = 0
-connection = None
 name2bucket = {}
 lock = Lock()
-
-def open_connection(config, log):
-    global connection
-    if connection:
-        raise ValueError('the connection to GCS is already open')
-    connection = boto.gs.connection.GSConnection()
-
+storage_service = None
+def open_connection(config = None, log = None):
+    global storage_service
+    if storage_service:
+        raise ValueError('storage has already been initialized')
+    log.info('opening GCS service')
+    storage_service = storage.Client(project = config['cloud_projects']['open'])
+    
 def close_connection():
-    global connection
-    if connection:
-        connection.close()
-        connection = None
+    pass
     
 def __get_bucket(bucket_name):
     if bucket_name in name2bucket:
@@ -51,12 +46,14 @@ def __get_bucket(bucket_name):
             if bucket_name in name2bucket:
                 bucket = name2bucket[bucket_name]
             else:
-                bucket = connection.get_bucket(bucket_name)
+                bucket = storage_service.get_bucket(bucket_name)
                 name2bucket[bucket_name] = bucket
     return bucket
 
 def upload_file(file_path, bucket_name, key_name, log):
     global backoff
+    if key_name.startswith('/'):
+        key_name = key_name[1:]
     for attempt in range(1, 4):
         try:
             __attempt_upload(file_path, bucket_name, key_name, log)
@@ -77,23 +74,23 @@ def upload_file(file_path, bucket_name, key_name, log):
             log.warning('\tproblem uploading %s due to %s' % (key_name, e))
     log.warning('\tfailed to upload %s due to multiple connection errors' % (key_name))
         
+
 def __attempt_upload(file_path, bucket_name, key_name, log):
     time.sleep(backoff)
     bucket = __get_bucket(bucket_name)
-    if key_name in bucket:
-        raise ValueError('found %s already uploaded in %s' % (key_name, bucket_name))
-    key = boto.gs.key.Key(bucket, key_name)
-    try:
-        if (file_path.endswith('txt')):
-            # make sure can be loaded as ascii!!!
-            with open(file_path) as infile:
-                contents = infile.read()
-                key.set_contents_from_string(str(contents.encode('ascii','ignore')))
-        else:
-            key.set_contents_from_filename(file_path)
-    finally:
-        key.close()
+    if bucket.get_blob(key_name):
+        raise ValueError('found %s in %s' % (key_name, bucket_name))
+    blob = bucket.blob(key_name)
+    blob.upload_from_filename(file_path)
+    log.info('successfully uploaded %s' % key_name)
 
-def get_bucket_contents(bucket_name, prefix):
+def get_bucket_contents(bucket_name, log):
     bucket = __get_bucket(bucket_name)
-    return bucket.list(prefix)
+    iterfiles = bucket.list_blobs()
+    count = 0
+    for fileinfo in iterfiles:
+        if 0 == count % 1028:
+            log.info('%s files.  current file: %s' % (count, fileinfo.name))
+        count += 1
+        yield fileinfo
+    log.info('found %s total files' % (count))
