@@ -31,7 +31,7 @@ def load(config):
 
     schemas_dir = os.environ.get('SCHEMA_DIR', 'schemas/')
 
-    print "Loading Clinical data into BigQuery.."
+    print "Loading Clinical data into BigQuery..."
     load_data_from_file.run(
         config['project_id'],
         config['bq_dataset'],
@@ -43,18 +43,17 @@ def load(config):
         'WRITE_EMPTY'
     )
     print "*"*30
-    print "Loading Biospecimen data into BigQuery.."
+    print "Loading Biospecimen data into BigQuery..."
     load_data_from_file.run(
         config['project_id'],
         config['bq_dataset'],
         config['biospecimen']['bq_table'],
         schemas_dir + config['biospecimen']['schema_file'],
         'gs://' + config['buckets']['open'] + '/' +\
-            config['biospecimen']['output_dir'] + 'IlluminaGA/*',
+            config['biospecimen']['output_dir'] + '*',
         'NEWLINE_DELIMITED_JSON',
         'WRITE_EMPTY'
     )
-
 
 if __name__ == '__main__':
     load(json.load(open(sys.argv[1])))

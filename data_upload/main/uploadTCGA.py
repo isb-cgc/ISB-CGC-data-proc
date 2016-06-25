@@ -31,6 +31,7 @@ import sys
 from parse_bio import parse_bio
 from prepare_upload import prepare_upload
 from process_annotations import process_annotations
+from process_annotations import associate_metadata2annotation
 from process_latestarchive import process_latestarchive
 from process_metadata_current import process_metadata_current
 from process_sdrf import process_sdrf
@@ -101,6 +102,7 @@ def merge_cghup(config, master_metadata, cghub_records, log):
                                 cghub_record[key] = dcc_metadata[key]
                             elif 'IncludeForAnalysis' == key:
                                 log.warning('\tIncludeForAnalysis mismatched values for %s:%s:%s\tcghub: %s\tdcc: %s' % (aliquot, filename, key, cghub_record[key], dcc_metadata[key]))
+                                cghub_record[key] = 'no'
                             else:
                                 log.warning('\tmismatched values for %s:%s:%s\n\t\tcghub:%s\n\t\tdcc:  %s' % (aliquot, filename, key, cghub_record[key], dcc_metadata[key]))
                 #now to merge the info
@@ -121,7 +123,8 @@ def merge_cghup(config, master_metadata, cghub_records, log):
 
 def process_platform(config, log_dir, log_name, tumor_type, platform, archive2metadata, archive_types2archives, barcode2annotations, exclude_samples):
     '''
-    
+    process the archives associated with the platform to obtain metadata from the sdrf archives and to upload the appropriate files from the 
+    exploded downloaded archives
     
     parameters:
         config: the configuration map
@@ -182,6 +185,9 @@ def merge_metadata_current_metadata(sdrf_metadata, barcode2metadata, log):
         except Exception as e:
             if '20' == aliquot[13:15]:
                 continue
+            # it looks like this occurs for samples that have annotations like 'Biospecimen identity unknown', where
+            # they wouldn't be assigned a UUID.  we get here if the aliquot should have been marked as bad by
+            # annotation but wasn't!?
             log.warning('problem with annotations for %s(%s) for type %s' % (aliquot, e, field2values['Datatype']))
     
 def store_metadata(config, log, table, key2metadata):   
@@ -285,7 +291,7 @@ def process_tumortype(config, log_dir, tumor_type, platform2archive_types2archiv
         biospecimen_metadata: metadata from the biospecimen bio files
         flattened_data_map: metadata from the file paths and SDRF files
     '''
-    print '\t', datetime.now(), 'processing tumor type %s' % (tumor_type)
+    print '\t', datetime.now(), '\tprocessing tumor type %s' % (tumor_type)
     log_name = create_log(log_dir + tumor_type + '/', tumor_type)
     log = logging.getLogger(log_name)
     log.info( '\tprocessing tumor type %s' % (tumor_type))
@@ -375,7 +381,8 @@ def process_tumortypes(config, log_dir, tumor_type2platform2archive_types2archiv
         platform2archive2metadata: map of platforms to archive name to the archive metadata
         tumor_type2cghub_records: map tumor type to cghub metadata
         barcode2metadata: metadata from metadata.current.txt
-        barcode2annotations: map of barcodes to TCGA annotations
+        barcode2annotations: map of barcodes to TCGA annotations--note: these are no longer saved to the database but it does no harm to 
+            pass them along as metadata
         log: logger to log any messages
     '''
     log.info('begin process_tumortypes()')
@@ -516,6 +523,8 @@ def uploadTCGA(configFileName):
             barcode2annotations = {}
         process_tumortypes(config, run_dir, tumor_type2platform2archive_types2archives, platform2archive2metadata, tumor_type2cghub_records, barcode2metadata, barcode2annotations, log)
         
+        # associate the annotation metadata with the other metadata tables
+        associate_metadata2annotation(config, log)
         
         # print out the stats
         metadata_modules = config['metadata_modules']
@@ -525,8 +534,6 @@ def uploadTCGA(configFileName):
     finally:
         if executor:
             executor.shutdown(wait=False)
-        if gcs_wrapper:
-            gcs_wrapper.close_connection()
     log.info('finish uploadTCGA()')
     
     try:
@@ -534,6 +541,9 @@ def uploadTCGA(configFileName):
         upload_run_files(config, run_dir, log)
     except Exception as e:
         log.exception('problem moving the logs and run files to GCS')
+    finally:
+        if gcs_wrapper:
+            gcs_wrapper.close_connection()
 
     print datetime.now(), 'finish uploadTCGA()'
 

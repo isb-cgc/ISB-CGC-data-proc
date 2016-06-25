@@ -21,6 +21,8 @@ from bigquery_etl.load import load_data_from_file
 import json
 import os
 
+from bigquery_etl.utils.logging_manager import configure_logging
+
 def load(config):
     """
     Load the bigquery table
@@ -28,10 +30,12 @@ def load(config):
     project_id, dataset_id, table_name, schema_file, data_path,
           source_format, write_disposition, poll_interval, num_retries
     """
+    log = configure_logging('mirna_mirna_load', 'logs/mirna_mirna_load.log')
+    log.info('begin load of mirna mirna into bigquery')
 
     schemas_dir = os.environ.get('SCHEMA_DIR', 'schemas/')
 
-    print "Loading mirna HiSeq data into BigQuery.."
+    log.info("\tLoading mirna HiSeq data into BigQuery..")
     load_data_from_file.run(
         config['project_id'],
         config['bq_dataset'],
@@ -42,8 +46,8 @@ def load(config):
         'NEWLINE_DELIMITED_JSON',
         'WRITE_EMPTY'
     )
-    print "*"*30
-    print "Loading mirna GA data into BigQuery.."
+    log.info("*"*30)
+    log.info("\tLoading mirna GA data into BigQuery..")
     load_data_from_file.run(
         config['project_id'],
         config['bq_dataset'],
@@ -54,6 +58,8 @@ def load(config):
         'NEWLINE_DELIMITED_JSON',
         'WRITE_EMPTY'
     )
+
+    log.info('done load of mirna mirna into bigquery')
 
 
 if __name__ == '__main__':

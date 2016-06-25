@@ -28,7 +28,6 @@ import logging
 import tempfile
 import chardet
 import traceback
-from retrying import retry
 
 log = logging.getLogger(__name__)
 
@@ -38,7 +37,17 @@ class GcsConnector(object):
     def __init__(self, project, bucket_name, tempdir='/tmp'):
         # connect to the cloud bucket
         self.client = storage.Client(project)
-        self.bucket = self.client.get_bucket(bucket_name)
+        retry = 0
+        while True:
+            try:
+                self.bucket = self.client.get_bucket(bucket_name)
+                break
+            except Exception as e:
+                if 3 == retry:
+                    print 'could not get bucket %s' % (bucket_name)
+                    raise e
+                retry += 1
+                time.sleep(1)
         self.tempdir = tempdir
 
     #--------------------------------------
@@ -122,15 +131,22 @@ class GcsConnector(object):
         log.info('Found {0} files in the bucket matching the pattern'.format(len(df.index)))
         return df
 
-    def retry_if_result_none(result):
-        """Return True if we should retry (in this case when result is None), False otherwise"""
-        return result is not True
-
-    @retry(retry_on_result=retry_if_result_none, wait_exponential_multiplier=2000, wait_exponential_max=10000, stop_max_delay=60000, stop_max_attempt_number=3)
     def upload_blob_from_string(self, blobname, df_stringIO, metadata={}):
         # upload the file
         upload_blob = storage.blob.Blob(blobname, bucket=self.bucket)
-        upload_blob.upload_from_string(df_stringIO)
+        tries = 0
+        while True:
+            try:
+                upload_blob.upload_from_string(df_stringIO)
+                break
+            except Exception as e:
+                if 3 == tries:
+                    traceback.print_exc(10)
+                    raise e
+                time.sleep(1)
+                tries += 1
+                print '\tretry %s for upload of %s' % (tries, blobname)
+
         # set blob metadata
         if metadata:
             log.info("Setting object metadata")
@@ -152,19 +168,38 @@ class GcsConnector(object):
     # works only in a single bucket
     # set the object metadata
     #----------------------------------------
-    @retry(retry_on_result=retry_if_result_none, wait_exponential_multiplier=2000, wait_exponential_max=10000, stop_max_delay=60000, stop_max_attempt_number=3)
     def convert_df_to_njson_and_upload(self, df, destination_blobname, metadata={}):
 
-        log.info("Converting dataframe into a new-line delimited JSON file")
+        log.info("Converting dataframe into a new-line delimited JSON file to save as %s" % (destination_blobname))
 
+        log.info('\tstart conversion of %s' % (destination_blobname))
         file_to_upload = StringIO()
+        modcount = len(df) / 20
+        count = 0
 
-        for i, rec in df.iterrows():
+        for _, rec in df.iterrows():
+            if 0 == count % modcount:
+                log.info('\t\tconverted %s rows' % (count))
+            count += 1
             file_to_upload.write(rec.convert_objects(convert_numeric=False).to_json() + "\n")
         file_to_upload.seek(0)
+        log.info('\tcompleted conversion.  converted %s total rows for %s' % (count, destination_blobname))
 
         upload_blob = storage.blob.Blob(destination_blobname, bucket=self.bucket)
-        upload_blob.upload_from_string(file_to_upload.getvalue())
+        retry = 0
+        log.info('\tstart upload of %s' % (destination_blobname))
+        while True:
+            try:
+                upload_blob.upload_from_string(file_to_upload.getvalue())
+                break
+            except Exception as e:
+                if 3 == retry:
+                    log.exception('problem with upload to %s, no more retries' % (destination_blobname))
+                    raise e
+                retry += 1
+                log.exception('problem with upload to %s, retry %s' % (destination_blobname, retry))
+        log.info('\tfinished upload of %s' % (destination_blobname))
+
         # set blob metadata
         if metadata:
             log.info("Setting object metadata")

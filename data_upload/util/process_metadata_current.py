@@ -45,19 +45,28 @@ def process_metadata_current(config, run_dir, log_name):
         else:
             raise e
     
-    column2term = config['metadata_locations']['metadata.current.txt']
-    headers = lines[0].split('\t')
-    column2index = {}
-    for column in column2term:
-        column2index[column] = headers.index(column)
-    for line in lines[1:]:
-        if not line:
-            continue
-        fields = line.split('\t')
-        term2value = {}
-        for column, term in column2term.iteritems():
-            term2value[term] = fields[column2index[column]]
-        barcode2term2value[fields[1]] = term2value
-    
+    try:
+        column2term = config['metadata_locations']['metadata.current.txt']
+        headers = lines[0].split('\t')
+        column2index = {}
+        for column in column2term:
+            column2index[column] = headers.index(column)
+    except Exception as e:
+        log.exception('problem parsing metadata.current.txt header: %s' % (headers))
+        raise e
+        
+    try:
+        for line in lines[1:]:
+            if not line:
+                continue
+            fields = line.split('\t')
+            term2value = {}
+            for column, term in column2term.iteritems():
+                term2value[term] = fields[column2index[column]]
+            barcode2term2value[fields[1]] = term2value
+    except Exception as e:
+        log.exception('problem parsing metadata.current.txt: %s' % (line))
+        raise e
+     
     log.info('finished processing metadata.current.txt')
     return barcode2term2value

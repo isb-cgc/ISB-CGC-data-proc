@@ -17,26 +17,15 @@
 """
 import json
 import sys
-import sqlite3
-import time
-from bigquery_etl.execution import process_manager
-import os
 import methylation.extract
-import methylation.transform
 from bigquery_etl.extract.gcloud_wrapper import GcsConnector
 
-def main():
+def main(configfilename):
     """
-    Pipeline
+    Prefer 450K files over 270k (delete transformed 270K files)
     """
-
-    #--------------
-    # methylation
-    #--------------
-    config = json.load(open(sys.argv[1]))
-    project_id = config['project_id']
-    bucket_name = config['buckets']['open']
-
+    with open(configfilename) as configfile:
+        config = json.load(configfile)
 
     print '*'*30 + "\nExtract - methylation"
     data_library = methylation.extract.identify_data(config)
@@ -44,9 +33,12 @@ def main():
     IlluminaGA_df = data_library.query('Platform == "HumanMethylation27"')
     IlluminaHiSeq_GA_df =  IlluminaGA_df[ (IlluminaGA_df['AliquotBarcode'].isin(hiseq_aliquots))]
 
+    project_id = config['project_id']
+    bucket_name = config['buckets']['open']
     gcs = GcsConnector(project_id, bucket_name)
-    for idx, row in IlluminaHiSeq_GA_df.iterrows():
+    for _, row in IlluminaHiSeq_GA_df.iterrows():
         blob = row.to_dict()['OutDatafileNameKey']
-        print gcs.delete_blob(blob)
+        gcs.delete_blob(blob)
+
 if __name__ == '__main__':
-    main()
+    main(sys.argv[1])
