@@ -1,0 +1,170 @@
+'''
+a wrapper to google cloud sql.
+
+the MySQLdb module is thread safe but the connections to the database are not.  so the
+recommendation is that each thread have an independent connection.  currently, each
+database access will use its own connection and at the end of the method, close it.
+if this becomes expensive, timewise, a mapping of thread to connection can be utilized.
+
+Copyright 2015, Institute for Systems Biology.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+'''
+from collections import OrderedDict
+
+import isbcgc_cloudsql_model
+
+class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
+    """
+    this class manages the cloud sql metadata upload
+    """
+    metadata_gdc_clinical = {
+        'table_name': 'metadata_gdc_clinical',
+        'primary_key_name': 'metadata_gdc_clinical_id',
+        'columns': [
+            ['ParticipantBarcode', 'VARCHAR(45)', 'NOT NULL'],
+            ['ParticipantUUID', 'VARCHAR(36)', 'NOT NULL'],
+            ['Project', 'VARCHAR(40)', 'NULL'],
+            ['Program', 'VARCHAR(40)', 'NULL'],
+        ],
+#         'natural_key_cols': [
+#             'ParticipantBarcode'
+#         ],
+        'indices_defs': [
+            ['ParticipantBarcode'],
+            ['Project'],
+            ['Program'],
+        ]
+    }
+    
+    metadata_gdc_biospecimen = {
+        'table_name': 'metadata_gdc_biospecimen',
+        'primary_key_name': 'metadata_gdc_biospecimen_id',
+        'columns': [
+            ['ParticipantBarcode', 'VARCHAR(45)', 'NOT NULL'],
+            ['Project', 'VARCHAR(40)', 'NULL'],
+            ['Program', 'VARCHAR(40)', 'NULL'],
+            ['SampleBarcode', 'VARCHAR(45)', 'NOT NULL'],
+            ['SampleUUID', 'VARCHAR(36)', 'NULL'],
+        ],
+#         'natural_key_cols': [
+#             'SampleBarcode'
+#         ],
+        'indices_defs': [
+            ['ParticipantBarcode'],
+            ['SampleBarcode'],
+            ['Project'],
+            ['Program'],
+        ],
+#         'foreign_key': [
+#             'ParticipantBarcode',
+#             'metadata_gdc_clinical',
+#             'ParticipantBarcode'
+#         ]
+    }
+    
+    metadata_gdc_data = {
+        'table_name': 'metadata_gdc_data',
+        'primary_key_name': 'metadata_gdc_data_id',
+        'columns': [
+            ['ParticipantBarcode', 'VARCHAR(35)', 'NOT NULL'],
+            ['SampleBarcode', 'VARCHAR(45)', 'NOT NULL'],
+            ['AliquotBarcode', 'VARCHAR(45)', 'NOT NULL'],
+            ['AliquotUUID', 'VARCHAR(36)', 'NULL'],
+            ['Project', 'VARCHAR(40)', 'NOT NULL'],
+            ['Program', 'VARCHAR(40)', 'NOT NULL'],
+            ['DataType', 'VARCHAR(35)', 'NOT NULL'],
+            ['FileName', 'VARCHAR(200)', 'NOT NULL'],
+            ['md5sum', 'VARCHAR(33)', 'NULL'],
+            ['DataFormat', 'VARCHAR(10)', 'NOT NULL'],
+            ['access', 'VARCHAR(10)', 'NOT NULL'],
+            ['state', 'VARCHAR(20)', 'NULL'],
+            ['DataCategory', 'VARCHAR(30)', 'NOT NULL'],
+            ['file_size', 'INT', 'NOT NULL'],
+            ['file_state', 'VARCHAR(30)', 'NOT NULL'],
+            ['ExperimentalStrategy', 'VARCHAR(20)', 'NOT NULL']
+        ],
+#         'natural_key_cols': [
+#             'AliquotBarcode',
+#             'DatafileName'
+#         ],
+        'indices_defs': [
+            ['ParticipantBarcode'],
+            ['SampleBarcode'],
+            ['AliquotBarcode'],
+            ['AliquotUUID'],
+            ['Project'],
+            ['Program'],
+            ['DataType'],
+            ['FileName'],
+            ['DataFormat'],
+            ['access'],
+            ['state'],
+            ['DataCategory'],
+            ['file_state'],
+            ['ExperimentalStrategy']
+        ],
+#         'foreign_key': [
+#             'SampleBarcode',
+#             'metadata_gdc_biospecimen',
+#             'SampleBarcode'
+#         ]
+    }
+
+    metadata_gdc_samples = {
+        'table_name': 'metadata_gdc_samples',
+        'primary_key_name': 'metadata_gdc_samples_id',  # todo: define this?
+
+        'columns': [
+            ['ParticipantBarcode', 'VARCHAR(45)', 'NOT NULL'],
+            ['Project', 'VARCHAR(40)', 'NOT NULL'],
+            ['Program', 'VARCHAR(40)', 'NOT NULL'],
+            ['SampleBarcode', 'VARCHAR(45)', 'NOT NULL'],
+            ['SampleUUID', 'VARCHAR(36)', 'NOT NULL']
+        ],
+#         'natural_key_cols': [
+#             'SampleBarcode'
+#         ],
+        'indices_defs': [
+            ['ParticipantBarcode'],
+            ['SampleBarcode'],
+            ['Project'],
+            ['Program'],
+        ],
+        'natural_key_cols': ['SampleBarcode'],
+#         'foreign_key': [
+#             'SampleBarcode',
+#         ]
+    }
+    
+    isbcgc_cloudsql_model.ISBCGC_database_helper.metadata_tables = OrderedDict(
+        [
+            ('metadata_gdc_clinical', metadata_gdc_clinical),
+            ('metadata_gdc_biospecimen', metadata_gdc_biospecimen),
+            ('metadata_gdc_data', metadata_gdc_data),
+            ('metadata_gdc_samples', metadata_gdc_samples)
+        ]
+    )
+
+    self = None
+
+    def __init__(self, config, log):
+        isbcgc_cloudsql_model.ISBCGC_database_helper.__init__(self, config, log)
+
+    @classmethod
+    def initialize(cls, config, log):
+        if cls.self:
+            log.warning('class has already been initialized')
+        else:
+            cls.self = ISBCGC_database_helper(config, log)
+
