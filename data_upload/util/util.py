@@ -34,6 +34,7 @@ import threading
 import time
 import traceback
 import urllib2
+from __builtin__ import dict
 
 gcs_wrapper = None 
 
@@ -306,7 +307,7 @@ def print_list_synopsis(fulllist, label, log, count = 2):
     if (count * 2) + 1 > len(fulllist):
         log.info("%s\n%s" % (label, json.dumps (fulllist, indent=4)))
     else:
-        log.info("%s\n%s\n\t...\n%s\n\n" % (label, json.dumps (fulllist[:count], indent=4), json.dumps (fulllist[-count:], indent=4)))
+        log.info("%s: size %d\n%s\n\t...\n%s\n\n" % (label, len(fulllist), json.dumps (fulllist[:count], indent=4), json.dumps (fulllist[-count:], indent=4)))
 
 def __recurse_filter_map(retmap, origmap, thefilter):
     if 'value' in thefilter:
@@ -336,3 +337,45 @@ def __recurse_filter_map(retmap, origmap, thefilter):
 
 def filter_map(origmap, thefilter):
     return __recurse_filter_map({}, origmap, thefilter)
+
+def __recurse_flatten_map(origmap, thefilter):
+    initmap = {}
+    if 'value' in thefilter:
+        for value in thefilter['value']:
+            newlabel = thefilter['value'][value]
+            initmap[newlabel] = origmap[value]
+    
+    # map might have a nested list so might return multiple rows
+    maplists = []
+    if 'map' in thefilter:
+        for value in thefilter['map']:
+            # flatten the key/values from the nested map with the top level key/values
+            initmap.update(__recurse_flatten_map(origmap[value], thefilter['map'][value])[0])
+    
+    # for every value on the list, a new row needs to be created in the returned list
+    listmaps = []
+    if 'list' in thefilter:
+        for value in thefilter['list']:
+            newlabel += [thefilter['list'][value]]
+            for value in origmap[value]:
+                newmap = dict(initmap)
+                newmap.update([(newlabel, value)])
+                listmaps += [newmap]
+    else:
+        listmaps += [initmap]
+        
+    # for every map on the list, a new row needs to be created in the returned list
+    if 'map_list' in thefilter:
+        retlist = []
+        for value in thefilter['map_list']:
+            newfilter = thefilter['map_list'][value]
+            for nextmap in origmap[value]:
+                newmap = dict(initmap)
+                newmap.update(__recurse_flatten_map(nextmap, newfilter)[0])
+                retlist += [newmap]
+    else:
+        retlist = listmaps
+    return retlist
+
+def flatten_map(origmap, thefilter):
+    return __recurse_flatten_map(origmap, thefilter)

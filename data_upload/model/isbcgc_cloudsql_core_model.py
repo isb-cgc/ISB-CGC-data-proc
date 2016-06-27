@@ -20,6 +20,8 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 '''
+from collections import OrderedDict
+
 import isbcgc_cloudsql_model
 
 class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
@@ -501,12 +503,14 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
         ]
     }
     
-    isbcgc_cloudsql_model.ISBCGC_database_helper.metadata_tables = {
-        'metadata_clinical': metadata_clinical,
-        'metadata_biospecimen': metadata_biospecimen,
-        'metadata_data': metadata_data,
-        'metadata_samples': metadata_samples
-    }
+    isbcgc_cloudsql_model.ISBCGC_database_helper.metadata_tables = OrderedDict(
+        [
+            ('metadata_clinical', metadata_clinical),
+            ('metadata_biospecimen', metadata_biospecimen),
+            ('metadata_data', metadata_data),
+            ('metadata_samples', metadata_samples)
+        ]
+    )
 
     self = None
 

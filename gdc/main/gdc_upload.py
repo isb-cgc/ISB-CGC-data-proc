@@ -28,6 +28,7 @@ import logging
 import requests
 
 from gdc.util.process_cases import process_cases
+from gdc.util.process_data_type import process_data_type
 
 import gcs_wrapper
 from util import create_log, import_module, upload_etl_file, print_list_synopsis
@@ -46,7 +47,7 @@ def parseargs():
     parser = ArgumentParser()
     parser.add_argument("config", help="config file to get information and settings for the gdc upload")
 
-    # Process arguments
+    # Process and return arguments
     return parser.parse_args()
 
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -61,10 +62,38 @@ def process_project(config, project, log_dir):
         
         log.info('\tprocess cases for %s' % (project_id))
         case2info = process_cases(config, project_id, log_dir)
-        log.info('\tcomplete process cases for %s' % (project_id))
+        log.info('\tcompleted process cases for %s' % (project_id))
         
+        log.info('\tprocess data_types for %s' % (project_id))
+        future2data_type = {}
+        for data_type in config['data_types']:
+            if data_type in ['Clinical', 'Biospecimen']:
+                continue
+            future2data_type[executor.submit(process_data_type, config, project_id, data_type, log_dir, project_id + '_' + data_type.replace(' ', ''))] = data_type
+     
+        data_type2retry = {}
+        future_keys = future2data_type.keys()
+        while future_keys:
+            future_done, _ = futures.wait(future_keys, return_when = futures.FIRST_COMPLETED)
+            try:
+                for future in future_done:
+                    data_type = future2data_type.pop(future)
+                    if future.exception() is not None:
+                        # TODO only retry on connection refused, not other exceptions
+                        retry_ct = data_type2retry.setdefault(data_type, 0)
+                        if retry_ct > 3:
+                            raise ValueError('%s failed multiple times: %s' % (data_type, future.exception()))
+                        data_type2retry[data_type] = retry_ct + 1
+                        log.warning('\tWARNING: resubmitting %s: %s.  try %s' % (data_type, future.exception(), retry_ct))
+                        new_future = executor.submit(process_data_type, config, project_id, data_type, log_dir, project_id + '_' + data_type.replace(' ', '') + '_%d' % (retry_ct))
+                        future2data_type[new_future] = data_type
+                    else:
+                        future_keys = future2data_type.keys()
+            except:
+                future_keys = future2data_type.keys()
+                log.exception('%s failed' % (data_type))
+        log.info('\tcompleted process data_types for %s' % (project_id))
         
-        future2type = {}
         log.info('finished process_project(%s)' % (project_id))
         return case2info
     except:

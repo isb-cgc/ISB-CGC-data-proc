@@ -120,7 +120,7 @@ def get_expanded_case_info ( cases_endpt, case_id ):
 
     params = { 'filters': json.dumps(filt) }
 
-    query = "?expand=archive,project,samples.portions.analytes.aliquots&pretty=true"
+    query = "?expand=archive,project,project.program,samples.portions.analytes.aliquots&pretty=true"
     url = cases_endpt + query
     print "\n=================================\nget expanded case request ", url, params
     response = requests.get ( url, params=params )
