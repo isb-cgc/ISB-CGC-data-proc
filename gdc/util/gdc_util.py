@@ -23,9 +23,9 @@ import time
 
 from util import filter_map, flatten_map, import_module, print_list_synopsis
 
-def request(url, params, msg, log):
-    response = requests.get(url, params=params)
+def request(url, params, msg, log, timeout = None):
     try:
+        response = requests.get(url, params=params)
         response.raise_for_status()
     except:
         retry_count = 1
@@ -34,7 +34,10 @@ def request(url, params, msg, log):
             log.exception('%s, retry %d...' % (msg, retry_count))
             time.sleep(1)
             try:
-                response = requests.get(url, params=params)
+                if timeout:
+                    response = requests.get(url, params=params, timeout = timeout)
+                else:
+                    response = requests.get(url, params=params)
                 response.raise_for_status()
                 break
             except:
@@ -45,16 +48,16 @@ def request(url, params, msg, log):
     
     return response
 
-def get_ids(endpt, typeID, project_name, params, label, log):
+def get_ids(endpt, typeID, label, params, activity, log):
     ids = []
     curstart = 1
     log.info("\t\tget request loop starting.  url:%s" % (endpt))
-    msg = '\t\tproblem getting ids for %s' % (project_name)
+    msg = '\t\tproblem getting ids for %s' % (activity)
     while True:
         params['from'] = curstart
         response = request(endpt, params, msg, log)
         rj = response.json()
-        print_list_synopsis(rj['data']['hits'], '\t\t%s for %s' % (label, project_name), log, 5)
+        print_list_synopsis(rj['data']['hits'], '\t\t%s for %s' % (label, activity), log, 5)
         for index in range(len(rj['data']['hits'])):
             ids += [rj['data']['hits'][index][typeID]]
         
@@ -64,11 +67,39 @@ def get_ids(endpt, typeID, project_name, params, label, log):
     
     return ids
 
-def get_filtered_map(url, ident, filt, mapfilter, project_name, count, log):
+def get_filtered_map_rows(url, idname, filt, mapfilter, activity, log, size = 100, timeout = None):
+    count = 0
+    id2map = {}
+    curstart = 1
+    while True:
+        params = {
+            'filters':json.dumps(filt), 
+            'sort': '%s:asc' % (idname),
+            'from': curstart, 
+            'size': size
+        }
+        msg = '\t\tproblem getting filtered map for %s' % (activity)
+        response = request(url, params, msg, log, timeout)
+            
+        rj = response.json()
+        for index in range(len(rj['data']['hits'])):
+            themap = rj['data']['hits'][index]
+            id2map[themap[idname]] = filter_map(themap, mapfilter)
+            if 0 == count % size:
+                print_list_synopsis([id2map[themap[idname]]], '\t\tprocessing id %d with id %s, for %s.  filtered map:' % (count, themap[idname], activity), log, 1)
+            count += 1
+        
+        curstart += rj['data']['pagination']['count']
+        if curstart >= rj['data']['pagination']['total']:
+            break
+
+    return id2map
+
+def get_filtered_map(url, ident, filt, mapfilter, activity, count, log):
     params = {'filters':json.dumps(filt), 
         'from':1, 
         'size':100}
-    msg = '\t\tproblem getting filtered map for %s' % (project_name)
+    msg = '\t\tproblem getting filtered map for %s' % (activity)
     response = request(url, params, msg, log)
         
     rj = response.json()
@@ -76,7 +107,7 @@ def get_filtered_map(url, ident, filt, mapfilter, project_name, count, log):
         raise ValueError('unexpected number of hits for %s: %s' % (ident, len(rj['data']['hits'])))
     filteredmap = filter_map(rj['data']['hits'][0], mapfilter)
     if 0 == count % 100:
-        print_list_synopsis([filteredmap], '\t\tprocessing id %d with id %s, for %s.  filtered map:' % (count, ident, project_name), log, 1)
+        print_list_synopsis([filteredmap], '\t\tprocessing id %d with id %s, for %s.  filtered map:' % (count, ident, activity), log, 1)
     return filteredmap
 
 def insert_rows(config, tablename, values, mapfilter, log):

@@ -34,7 +34,6 @@ import threading
 import time
 import traceback
 import urllib2
-from __builtin__ import dict
 
 gcs_wrapper = None 
 
@@ -342,8 +341,15 @@ def __recurse_flatten_map(origmap, thefilter):
     initmap = {}
     if 'value' in thefilter:
         for value in thefilter['value']:
-            newlabel = thefilter['value'][value]
-            initmap[newlabel] = origmap[value]
+            fields = thefilter['value'][value].split(',')
+            if 1 == len(fields):
+                newlabel = thefilter['value'][value]
+                initmap[newlabel] = origmap[value]
+            elif 'substr' == fields[0]:
+                substr = origmap[value][int(fields[1]):int(fields[2])]
+                initmap[fields[3]] = substr
+            else:
+                raise ValueError('unknown operation specification: %s %s' % (origmap[value], thefilter['value'][value]))
     
     # map might have a nested list so might return multiple rows
     maplists = []

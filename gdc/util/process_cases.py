@@ -20,7 +20,7 @@ limitations under the License.
 import json
 import logging
 
-from gdc.util.gdc_util import get_ids, get_filtered_map, insert_rows
+from gdc.util.gdc_util import get_ids, get_filtered_map, get_filtered_map_rows, insert_rows
 
 from util import create_log
 
@@ -30,6 +30,25 @@ def save2db(config, case2info, log):
     insert_rows(config, 'metadata_gdc_clinical', values, config['process_cases']['clinical_table_mapping'], log)
     insert_rows(config, 'metadata_gdc_biospecimen', values, config['process_cases']['sample_table_mapping'], log)
     log.info('\tfinished save cases to db')
+
+def get_case_map_rows(config, project_name, log):
+    log.info('\tbegin select cases')
+    count = 0
+    endpt = config['cases_endpt']['endpt']
+    query = config['cases_endpt']['query']
+    url = endpt + query
+    mapfilter = config['process_cases']['filter_result']
+    filt = { 'op': '=',
+             'content': {
+                 'field': 'project.project_id',
+                 'value': [project_name]
+              } 
+           }
+    
+    case2info = get_filtered_map_rows(url, 'case_id', filt, mapfilter, 'case', log, config['process_cases']['fetch_count'], 3)
+    
+    log.info('\tfinished select cases.  processed %s cases for %s' % (count, 'cases'))
+    return case2info
 
 def get_case_maps(config, project_name, case_ids, log):
     log.info('\tbegin select cases')
@@ -42,9 +61,9 @@ def get_case_maps(config, project_name, case_ids, log):
     case2info = {}
     for case_id in case_ids:
         filt = {'op':'=', 
-            'content':{
-                'field':'case_id', 
-                'value':[case_id]}}
+                'content':{
+                    'field':'case_id', 
+                    'value':[case_id]}}
         case2info[case_id] = get_filtered_map(url, case_id, filt, mapfilter, project_name, count, log)
         count += 1
     
@@ -83,8 +102,11 @@ def process_cases(config, project_name, log_dir):
         log = logging.getLogger(log_name)
 
         log.info('begin process_cases(%s)' % (project_name))
-        case_ids = get_case_ids(config, project_name, log)
-        case2info = get_case_maps(config, project_name, case_ids, log)
+        if config['process_cases']['call_map_rows']:
+            case2info = get_case_map_rows(config, project_name, log)
+        else:
+            case_ids = get_case_ids(config, project_name, log)
+            case2info = get_case_maps(config, project_name, case_ids, log)
         save2db(config, case2info, log)
         log.info('finished process_cases(%s)' % (project_name))
 

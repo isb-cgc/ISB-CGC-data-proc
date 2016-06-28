@@ -6,7 +6,7 @@ Created on Jun 26, 2016
 import json
 import logging
 
-from gdc.util.gdc_util import get_ids, get_filtered_map, insert_rows
+from gdc.util.gdc_util import get_ids, get_filtered_map, get_filtered_map_rows, insert_rows
 
 from util import create_log
 
@@ -15,6 +15,38 @@ def save2db(config, file2info, log):
     values = file2info.values()
     insert_rows(config, 'metadata_gdc_data', values, config['process_files']['data_table_mapping'], log)
     log.info('\tfinished save cases to db')
+
+def get_file_map_rows(config, data_type, project_id, log):
+    log.info('\tbegin select files')
+    count = 0
+    endpt = config['files_endpt']['endpt']
+    query = config['files_endpt']['query']
+    url = endpt + query
+    mapfilter = config['process_files']['filter_result']
+    filt = { 
+              'op': 'and',
+              'content': [
+                 {
+                     'op': '=',
+                     'content': {
+                         'field': 'data_type',
+                         'value': [data_type]
+                      }
+                  },
+                  {
+                     'op': '=',
+                     'content': {
+                         'field': 'cases.project.project_id',
+                         'value': [project_id]
+                      }
+                  } 
+              ]
+           } 
+
+    file2info = get_filtered_map_rows(url, 'file_id', filt, mapfilter, 'file', log, config['process_files']['fetch_count'], 3)
+    
+    log.info('\tfinished select files.  processed %s files for %s' % (count, 'files'))
+    return file2info
 
 def get_file_maps(config, data_type, project_id, file_ids, log):
     log.info('\tbegin select files')
@@ -78,8 +110,11 @@ def process_data_type(config, project_id, data_type, log_dir, log_name):
         log_name = create_log(log_dir, log_name)
         log = logging.getLogger(log_name)
         log.info('begin process_data_type %s for %s' % (data_type, project_id))
-        file_ids = get_file_ids(config, project_id, data_type, log)
-        file2info = get_file_maps(config, data_type, project_id, file_ids, log)
+        if config['process_files']['call_map_rows']:
+            file2info = get_file_map_rows(config, data_type, project_id, log)
+        else:
+            file_ids = get_file_ids(config, project_id, data_type, log)
+            file2info = get_file_maps(config, data_type, project_id, file_ids, log)
         save2db(config, file2info, log)
         log.info('finished process_data_type %s for %s' % (data_type, project_id))
     except:

@@ -28,6 +28,37 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
     """
     this class manages the cloud sql metadata upload
     """
+    metadata_gdc_annotation = {
+        'table_name': 'metadata_gdc_annotation',
+        'primary_key_name': 'metadata_gdc_annotation_id',
+        'columns': [
+            ['status', 'VARCHAR(20)', 'NOT NULL'],
+            ['annotationId', 'VARCHAR(36)', 'NOT NULL'],
+            ['annotationCategoryName', 'VARCHAR(100)', 'NOT NULL'],
+            ['annotationClassification', 'VARCHAR(30)', 'NOT NULL'],
+            ['annotationNoteText', 'VARCHAR(700)', 'NULL'],
+            ['itemTypeId', 'VARCHAR(36)', 'NOT NULL'],
+            ['itemTypeName', 'VARCHAR(20)', 'NOT NULL'],
+            ['itemBarcode', 'VARCHAR(28)', 'NOT NULL'],
+            ['AliquotBarcode', 'VARCHAR(28)', 'NULL'],
+            ['ParticipantBarcode', 'VARCHAR(12)', 'NOT NULL'],
+            ['SampleBarcode', 'VARCHAR(16)', 'NULL'],
+            ['dateCreated', 'DATETIME', 'NOT NULL'],
+            ['dateEdited', 'DATETIME', 'NULL'],
+        ],
+
+        'indices_defs': [
+            ['annotationId'],
+            ['annotationCategoryName'],
+            ['annotationClassification'],
+            ['itemTypeId'],
+            ['itemBarcode'],
+            ['AliquotBarcode'],
+            ['ParticipantBarcode'],
+            ['SampleBarcode'],
+        ]
+    }
+    
     metadata_gdc_clinical = {
         'table_name': 'metadata_gdc_clinical',
         'primary_key_name': 'metadata_gdc_clinical_id',
@@ -149,6 +180,7 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
     
     isbcgc_cloudsql_model.ISBCGC_database_helper.metadata_tables = OrderedDict(
         [
+            ('metadata_gdc_annotation', metadata_gdc_annotation),
             ('metadata_gdc_clinical', metadata_gdc_clinical),
             ('metadata_gdc_biospecimen', metadata_gdc_biospecimen),
             ('metadata_gdc_data', metadata_gdc_data),

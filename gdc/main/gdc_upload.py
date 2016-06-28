@@ -27,6 +27,7 @@ import json
 import logging
 import requests
 
+from gdc.util.process_annotations import process_annotations
 from gdc.util.process_cases import process_cases
 from gdc.util.process_data_type import process_data_type
 
@@ -204,6 +205,7 @@ def uploadGDC():
             # open the GCS wrapper here so it can be used by all the projects/platforms to save files
             gcs_wrapper.open_connection()
 
+        process_annotations(config, log_dir)
         process_programs(config, log_dir, log)
     finally:
         if executor:
