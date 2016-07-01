@@ -308,6 +308,7 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
             ['Species'],
             ['Study'],
             ['state'],
+            ['analysis_id'],
             ['GG_dataset_id']
         ],
 #         'foreign_key': [
