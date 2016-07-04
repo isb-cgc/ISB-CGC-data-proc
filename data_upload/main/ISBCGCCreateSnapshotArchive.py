@@ -61,7 +61,7 @@ def main(configfilename):
                     latestarchive.write('\t'.join(fields) + '\n')
                     # upload to GCS
                     snapshotloc = snapshotprefix + pathsuffix
-                    uploadpath = 'gs://' + googlebucket + '/' + googlefolderprefix + pathsuffix
+                    uploadpath = googlefolderprefix + pathsuffix
                     try:
                         if os.path.exists(snapshotloc):
                             upload_file(config, snapshotloc, googlebucket, uploadpath, log)
