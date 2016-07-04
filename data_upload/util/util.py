@@ -311,26 +311,30 @@ def print_list_synopsis(fulllist, label, log, count = 2):
 def __recurse_filter_map(retmap, origmap, thefilter):
     if 'value' in thefilter:
         for value in thefilter['value']:
-            newlabel = thefilter['value'][value]
-            retmap[newlabel] = origmap[value]
+            if value in origmap:
+                newlabel = thefilter['value'][value]
+                retmap[newlabel] = origmap[value]
     
     if 'list' in thefilter:
         for value in thefilter['list']:
-            newlabel = thefilter['list'][value]
-            retmap[newlabel] = deepcopy(origmap[value])
+            if value in origmap:
+                newlabel = thefilter['list'][value]
+                retmap[newlabel] = deepcopy(origmap[value])
     
     if 'map' in thefilter:
         for value in thefilter['map']:
-            newlabel = thefilter['map'][value][value]
-            retmap[newlabel] = __recurse_filter_map({}, origmap[value], thefilter['map'][value])
+            if value in origmap:
+                newlabel = thefilter['map'][value][value]
+                retmap[newlabel] = __recurse_filter_map({}, origmap[value], thefilter['map'][value])
     
     if 'map_list' in thefilter:
         for value in thefilter['map_list']:
-            newfilter = thefilter['map_list'][value]
-            newlabel = newfilter[value]
-            retmap[newlabel] = []
-            for nextmap in origmap[value]:
-                retmap[newlabel] += [__recurse_filter_map({}, nextmap, newfilter)]
+            if value in origmap:
+                newfilter = thefilter['map_list'][value]
+                newlabel = newfilter[value]
+                retmap[newlabel] = []
+                for nextmap in origmap[value]:
+                    retmap[newlabel] += [__recurse_filter_map({}, nextmap, newfilter)]
 
     return retmap
 
@@ -341,22 +345,24 @@ def __recurse_flatten_map(origmap, thefilter):
     initmap = {}
     if 'value' in thefilter:
         for value in thefilter['value']:
-            fields = thefilter['value'][value].split(',')
-            if 1 == len(fields):
-                newlabel = thefilter['value'][value]
-                initmap[newlabel] = origmap[value]
-            elif 'substr' == fields[0]:
-                substr = origmap[value][int(fields[1]):int(fields[2])]
-                initmap[fields[3]] = substr
-            else:
-                raise ValueError('unknown operation specification: %s %s' % (origmap[value], thefilter['value'][value]))
+            if value in origmap:
+                fields = thefilter['value'][value].split(',')
+                if 1 == len(fields):
+                    newlabel = thefilter['value'][value]
+                    initmap[newlabel] = origmap[value]
+                elif 'substr' == fields[0]:
+                    substr = origmap[value][int(fields[1]):int(fields[2])]
+                    initmap[fields[3]] = substr
+                else:
+                    raise ValueError('unknown operation specification: %s %s' % (origmap[value], thefilter['value'][value]))
     
     # map might have a nested list so might return multiple rows
     maplists = []
     if 'map' in thefilter:
         for value in thefilter['map']:
-            # flatten the key/values from the nested map with the top level key/values
-            initmap.update(__recurse_flatten_map(origmap[value], thefilter['map'][value])[0])
+            if value in origmap:
+                # flatten the key/values from the nested map with the top level key/values
+                initmap.update(__recurse_flatten_map(origmap[value], thefilter['map'][value])[0])
     
     # for every value on the list, a new row needs to be created in the returned list
     listmaps = []
@@ -368,7 +374,7 @@ def __recurse_flatten_map(origmap, thefilter):
                 newmap.update([(newlabel, value)])
                 listmaps += [newmap]
     else:
-        listmaps += [initmap]
+        listmaps = initmap
         
     # for every map on the list, a new row needs to be created in the returned list
     if 'map_list' in thefilter:

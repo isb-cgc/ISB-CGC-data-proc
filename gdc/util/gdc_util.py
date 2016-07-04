@@ -130,3 +130,13 @@ def insert_rows(config, tablename, values, mapfilter, log):
         rows += [row]
     
     module.ISBCGC_database_helper.column_insert(config, rows, tablename, fieldnames, log)
+
+def request_facets_results(url, facet, log, page_size = 0, params = None):
+    response = request(url + facet, params, 'requesting facet %s from %s' % (facet, url), log)
+
+    rj = response.json()
+    buckets = rj['aggregations'][facet]
+    retval = {}
+    for bucket in buckets:
+        retval[bucket['key']] = bucket['doc_count']
+    return retval
