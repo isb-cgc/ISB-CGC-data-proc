@@ -119,7 +119,7 @@ def get_file_ids(config, project_id, data_type, log):
         log.exception('problem getting file_ids for %s' % (project_id))
         raise
     
-def process_data_type(config, project_id, data_type, log_dir, log_name):
+def process_data_type(config, project_id, data_type, file_count, log_dir, log_name):
     try:
         log_name = create_log(log_dir, log_name)
         log = logging.getLogger(log_name)
@@ -128,9 +128,12 @@ def process_data_type(config, project_id, data_type, log_dir, log_name):
             file2info = get_file_map_rows(config, data_type, project_id, log)
         else:
             file_ids = get_file_ids(config, project_id, data_type, log)
+            if len(file_ids) != file_count:
+                log.warning('actual file count (%d) != projected file count (%d)' % (len(file_ids), file_count))
             file2info = get_file_maps(config, data_type, project_id, file_ids, log)
         save2db(config, file2info, log)
         log.info('finished process_data_type %s for %s' % (data_type, project_id))
+        return file2info
     except:
         log.exception('problem processing data_type %s for %s' % (data_type, project_id))
         raise

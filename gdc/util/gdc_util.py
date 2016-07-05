@@ -86,6 +86,7 @@ def get_filtered_map_rows(url, idname, filt, mapfilter, activity, log, size = 10
             themap = rj['data']['hits'][index]
             id2map[themap[idname]] = filter_map(themap, mapfilter)
             if 0 == count % size:
+                print_list_synopsis([themap], '\t\tprocessing id %d with id %s, for %s.  unfiltered map:' % (count, themap[idname], activity), log, 1)
                 print_list_synopsis([id2map[themap[idname]]], '\t\tprocessing id %d with id %s, for %s.  filtered map:' % (count, themap[idname], activity), log, 1)
             count += 1
         
@@ -110,32 +111,36 @@ def get_filtered_map(url, ident, filt, mapfilter, activity, count, log):
         print_list_synopsis([filteredmap], '\t\tprocessing id %d with id %s, for %s.  filtered map:' % (count, ident, activity), log, 1)
     return filteredmap
 
+
+def addrow(fieldnames, row2map):
+    row = []
+    for fieldname in fieldnames:
+        if fieldname in row2map:
+            row += [row2map[fieldname]]
+        else:
+            row += [None]
+    return [row]
+
 def insert_rows(config, tablename, values, mapfilter, log):
-    module = import_module(config['database_module'])
     maps = []
     for value in values:
         maps += flatten_map(value, mapfilter)
     print_list_synopsis(maps, '\t\trows to save for %s' % (tablename), log)
 
+    module = import_module(config['database_module'])
     fieldnames = module.ISBCGC_database_helper.field_names(tablename)
     rows = []
     for nextmap in maps:
-        row = []
-        for fieldname in fieldnames:
-            if fieldname in nextmap:
-                row += [nextmap[fieldname]]
-            else:
-                row += [None]
-        
-        rows += [row]
+        rows += addrow(fieldnames, nextmap)
     
     module.ISBCGC_database_helper.column_insert(config, rows, tablename, fieldnames, log)
 
-def request_facets_results(url, facet, log, page_size = 0, params = None):
-    response = request(url + facet, params, 'requesting facet %s from %s' % (facet, url), log)
+def request_facets_results(url, facet_query, facet, log, page_size = 0, params = None):
+    facet_query = facet_query % (facet, page_size)
+    response = request(url + facet_query, params, 'requesting facet %s from %s' % (facet, url), log)
 
     rj = response.json()
-    buckets = rj['aggregations'][facet]
+    buckets = rj['data']['aggregations'][facet]['buckets']
     retval = {}
     for bucket in buckets:
         retval[bucket['key']] = bucket['doc_count']

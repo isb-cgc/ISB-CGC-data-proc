@@ -315,6 +315,7 @@ def __recurse_filter_map(retmap, origmap, thefilter):
                 newlabel = thefilter['value'][value]
                 retmap[newlabel] = origmap[value]
     
+    # TODO: map might have a list might have nested fields so might return multiple rows
     if 'list' in thefilter:
         for value in thefilter['list']:
             if value in origmap:
@@ -356,7 +357,7 @@ def __recurse_flatten_map(origmap, thefilter):
                 else:
                     raise ValueError('unknown operation specification: %s %s' % (origmap[value], thefilter['value'][value]))
     
-    # map might have a nested list so might return multiple rows
+    # TODO: map might have a list might have nested fields so might return multiple rows
     maplists = []
     if 'map' in thefilter:
         for value in thefilter['map']:
@@ -374,7 +375,7 @@ def __recurse_flatten_map(origmap, thefilter):
                 newmap.update([(newlabel, value)])
                 listmaps += [newmap]
     else:
-        listmaps = initmap
+        listmaps += [initmap]
         
     # for every map on the list, a new row needs to be created in the returned list
     if 'map_list' in thefilter:
