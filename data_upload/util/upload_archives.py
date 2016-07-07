@@ -179,7 +179,7 @@ def upload_archive(config, sdrf_metadata, archive2metadata, exclude_samples, arc
         try:
             level = archive_fields[0].split('.')[-4].replace('_', ' ')
             user_info = config['user_info']
-            archive_path = util.setup_archive(archive_fields, log, user_info['user'], user_info['password'])
+            archive_path = util.setup_archive(config, archive_fields, log, user_info['user'], user_info['password'])
             file2metadata = process_files(config, archive_path, sdrf_metadata, seen_files, nonupload_files, exclude_samples, level, log)
             if 0 < len(file2metadata):
                 upload_files(config, archive_path, file2metadata, log)

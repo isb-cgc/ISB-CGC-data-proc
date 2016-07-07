@@ -503,10 +503,10 @@ def uploadTCGA(configFileName):
         module = import_module(config['database_module'])
         module.ISBCGC_database_helper.initialize(config, log)
      
-        if config['upload_files'] or config['upload_etl_files']:
-            # open the GCS wrapper here so it can be used by all the tumor types/platforms to save files
-            gcs_wrapper = import_module(config['gcs_wrapper'])
-            gcs_wrapper.open_connection(config, log)
+        # open the GCS wrapper here so it can be used by all the tumor types/platforms to save files
+        gcs_wrapper = import_module(config['gcs_wrapper'])
+        gcs_wrapper.open_connection(config, log)
+        
         info_status(config, log)
         tumor_type2platform2archive_types2archives, platform2archive2metadata = process_latestarchive(config, run_dir, log_name)
         prepare_upload(tumor_type2platform2archive_types2archives, log)

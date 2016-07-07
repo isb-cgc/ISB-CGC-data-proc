@@ -18,6 +18,7 @@ limitations under the License.
 @author: michael
 '''
 import logging
+import urllib
 
 import util
 
@@ -32,9 +33,11 @@ def process_metadata_current(config, run_dir, log_name):
     
     metadataURL = config['downloads']['metadata_current']
     try:
-        metadata = util.getURLData(metadataURL, 'metadata.current.txt', log)
-        lines = metadata.split('\n')
-        util.post_run_file(run_dir, 'metadata.current.txt', metadata)
+#         metadata = util.getURLData(metadataURL, 'metadata.current.txt', log)
+        metadata = urllib.urlopen(metadataURL)
+        contents = metadata.read()
+        lines = contents.split('\n')
+        util.post_run_file(run_dir, 'metadata.current.txt', contents)
     except Exception as e:
         log.exception('problem fetching metadata.current.txt')
         if 'test' == config['mode']:

@@ -19,6 +19,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 '''
 import isbcgc_cloudsql_model
+from collections import OrderedDict
 
 class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
     """
@@ -56,7 +57,7 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
         ]
     }
 
-    isbcgc_cloudsql_model.ISBCGC_database_helper.metadata_tables = {'metadata_datadictionary': metadata_datadictionary}
+    isbcgc_cloudsql_model.ISBCGC_database_helper.metadata_tables = OrderedDict([('metadata_datadictionary', metadata_datadictionary)])
 
     self = None
 

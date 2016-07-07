@@ -21,6 +21,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 '''
 import isbcgc_cloudsql_model
+from collections import OrderedDict
 
 class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
     """
@@ -308,6 +309,7 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
             ['Species'],
             ['Study'],
             ['state'],
+            ['analysis_id'],
             ['GG_dataset_id']
         ],
 #         'foreign_key': [
@@ -501,12 +503,14 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
         ]
     }
     
-    isbcgc_cloudsql_model.ISBCGC_database_helper.metadata_tables = {
-        'metadata_clinical': metadata_clinical,
-        'metadata_biospecimen': metadata_biospecimen,
-        'metadata_data': metadata_data,
-        'metadata_samples': metadata_samples
-    }
+    isbcgc_cloudsql_model.ISBCGC_database_helper.metadata_tables = OrderedDict(
+        [
+            ('metadata_clinical', metadata_clinical),
+            ('metadata_biospecimen', metadata_biospecimen),
+            ('metadata_data', metadata_data),
+            ('metadata_samples', metadata_samples)
+        ]
+    )
 
     self = None
 

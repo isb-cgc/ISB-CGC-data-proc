@@ -71,14 +71,13 @@ class ISBCGC_database_helper():
             not_found = OrderedDict(self.metadata_tables)
             found = OrderedDict()
             for next_row in cursor:
-                print next_row[0]
                 if next_row[0] in self.metadata_tables:
                     found[next_row[0]] = self.metadata_tables[next_row[0]]
                     not_found.pop(next_row[0])
             if 0 != len(found) and config['cloudsql']['update_schema']:
                 # need to delete in foreign key dependency order
                 found_list = []
-                for table_name in reversed(self.metadata_tables):
+                for table_name in reversed(self.metadata_tables.keys()):
                     if table_name in found:
                         found_list += [found[table_name]]
                 self._drop_schema(cursor, config, found_list, log)
