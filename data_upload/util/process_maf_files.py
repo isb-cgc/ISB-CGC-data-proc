@@ -235,7 +235,7 @@ def upload_archive(config, log, archive_fields, archive2metadata, sdrf_metadata,
     archive_path = None
     try:
         if config['download_archives']:
-            archive_path = util.setup_archive(archive_fields, log, user_info['user'], user_info['password'])
+            archive_path = util.setup_archive(config, archive_fields, log, user_info['user'], user_info['password'])
             maf_upload_files = config['maf_upload_files']
             filenames = process_files(archive_path, maf_upload_files, seen_files, log)
             if 0 < len(filenames):

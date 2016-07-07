@@ -137,7 +137,7 @@ def is_upload_archive(archive_name, upload_archives, archive2metadata):
             break
     return upload
 
-def setup_archive(archive_fields, log, user = None, password = None):
+def setup_archive(config, archive_fields, log, user = None, password = None):
     tmp_dir_parent = os.environ.get('ISB_TMP', '/tmp/')
     archive_path = os.path.join(tmp_dir_parent, archive_fields[0] + '/')
     if not os.path.isdir(archive_path):
@@ -147,7 +147,16 @@ def setup_archive(archive_fields, log, user = None, password = None):
         while True:
             try:
                 log.info('\t\tstart download of %s' % (archive_fields[0]))
-                _download_file(archive_fields[2], archive_path + archive_fields[0] + '.tar.gz', log, user, password)
+                if config['use_gcs_processing']:
+                    global gcs_wrapper
+                    if None == gcs_wrapper:
+                        gcs_wrapper = import_module(config['gcs_wrapper'])
+                    fields = archive_fields[2].split('/')
+                    bucket_name = fields[6]
+                    key_name = '/'.join(fields[8:])
+                    gcs_wrapper.download_file(archive_path + archive_fields[0] + '.tar.gz', bucket_name, key_name, log)
+                else:
+                    _download_file(archive_fields[2], archive_path + archive_fields[0] + '.tar.gz', log, user, password)
                 log.info('\t\tfinished download of %s' % (archive_fields[0]))
                 break
             except (requests.exceptions.ConnectionError, urllib2.URLError) as ce:

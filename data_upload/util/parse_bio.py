@@ -767,7 +767,7 @@ def parse_archives(config, log, archives, study, archive2metadata, clinical_meta
         archive_path = os.path.join(tmp_dir_parent, archive_fields[0] + '/')
         if not os.path.isdir(archive_path):
             os.makedirs(archive_path)
-        archive_path = util.setup_archive(archive_fields, log)
+        archive_path = util.setup_archive(config, archive_fields, log)
         files = os.listdir(archive_path)
         parse_files(config, log, files, archive_path, archive_fields, study, archive2metadata, exclude_samples, clinical_metadata, biospecimen_metadata)
         shutil.rmtree(archive_path)
