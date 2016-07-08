@@ -13,6 +13,7 @@ lib-cov
 *.xlsx
 *.tsv
 *.vcf
+*.onco
 
 pids
 logs
@@ -41,6 +42,8 @@ data_upload/data
 data_upload/ssl
 data_upload/config
 scripts
+ssl
+venv_upload
 
 /env
 ~*
