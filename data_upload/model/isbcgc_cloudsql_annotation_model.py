@@ -18,8 +18,9 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 '''
-import isbcgc_cloudsql_model
 from collections import OrderedDict
+
+import isbcgc_cloudsql_model
 
 class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
     """
@@ -63,116 +64,11 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
         ]
     }
 
-    metadata_annotation2samples = {
-        'table_name': 'metadata_annotation2samples',
-
-        'columns': [
-            ['metadata_annotation_id', 'INTEGER', 'NOT NULL'],
-            ['metadata_samples_id', 'INTEGER', 'NOT NULL'],
-        ],
-
-        'indices_defs': [
-            ['metadata_annotation_id', 'metadata_samples_id'],
-        ],
-        
-        'foreign_keys': [
-            [
-                'metadata_annotation_id',
-                'metadata_annotation',
-                'metadata_annotation_id'
-            ],
-            [
-                'metadata_samples_id',
-                'metadata_samples',
-                'metadata_samples_id'
-            ]
+    isbcgc_cloudsql_model.ISBCGC_database_helper.metadata_tables = OrderedDict(
+        [
+            ('metadata_annotation', metadata_annotation)
         ]
-    }
-
-    metadata_annotation2clinical = {
-        'table_name': 'metadata_annotation2clinical',
-
-        'columns': [
-            ['metadata_annotation_id', 'INTEGER', 'NOT NULL'],
-            ['metadata_clinical_id', 'INTEGER', 'NOT NULL'],
-        ],
-
-        'indices_defs': [
-            ['metadata_annotation_id', 'metadata_clinical_id'],
-        ],
-        
-        'foreign_keys': [
-            [
-                'metadata_annotation_id',
-                'metadata_annotation',
-                'metadata_annotation_id'
-            ],
-            [
-                'metadata_clinical_id',
-                'metadata_clinical',
-                'metadata_clinical_id'
-            ]
-        ]
-    }
-
-    metadata_annotation2biospecimen = {
-        'table_name': 'metadata_annotation2biospecimen',
-
-        'columns': [
-            ['metadata_annotation_id', 'INTEGER', 'NOT NULL'],
-            ['metadata_biospecimen_id', 'INTEGER', 'NOT NULL'],
-        ],
-
-        'indices_defs': [
-            ['metadata_annotation_id', 'metadata_biospecimen_id'],
-        ],
-        
-        'foreign_keys': [
-            [
-                'metadata_annotation_id',
-                'metadata_annotation',
-                'metadata_annotation_id'
-            ],
-            [
-                'metadata_biospecimen_id',
-                'metadata_biospecimen',
-                'metadata_biospecimen_id'
-            ]
-        ]
-    }
-
-    metadata_annotation2data = {
-        'table_name': 'metadata_annotation2data',
-
-        'columns': [
-            ['metadata_annotation_id', 'INTEGER', 'NOT NULL'],
-            ['metadata_data_id', 'INTEGER', 'NOT NULL'],
-        ],
-
-        'indices_defs': [
-            ['metadata_annotation_id', 'metadata_data_id'],
-        ],
-        
-        'foreign_keys': [
-            [
-                'metadata_annotation_id',
-                'metadata_annotation',
-                'metadata_annotation_id'
-            ],
-            [
-                'metadata_data_id',
-                'metadata_data',
-                'metadata_data_id'
-            ]
-        ]
-    }
-
-    isbcgc_cloudsql_model.ISBCGC_database_helper.metadata_tables = OrderedDict([('metadata_annotation', metadata_annotation),
-            ('metadata_annotation2clinical', metadata_annotation2clinical),
-            ('metadata_annotation2biospecimen', metadata_annotation2biospecimen),
-            ('metadata_annotation2samples', metadata_annotation2samples),
-            ('metadata_annotation2data', metadata_annotation2data)]
-        )
+    )
 
     self = None
 
