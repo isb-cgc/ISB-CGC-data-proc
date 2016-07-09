@@ -119,9 +119,7 @@ import isbcgc_cloudsql_annotation_association_model
 from util import post_run_file
 
 def associate_metadata2annotation(config, log):
-    # now create the annotation association tables and save the associations
-    isbcgc_cloudsql_annotation_association_model.ISBCGC_database_helper.initialize(config, log)
-
+    # now save the associations
     associate_statements = [
         "insert into metadata_annotation2data " \
             "(metadata_annotation_id, metadata_data_id) " \
@@ -264,8 +262,7 @@ def process_annotations(config, run_dir, log_name):
             log.exception('exception occurred on line %s for %s' % (count, annotation))
             raise e
 
-    # now create the annotation table and save to the cloudsql annotation table
-    isbcgc_cloudsql_annotation_model.ISBCGC_database_helper.initialize(config, log)
+    # now save the rows to the cloudsql annotation table
     isbcgc_cloudsql_annotation_model.ISBCGC_database_helper.column_insert(config, annotation_lists, "metadata_annotation", sorted(ann_config.keys()), log)
 
     log.info('\tfinished processing annotations')

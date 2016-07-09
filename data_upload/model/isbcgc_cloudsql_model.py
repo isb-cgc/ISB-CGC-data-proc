@@ -22,9 +22,8 @@ limitations under the License.
 '''
 import MySQLdb
 import time
-from collections import OrderedDict
 
-class ISBCGC_database_helper():
+class ISBCGC_database_helper(object):
     """
     this class is the base class to manage subclass the CloudSQL  uploads
     """
@@ -34,8 +33,6 @@ class ISBCGC_database_helper():
         'cert': ssl_dir + 'client-cert.pem',
         'key': ssl_dir + 'client-key.pem' 
     }
-
-    metadata_tables = None
 
     @classmethod
     def getDBConnection(cls, config, log):
@@ -58,62 +55,55 @@ class ISBCGC_database_helper():
             
         return db
 
-    def __init__(self, config, log):
+    @classmethod
+    def process_tables(cls, config, process_function, log):
         db = None
         cursor = None
         try:
+            if not config['cloudsql']['update_schema']:
+                return
             if not config['process_bio']:
                 log.warning('process_bio must be true for initialization to proceed')
                 return
-            db = self.getDBConnection(config, log)
+            db = cls.getDBConnection(config, log)
             cursor = db.cursor()
-            cursor.execute('select table_name from information_schema.tables where table_schema = "%s"' % (config['cloudsql']['db']))
-            not_found = OrderedDict(self.metadata_tables)
-            found = OrderedDict()
-            for next_row in cursor:
-                if next_row[0] in self.metadata_tables:
-                    found[next_row[0]] = self.metadata_tables[next_row[0]]
-                    not_found.pop(next_row[0])
-            if 0 != len(found) and config['cloudsql']['update_schema']:
-                # need to delete in foreign key dependency order
-                found_list = []
-                for table_name in reversed(self.metadata_tables.keys()):
-                    if table_name in found:
-                        found_list += [found[table_name]]
-                self._drop_schema(cursor, config, found_list, log)
-                self._create_schema(cursor, config, self.metadata_tables.values(), log)
-            if 0 != len(not_found):
-                log.info('\tcreating table(s) %s' % (', '.join(not_found)))
-                self._create_schema(cursor, config, not_found.values(), log)
-            else:
-                log.info('\tpreserving tables')
-            log.info('\tconnection successful')
+            process_function(cursor, config, cls.metadata_tables, log)
         finally:
             if cursor:
                 cursor.close()
             if db:
                 db.close()
 
-    def _drop_schema(self, cursor, config, tables, log):
-        drop_schema_template = 'DROP TABLE %s.%s'
+    @classmethod
+    def drop_tables(cls, config, log):
+        cls.process_tables(config, cls._drop_schema, log)
+    
+    @classmethod
+    def setup_tables(cls, config, log):
+        cls.process_tables(config, cls._create_schema, log)
+    
+    @classmethod
+    def _drop_schema(cls, cursor, config, tables, log):
+        drop_schema_template = 'DROP TABLE IF EXISTS %s.%s'
         
-        for table in tables:
-            drop_statement = drop_schema_template % (config['cloudsql']['db'], table['table_name'])
-            log.info('\tdropping table %s:\n%s' % (config['cloudsql']['db'], drop_statement))
+        for table in tables.keys():
+            drop_statement = drop_schema_template % (config['cloudsql']['db'], table)
+            log.info('\tdropping table %s:\n%s' % (table, drop_statement))
             try:
                 cursor.execute(drop_statement)
             except Exception as e:
-                log.exception('\tproblem dropping %s' % (table['table_name']))
+                log.exception('\tproblem dropping %s' % (table))
                 raise e
 
-    def _create_schema(self, cursor, config, tables, log):
+    @classmethod
+    def _create_schema(cls, cursor, config, tables, log):
         create_table_template = "CREATE TABLE IF NOT EXISTS %s.%s (\n\t%s\n)" 
         primary_key_template = '%s INTEGER NOT NULL AUTO_INCREMENT PRIMARY KEY,\n\t'
         create_col_template = '%s %s %s,\n\t'
         index_template = 'INDEX %s (%s),\n\t'
         foreign_key_template = 'CONSTRAINT %s FOREIGN KEY (%s) REFERENCES %s(%s),\n\t'
 
-        for table in tables:
+        for table in tables.itervalues():
             columnDefinitions = ''
             if 'primary_key_name' in table:
                 columnDefinitions = primary_key_template % (table['primary_key_name'])
@@ -133,7 +123,7 @@ class ISBCGC_database_helper():
                                                 table['foreign_keys'][index][0], table['foreign_keys'][index][1], table['foreign_keys'][index][2])
             columnDefinitions = columnDefinitions[:-3]
             table_statement = create_table_template % (config['cloudsql']['db'], table['table_name'], columnDefinitions)
-            log.info('\tcreating table %s:\n%s' % (config['cloudsql']['db'], table_statement))
+            log.info('\tcreating table %s:\n%s' % (table['table_name'], table_statement))
             try:
                 cursor.execute(table_statement)
             except Exception as e:
