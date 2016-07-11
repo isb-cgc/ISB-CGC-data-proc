@@ -74,9 +74,9 @@ def upload_file(file_path, bucket_name, key_name, log):
                     backoff = min(1, backoff * 1.15)
             log.warning('\tattempt %s had connection error.  backoff at: %s' % (attempt, backoff))
         except Exception as e:
-            log.exception('\tproblem uploading %s due to %s' % (key_name, e))
+            log.warning('\tproblem uploading %s due to %s' % (key_name, e))
             time.sleep(1)
-    log.warning('\tfailed to upload %s due to multiple errors' % (key_name))
+    log.error('\tfailed to upload %s due to multiple errors' % (key_name))
         
 def __attempt_upload(file_path, bucket_name, key_name, log):
     time.sleep(backoff)
@@ -116,8 +116,8 @@ def download_file(file_path, bucket_name, key_name, log):
                     backoff = min(1, backoff * 1.15)
             log.warning('\tattempt %s had connection error.  backoff at: %s' % (attempt, backoff))
         except Exception as e:
-            log.warning('\tproblem uploading %s due to %s' % (key_name, e))
-    log.warning('\tfailed to upload %s due to multiple connection errors' % (key_name))
+            log.warning('\tproblem downloading %s due to %s' % (key_name, e))
+    log.error('\tfailed to upload %s due to multiple connection errors' % (key_name))
 
 def __attempt_download(file_path, bucket_name, key_name, log):
     time.sleep(backoff)
