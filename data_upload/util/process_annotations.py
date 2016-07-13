@@ -121,11 +121,51 @@ from util import post_run_file
 def associate_metadata2annotation(config, log):
     # now save the associations
     associate_statements = [
-        "insert into metadata_annotation2data " \
-            "(metadata_annotation_id, metadata_data_id) " \
-        "select a.metadata_annotation_id, s.metadata_data_id " \
-        "from metadata_annotation a join metadata_data s on " \
-            "0 < instr(s.aliquotbarcode, a.itembarcode) ",
+        "insert into metadata_annotation2data" \
+            "(metadata_annotation_id, metadata_data_id)" \
+        "select a.metadata_annotation_id, s.metadata_data_id" \
+        "from metadata_annotation a join metadata_data s on" \
+            "s.aliquotbarcode = a.itembarcode",
+        "insert into metadata_annotation2data" \
+            "(metadata_annotation_id, metadata_data_id)" \
+        "select a.metadata_annotation_id, s.metadata_data_id" \
+        "from metadata_annotation a join metadata_data s on" \
+            "left(s.aliquotbarcode, 15) = a.itembarcode",
+        "insert into metadata_annotation2data" \
+            "(metadata_annotation_id, metadata_data_id)" \
+        "select a.metadata_annotation_id, s.metadata_data_id" \
+        "from metadata_annotation a join metadata_data s on" \
+            "left(s.aliquotbarcode, 19) = a.itembarcode",
+        "insert into metadata_annotation2data" \
+            "(metadata_annotation_id, metadata_data_id)" \
+        "select a.metadata_annotation_id, s.metadata_data_id" \
+        "from metadata_annotation a join metadata_data s on" \
+            "left(s.aliquotbarcode, 20) = a.itembarcode",
+        "insert into metadata_annotation2data" \
+            "(metadata_annotation_id, metadata_data_id)" \
+        "select a.metadata_annotation_id, s.metadata_data_id" \
+        "from metadata_annotation a join metadata_data s on" \
+            "left(s.aliquotbarcode, 23) = a.itembarcode",
+        "insert into metadata_annotation2data" \
+            "(metadata_annotation_id, metadata_data_id)" \
+        "select a.metadata_annotation_id, s.metadata_data_id" \
+        "from metadata_annotation a join metadata_data s on" \
+            "left(s.aliquotbarcode, 24) = a.itembarcode",
+        "insert into metadata_annotation2data" \
+            "(metadata_annotation_id, metadata_data_id)" \
+        "select a.metadata_annotation_id, s.metadata_data_id" \
+        "from metadata_annotation a join metadata_data s on" \
+            "left(s.aliquotbarcode, 27) = a.itembarcode",
+        "insert into metadata_annotation2data" \
+            "(metadata_annotation_id, metadata_data_id)" \
+        "select a.metadata_annotation_id, s.metadata_data_id" \
+        "from metadata_annotation a join metadata_data s on" \
+            "s.samplebarcode = a.itembarcode",
+        "insert into metadata_annotation2data" \
+            "(metadata_annotation_id, metadata_data_id)" \
+        "select a.metadata_annotation_id, s.metadata_data_id" \
+        "from metadata_annotation a join metadata_data s on" \
+            "s.participantbarcode = a.itembarcode",
         "insert into metadata_annotation2clinical " \
             "(metadata_annotation_id, metadata_clinical_id) " \
         "select a.metadata_annotation_id, s.metadata_clinical_id " \
