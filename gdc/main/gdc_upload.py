@@ -34,7 +34,7 @@ from gdc.util.process_data_type import process_data_type
 from gdc.util.process_bio_data_type import process_bio_data_type
 
 import gcs_wrapper
-from util import create_log, import_module, upload_etl_file, print_list_synopsis
+from util import create_log, import_module, print_list_synopsis
 
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
@@ -61,6 +61,7 @@ def process_project(config, project, log_dir):
         log_dir += project_id + '/'
         log_name = create_log(log_dir, project_id)
         log = logging.getLogger(log_name)
+        
         log.info('begin process_project(%s)' % (project_id))
         
         log.info('\tprocess cases for %s' % (project_id))
@@ -202,6 +203,7 @@ def uploadGDC():
         log_dir = str(date.today()).replace('-', '_') + '_' + config['log_dir_tag'] + '/'
         log_name = create_log(log_dir, 'top_processing')
         log = logging.getLogger(log_name)
+
         log.info('begin uploadGDC()')
         
         executor = futures.ThreadPoolExecutor(max_workers=config['threads'])
