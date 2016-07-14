@@ -46,15 +46,15 @@ def updateDatafileUploaded(config, path_file, log):
             cursor = isbcgc_cloudsql_model.ISBCGC_database_helper.select(config, select_stmt, log, [filename], False)
             if 0 < len(cursor):
                 found_path_names += [[path_nobucket, filename]]
-            else:
+            elif not filename.endswith('xml'):
                 notfound_path_names += [[path_nobucket, filename]]
         if 0 == len(notfound_path_names):
             log.info('\tprocessed a total of %s path/name combinations.' % (count))
         else:
-            if 100 > notfound_path_names:
+            if 500 > len(notfound_path_names):
                 print_notfound = notfound_path_names
             else:
-                print_notfound = notfound_path_names[:100] + ['...']
+                print_notfound = notfound_path_names[:500] + ['...']
             log.info('\tprocessed a total of %s path/name combinations.  %s files were not found:\n\t\t%s\n' % (count, len(notfound_path_names), '\n\t\t'.join(':'.join(pathinfo) for pathinfo in print_notfound)))
         
         update_stmt = 'update metadata_data set DatafileUploaded = \'true\', DatafileNameKey = %s where DatafileName = %s'
