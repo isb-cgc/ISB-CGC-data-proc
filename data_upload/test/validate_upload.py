@@ -412,7 +412,7 @@ def validate_database(config, log, log_dir):
         columns[table2column[row[1]]][row[0]] = row[2]
     
 # create a summary table of statistics
-    summary = 'column name\ttable name\tstudies\tvalid values\tdistinct values\tsstats\n'
+    summary = 'column name\ttable name\tstudies\tvalid values(empty)\tdistinct values\tsstats\n'
     for table_name in table2column:
         log.info('validating table %s\n' % (table_name))
         dd_columns2type = columns[table2column[table_name]]
@@ -516,21 +516,24 @@ def validate_database(config, log, log_dir):
             if 'VALUE' == results[0][0]: 
                 if 'EMPTY' == results[1][0]:
                     stats += basic_print % (results[0][1], total, results[1][1])
+                    summary += '%s/%s(%s)\t' % (results[0][1], total, results[1][1])
                 else:
                     stats += basic_print % (results[0][1], total, results[2][1])
-                summary += '%s/%s\t' % (results[0][1], total)
+                    summary += '%s/%s(%s)\t' % (results[0][1], total, results[2][1])
             elif 'VALUE' == results[1][0]: 
                 if 'EMPTY' == results[0][0]:
                     stats += basic_print % (results[0][1], total, results[0][1])
+                    summary += '%s/%s(%s)\t' % (results[0][1], total, results[0][1])
                 else:
                     stats += basic_print % (results[0][1], total, results[2][1])
-                summary += '%s/%s\t' % (results[1][1], total)
+                    summary += '%s/%s(%s)\t' % (results[0][1], total, results[2][1])
             elif 'VALUE' == results[2][0]: 
                 if 'EMPTY' == results[0][0]:
                     stats += basic_print % (results[0][1], total, results[0][1])
+                    summary += '%s/%s(%s)\t' % (results[0][1], total, results[0][1])
                 else:
                     stats += basic_print % (results[0][1], total, results[1][1])
-                summary += '%s/%s\t' % (results[2][1], total)
+                    summary += '%s/%s(%s)\t' % (results[0][1], total, results[1][1])
 
             cursor = helper.select(config, distinct_stmt.format(colname, table_name), log)
             if 50 < len(cursor):
