@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Script to load Clinical and Biospecimen data
+"""Script to load Clinical, Biospecimen data and Data data
 To run: python load.py config_file
 """
 import sys
@@ -51,6 +51,18 @@ def load(config):
         schemas_dir + config['biospecimen']['schema_file'],
         'gs://' + config['buckets']['open'] + '/' +\
             config['biospecimen']['output_dir'] + '*',
+        'NEWLINE_DELIMITED_JSON',
+        'WRITE_EMPTY'
+    )
+    print "*"*30
+    print "Loading Data data into BigQuery..."
+    load_data_from_file.run(
+        config['project_id'],
+        config['bq_dataset'],
+        config['data']['bq_table'],
+        schemas_dir + config['data']['schema_file'],
+        'gs://' + config['buckets']['open'] + '/' +\
+            config['data']['output_dir'] + '*',
         'NEWLINE_DELIMITED_JSON',
         'WRITE_EMPTY'
     )
