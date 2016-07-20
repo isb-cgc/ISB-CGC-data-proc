@@ -42,8 +42,6 @@ def identify_data(config):
             SampleBarcode,
             AliquotBarcode,
             AliquotUUID,
-            AnnotationCategory,
-            AnnotationClassification,
             DataArchiveName,
             DataArchiveURL,
             DataArchiveVersion,
