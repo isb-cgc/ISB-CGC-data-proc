@@ -18,7 +18,7 @@ def melt_matrix(matrix_file, Platform, studies_map, config, log):
     """
     # melt matrix
     """
-    log.info('\tbegin melt matrix')
+    log.info('\tbegin melt matrix: \'%s\'' % (matrix_file))
     # begin parsing the data
     data_df2 = pd.read_csv(matrix_file, delimiter='\t', header=0)
     data_df2 = data_df2.set_index(["Gene"])
@@ -31,6 +31,7 @@ def melt_matrix(matrix_file, Platform, studies_map, config, log):
     mod = int(len(data_df2) / 20)
     count = 0
     buf = StringIO()
+    buf.write("ParticipantBarcode	SampleBarcode	AliquotBarcode	SampleTypeLetterCode	Study	Platform	mirna_id	mirna_accession	normalized_count")
     for i,j in data_df2.T.iteritems():
         if 0 == count % mod:
             log.info('\t\t\tprocessed %s lines' % (count))
