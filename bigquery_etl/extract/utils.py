@@ -40,7 +40,7 @@ def convert_file_to_dataframe(filepath_or_buffer, sep="\t", skiprows=0, rollover
                                 comment='#', na_values=na_values, dtype='object', nrows=nrows)
 
     except Exception as exp:
-        log.error(msg=exp.message)
+        log.exception('problem converting to dataframe: %s' % (exp.message))
         raise
 
     filepath_or_buffer.close() # close  StringIO

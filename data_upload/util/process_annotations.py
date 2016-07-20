@@ -184,7 +184,10 @@ def associate_metadata2annotation(config, log):
     ]
     
     for statement in associate_statements:
-        isbcgc_cloudsql_annotation_association_model.ISBCGC_database_helper.update(config, statement, log, [[]], True)
+        try:
+            isbcgc_cloudsql_annotation_association_model.ISBCGC_database_helper.update(config, statement, log, [[]], True)
+        except:
+            log.exception('problem executing:\n\t%s' % (statement))
 
 def parse_derived(annotation, derived_keys, length, log):
     derived = parse_item(annotation, derived_keys, log)
