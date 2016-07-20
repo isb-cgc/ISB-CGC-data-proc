@@ -34,7 +34,11 @@ def generate_oncotator_inputfiles(project_id, bucket_name, filename, outputfilen
     filebuffer = gcs.download_blob_to_file(filename)
 
     # convert blob into dataframe
-    maf_df = convert_file_to_dataframe(filebuffer)
+    try:
+        maf_df = convert_file_to_dataframe(filebuffer)
+    except:
+        print 'problem converting %s to a dataframe' % (filename)
+        raise
 
     # clean-up dataframe
     maf_df = cleanup_dataframe(maf_df)
