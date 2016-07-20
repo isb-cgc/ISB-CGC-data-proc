@@ -54,18 +54,6 @@ def load(config):
         'NEWLINE_DELIMITED_JSON',
         'WRITE_EMPTY'
     )
-    print "*"*30
-    print "Loading Data data into BigQuery..."
-    load_data_from_file.run(
-        config['project_id'],
-        config['bq_dataset'],
-        config['data']['bq_table'],
-        schemas_dir + config['data']['schema_file'],
-        'gs://' + config['buckets']['open'] + '/' +\
-            config['data']['output_dir'] + '*',
-        'NEWLINE_DELIMITED_JSON',
-        'WRITE_EMPTY'
-    )
 
 if __name__ == '__main__':
     load(json.load(open(sys.argv[1])))

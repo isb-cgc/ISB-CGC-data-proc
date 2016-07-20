@@ -17,14 +17,6 @@
     },
     {
         "type": "STRING",
-        "name": "AnnotationCategory"
-    },
-    {
-        "type": "STRING",
-        "name": "AnnotationClassification"
-    },
-    {
-        "type": "STRING",
         "name": "DataArchiveName"
     },
     {
