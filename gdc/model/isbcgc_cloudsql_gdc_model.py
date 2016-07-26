@@ -87,6 +87,7 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
             ['Program', 'VARCHAR(40)', 'NULL'],
             ['SampleBarcode', 'VARCHAR(45)', 'NOT NULL'],
             ['SampleUUID', 'VARCHAR(36)', 'NULL'],
+            ['PathologyReportUUID', 'VARCHAR(36)', 'NULL'],
         ],
 #         'natural_key_cols': [
 #             'SampleBarcode'
@@ -108,12 +109,12 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
         'table_name': 'metadata_gdc_data',
         'primary_key_name': 'metadata_gdc_data_id',
         'columns': [
-            ['ParticipantBarcode', 'VARCHAR(35)', 'NOT NULL'],
-            ['SampleBarcode', 'VARCHAR(45)', 'NOT NULL'],
-            ['AliquotBarcode', 'VARCHAR(45)', 'NOT NULL'],
+            ['ParticipantBarcode', 'VARCHAR(35)', 'NULL'],
+            ['SampleBarcode', 'VARCHAR(45)', 'NULL'],
+            ['AliquotBarcode', 'VARCHAR(45)', 'NULL'],
             ['AliquotUUID', 'VARCHAR(36)', 'NULL'],
-            ['Project', 'VARCHAR(40)', 'NOT NULL'],
-            ['Program', 'VARCHAR(40)', 'NOT NULL'],
+            ['Project', 'VARCHAR(40)', 'NULL'],
+            ['Program', 'VARCHAR(40)', 'NULL'],
             ['DataType', 'VARCHAR(35)', 'NOT NULL'],
             ['FileName', 'VARCHAR(200)', 'NOT NULL'],
             ['md5sum', 'VARCHAR(33)', 'NULL'],
@@ -122,8 +123,9 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
             ['state', 'VARCHAR(20)', 'NULL'],
             ['DataCategory', 'VARCHAR(30)', 'NOT NULL'],
             ['file_size', 'INT', 'NOT NULL'],
-            ['file_state', 'VARCHAR(30)', 'NOT NULL'],
-            ['ExperimentalStrategy', 'VARCHAR(20)', 'NOT NULL']
+            ['file_state', 'VARCHAR(30)', 'NULL'],
+            ['ExperimentalStrategy', 'VARCHAR(20)', 'NULL'],
+            ['MetadataFilename', 'VARCHAR(200)', 'NULL'],
         ],
 #         'natural_key_cols': [
 #             'AliquotBarcode',

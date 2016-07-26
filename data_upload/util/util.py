@@ -374,6 +374,8 @@ def __recurse_flatten_map(origmap, thefilter):
                 newmap = dict(initmap)
                 newmap.update([(newlabel, value)])
                 listmaps += [newmap]
+        if 0 == len(listmaps):
+            listmaps += [initmap]
     else:
         listmaps += [initmap]
         
@@ -382,10 +384,13 @@ def __recurse_flatten_map(origmap, thefilter):
         retlist = []
         for value in thefilter['map_list']:
             newfilter = thefilter['map_list'][value]
-            for nextmap in origmap[value]:
-                newmap = dict(initmap)
-                newmap.update(__recurse_flatten_map(nextmap, newfilter)[0])
-                retlist += [newmap]
+            if value in origmap:
+                for nextmap in origmap[value]:
+                    newmap = dict(initmap)
+                    newmap.update(__recurse_flatten_map(nextmap, newfilter)[0])
+                    retlist += [newmap]
+        if 0 == len(retlist):
+            retlist = listmaps
     else:
         retlist = listmaps
     return retlist

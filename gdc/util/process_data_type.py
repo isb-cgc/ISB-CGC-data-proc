@@ -32,30 +32,45 @@ def save2db(config, file2info, log):
 
 def get_file_map_rows(config, data_type, project_id, log):
     log.info('\tbegin select files')
+    use_project = config['data_types_legacy2use_project'][data_type]
     count = 0
     endpt = config['files_endpt']['endpt']
     query = config['files_endpt']['query']
     url = endpt + query
     mapfilter = config['process_files']['filter_result']
-    filt = { 
-              'op': 'and',
-              'content': [
-                 {
-                     'op': '=',
-                     'content': {
-                         'field': 'data_type',
-                         'value': [data_type]
-                      }
-                  },
-                  {
-                     'op': '=',
-                     'content': {
-                         'field': 'cases.project.project_id',
-                         'value': [project_id]
-                      }
-                  } 
-              ]
-           } 
+    if use_project:
+        filt = { 
+                  'op': 'and',
+                  'content': [
+                     {
+                         'op': '=',
+                         'content': {
+                             'field': 'data_type',
+                             'value': [data_type]
+                          }
+                      },
+                      {
+                         'op': '=',
+                         'content': {
+                             'field': 'cases.project.project_id',
+                             'value': [project_id]
+                          }
+                      } 
+                  ]
+               } 
+    else:
+        filt = { 
+                  'op': 'and',
+                  'content': [
+                     {
+                         'op': '=',
+                         'content': {
+                             'field': 'data_type',
+                             'value': [data_type]
+                          }
+                     }
+                  ]
+               } 
 
     file2info = get_filtered_map_rows(url, 'file_id', filt, mapfilter, 'file', log, config['process_files']['fetch_count'], 3)
     

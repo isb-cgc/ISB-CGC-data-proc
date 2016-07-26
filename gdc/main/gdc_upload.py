@@ -31,7 +31,7 @@ from gdc.util.gdc_util import request_facets_results
 from gdc.util.process_annotations import process_annotations
 from gdc.util.process_cases import process_cases
 from gdc.util.process_data_type import process_data_type
-from gdc.util.process_bio_data_type import process_bio_data_type
+from gdc.util.process_bio_type import process_bio_type
 
 import gcs_wrapper
 from util import create_log, import_module, print_list_synopsis
@@ -96,8 +96,9 @@ def process_project(config, project, log_dir):
                             new_future = executor.submit(process_data_type, config, project_id, data_type, data_types[data_type], log_dir, project_id + '_' + data_type.replace(' ', '') + '_%d' % (retry_ct))
                         future2data_type[new_future] = data_type
                     else:
+                        # TODO: this probably isn't how to get these files, different data_types will end up pointing to the same clinical files?
                         if 'bio' != data_type:
-                            future2data_type[executor.submit(process_bio_data_type, config, project_id, data_type, future.result(), data_types['Clinical Supplement'], log_dir, project_id + '_' + data_type.replace(' ', '') + '_bio_data')] = 'bio'
+                            future2data_type[executor.submit(process_bio_type, config, project_id, data_type, future.result(), data_types['Clinical Supplement'], log_dir, project_id + '_' + data_type.replace(' ', '') + '_bio_data')] = 'bio'
                         future_keys = future2data_type.keys()
             except:
                 future_keys = future2data_type.keys()
