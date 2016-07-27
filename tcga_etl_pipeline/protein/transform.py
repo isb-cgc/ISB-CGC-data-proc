@@ -59,7 +59,7 @@ def additional_changes(data_df):
     """
     # need to change the curated file loading logic
     # antibody annotation mapping
-    manual_curated_file = 'protein/antibody-gene-protein-map/2016_05_21_antibody-gene-protein-map.txt' # bad hardcoded link
+    manual_curated_file = 'protein/antibody-gene-protein-map/2016_07_17_antibody-gene-protein-map.txt' # bad hardcoded link
     aa_df = pd.read_csv(manual_curated_file, delimiter='\t', header=0, keep_default_na=False)
     aa_df = aa_df.set_index('composite_element_ref')
 

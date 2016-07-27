@@ -76,5 +76,5 @@ if __name__ == '__main__':
     bucket_name = sys.argv[2]
     filename = sys.argv[3]
     outfilename = sys.argv[4]
-    metadata = {'AliquotBarcode':'test', 'SampleBarcode':'t', 'ParticipantBarcode':'t', 'Study':'e', 'SampleTypeLetterCode':'f', 'Platform':'r'}
+    metadata = {'AliquotBarcode':'test', 'SampleBarcode':'t', 'ParticipantBarcode':'t', 'Study':'e', 'SampleTypeLetterCode':'f', 'Platform':'r', 'Pipeline': 'p', 'DataCenterName': 'c'}
     parse_isoform(project_id, bucket_name, filename, outfilename, metadata)

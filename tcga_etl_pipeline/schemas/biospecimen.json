@@ -154,13 +154,5 @@
     {
         "type": "STRING",
         "name": "SampleUUID"
-    },
-    {
-        "type": "STRING",
-        "name": "SampleType"
-    },
-    {
-        "type": "STRING",
-        "name": "SampleTypeCode"
     }
 ]
