@@ -32,7 +32,8 @@ def save2db(config, file2info, log):
 
 def get_file_map_rows(config, data_type, project_id, log):
     log.info('\tbegin select files')
-    use_project = config['data_types_legacy2use_project'][data_type]
+    data_types_legacy2use_project = config['data_types_legacy2use_project']
+    use_project = data_type not in data_types_legacy2use_project or data_types_legacy2use_project[data_type]
     count = 0
     endpt = config['files_endpt']['endpt']
     query = config['files_endpt']['query']
