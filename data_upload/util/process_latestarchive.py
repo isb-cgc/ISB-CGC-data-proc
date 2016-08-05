@@ -19,8 +19,8 @@ limitations under the License.
 '''
 from datetime import date
 import logging
-import os
 import re
+import urllib
 
 import util
 
@@ -44,7 +44,8 @@ def add_stats(stats, config, archive_name, archive_path, platform2pipeline_tag):
         access2center2platform2level2count = stats.setdefault('by_ignore_center', {})
     else:
         access2center2platform2level2count = stats.setdefault('by_center', {})
-    center2platform2level2count = access2center2platform2level2count.setdefault('public' if 'anonymous' in archive_path else 'protected', {})
+#     center2platform2level2count = access2center2platform2level2count.setdefault('public' if 'anonymous' in archive_path else 'protected', {})
+    center2platform2level2count = access2center2platform2level2count.setdefault('public' if 'public' in archive_path else 'protected', {})
     platform2level2count = center2platform2level2count.setdefault(center, {})
     level2count = platform2level2count.setdefault(platform, {})
     level2count[archive_type] = level2count.setdefault(archive_type, 0) + 1
@@ -74,7 +75,10 @@ def process_latestarchive(config, run_dir, log_name):
     log = logging.getLogger(log_name)
     log.info('start process latestarchive')
     processAll, process = util.getTumorTypes(config, log)
-    metadata_spec = config['metadata_locations']['latestarchive']
+    if config['use_gcs_processing']:
+        metadata_spec = config['metadata_locations']['latestarchive_gcs_processing']
+    else:
+        metadata_spec = config['metadata_locations']['latestarchive_dcc_processing']
     for key, value in metadata_spec.iteritems():
         metadata_spec[key] = value.split('#')
     
@@ -82,7 +86,9 @@ def process_latestarchive(config, run_dir, log_name):
     platform2pipeline_tag = config['platform2pipeline_tag']
     latestarchivesURL = config['downloads']['latestarchive']
     try:
-        archives = util.getURLData(latestarchivesURL, 'latestarchive', log)
+#         archives = util.getURLData(latestarchivesURL, 'latestarchive', log)
+        response = urllib.urlopen(latestarchivesURL)
+        archives = response.read()
         lines = archives.split('\n')
         log.info('\tarchive size is %s with %s lines' % (len(archives), len(lines)))
         if 20 > len(lines) and 'test' == config['mode']:

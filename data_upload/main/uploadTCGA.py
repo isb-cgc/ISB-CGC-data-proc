@@ -28,6 +28,9 @@ import json
 import logging
 import sys
 
+import isbcgc_cloudsql_annotation_association_model
+import isbcgc_cloudsql_annotation_model
+import isbcgc_cloudsql_core_model
 from parse_bio import parse_bio
 from prepare_upload import prepare_upload
 from process_annotations import process_annotations
@@ -420,6 +423,23 @@ def process_tumortypes(config, log_dir, tumor_type2platform2archive_types2archiv
         upload_etl_file(config, config['bio_etl_keys']['data'], total_data_metadata, log, 'Data')
     log.info('finished process_tumortypes()')
 
+    '''
+    sets up the dagtabase tables in dependency order 
+    
+    parameters:
+        config: the configuration map
+        log: logger to log any messages
+    '''
+def setup_database(config, log):
+    log.info('\tstart setting up the database')
+    isbcgc_cloudsql_annotation_association_model.ISBCGC_database_helper.drop_tables(config, log)
+    isbcgc_cloudsql_annotation_model.ISBCGC_database_helper.drop_tables(config, log)
+    isbcgc_cloudsql_core_model.ISBCGC_database_helper.drop_tables(config, log)
+    
+    isbcgc_cloudsql_core_model.ISBCGC_database_helper.setup_tables(config, log)
+    isbcgc_cloudsql_annotation_model.ISBCGC_database_helper.setup_tables(config, log)
+    isbcgc_cloudsql_annotation_association_model.ISBCGC_database_helper.setup_tables(config, log)
+    log.info('\tfinished setting up the database')
 
 def info_status(config, log):
     '''
@@ -499,15 +519,14 @@ def uploadTCGA(configFileName):
         log = logging.getLogger(log_name)
         log.info('begin uploadTCGA()')
         executor = futures.ThreadPoolExecutor(max_workers=config['threads'])
-        
-        module = import_module(config['database_module'])
-        module.ISBCGC_database_helper.initialize(config, log)
-     
-        if config['upload_files'] or config['upload_etl_files']:
-            # open the GCS wrapper here so it can be used by all the tumor types/platforms to save files
-            gcs_wrapper = import_module(config['gcs_wrapper'])
-            gcs_wrapper.open_connection(config, log)
         info_status(config, log)
+        
+        setup_database(config, log)
+     
+        # open the GCS wrapper here so it can be used by all the tumor types/platforms to save files
+        gcs_wrapper = import_module(config['gcs_wrapper'])
+        gcs_wrapper.open_connection(config, log)
+        
         tumor_type2platform2archive_types2archives, platform2archive2metadata = process_latestarchive(config, run_dir, log_name)
         prepare_upload(tumor_type2platform2archive_types2archives, log)
         if 'process_cghub' not in config or config['process_cghub']:

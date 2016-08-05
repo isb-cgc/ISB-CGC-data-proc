@@ -93,10 +93,6 @@
     }, 
     {
         "type": "STRING", 
-        "name": "frozen_specimen_anatomic_site"
-    }, 
-    {
-        "type": "STRING", 
         "name": "gender"
     }, 
     {
@@ -156,10 +152,6 @@
         "name": "mononucleotide_and_dinucleotide_marker_panel_analysis_status"
     },
     {
-        "type": "FLOAT",
-        "name": "mononucleotide_marker_panel_analysis_status"
-    }, 
-    {
         "type": "STRING", 
         "name": "neoplasm_histologic_grade"
     }, 
@@ -216,10 +208,6 @@
         "name": "primary_therapy_outcome_success"
     }, 
     {
-        "type": "STRING", 
-        "name": "prior_dx"
-    }, 
-    {
         "type": "FLOAT", 
         "name": "psa_value"
     }, 
@@ -244,10 +232,6 @@
         "name": "tumor_type"
     }, 
     {
-        "type": "STRING", 
-        "name": "venous_invasion"
-    }, 
-    {
         "type": "FLOAT", 
         "name": "weight"
     }, 
@@ -258,5 +242,41 @@
     {
         "type": "FLOAT",
         "name": "BMI"
-    }
+    },
+    {
+        "type": "STRING", 
+        "name": "age_began_smoking_in_years"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "h_pylori_infection"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "other_dx"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "other_malignancy_anatomic_site"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "other_malignancy_histological_type"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "other_malignancy_malignancy_type"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "stopped_smoking_year"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "venous_invasion"
+    }, 
+    {
+        "type": "STRING", 
+        "name": "year_of_tobacco_smoking_onset"
+    } 
 ]

@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Script to load Clinical and Biospecimen data
+"""Script to load Clinical, Biospecimen data and Data data
 To run: python load.py config_file
 """
 import sys

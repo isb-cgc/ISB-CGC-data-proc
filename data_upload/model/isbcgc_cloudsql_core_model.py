@@ -310,6 +310,7 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
             ['Species'],
             ['Study'],
             ['state'],
+            ['analysis_id'],
             ['GG_dataset_id']
         ],
 #         'foreign_key': [
@@ -503,7 +504,7 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
         ]
     }
     
-    isbcgc_cloudsql_model.ISBCGC_database_helper.metadata_tables = OrderedDict(
+    metadata_tables = OrderedDict(
         [
             ('metadata_clinical', metadata_clinical),
             ('metadata_biospecimen', metadata_biospecimen),
@@ -512,15 +513,6 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
         ]
     )
 
-    self = None
-
-    def __init__(self, config, log):
-        isbcgc_cloudsql_model.ISBCGC_database_helper.__init__(self, config, log)
-
     @classmethod
     def initialize(cls, config, log):
-        if cls.self:
-            log.warning('class has already been initialized')
-        else:
-            cls.self = ISBCGC_database_helper(config, log)
-
+        cls.setup_tables(config, log)

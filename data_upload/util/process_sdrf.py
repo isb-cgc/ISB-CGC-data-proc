@@ -140,7 +140,7 @@ def parse_sdrf(config, log, file_name, archive2metadata, barcode2files2term2valu
                         term2value['SDRFFileName'] = sdrf_file_name
                         
                         
-                        if 'DataArchiveName' in term2value:
+                        if 'DataArchiveName' in term2value and term2value['DataArchiveName'] in archive2metadata:
                             # the archive2metadata will set the following fields: DataArchiveURL, DataArchiveVersion, DataCenterName, DataCenterType, 
                             #   Pipeline, Platform, Project, SecurityProtocol 
                             term2value.update(archive2metadata[term2value['DataArchiveName']])
@@ -233,9 +233,10 @@ def process_sdrf(config, log, magetab_archives, archive2metadata, barcode2annota
     barcode2files2term2values = {}
     archive2barcodes = {}
     for archive_fields in magetab_archives:
+        archive_path = None
         try:
             log.info('\tprocessing %s' % (archive_fields[0]))
-            archive_path = util.setup_archive(archive_fields, log)
+            archive_path = util.setup_archive(config, archive_fields, log)
             files = os.listdir(archive_path)
             antibody_files = []
             cur_barcode2files2term2values = {}
@@ -250,6 +251,7 @@ def process_sdrf(config, log, magetab_archives, archive2metadata, barcode2annota
             for file_name in antibody_files:
                 upload_sdrf_file(config, archive_path, file_name, barcode2files2term2values.values()[0].values()[0], log)
         finally:
-            shutil.rmtree(archive_path)
+            if archive_path:
+                shutil.rmtree(archive_path)
     log.info('finished processing sdrf')
     return barcode2files2term2values

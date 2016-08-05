@@ -25,7 +25,7 @@ from bigquery_etl.utils.logging_manager import configure_logging
 def identify_data(config):
     """Gets the metadata info from database
     """
-    log = configure_logging('cnv', 'logs/cnv_extract_.log')
+    log = configure_logging('cnv', 'logs/cnv_extract.log')
     log.info('start cnv extract')
     # cloudSql connection params
     host = config['cloudsql']['host']
