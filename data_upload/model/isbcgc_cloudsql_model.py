@@ -80,13 +80,15 @@ class ISBCGC_database_helper(object):
     
     @classmethod
     def setup_tables(cls, config, log):
+        if config['cloudsql']['update_schema']:
+            cls.drop_tables(config, log)
         cls.process_tables(config, cls._create_schema, log)
     
     @classmethod
     def _drop_schema(cls, cursor, config, tables, log):
         drop_schema_template = 'DROP TABLE IF EXISTS %s.%s'
         
-        for table in tables.keys():
+        for table in tables.keys()[::-1]:
             drop_statement = drop_schema_template % (config['cloudsql']['db'], table)
             log.info('\tdropping table %s:\n%s' % (table, drop_statement))
             try:

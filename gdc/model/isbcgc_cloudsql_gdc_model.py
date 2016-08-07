@@ -116,6 +116,7 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
             ['Project', 'VARCHAR(40)', 'NULL'],
             ['Program', 'VARCHAR(40)', 'NULL'],
             ['DataType', 'VARCHAR(35)', 'NOT NULL'],
+            ['FileID', 'VARCHAR(36)', 'NOT NULL'],
             ['FileName', 'VARCHAR(200)', 'NOT NULL'],
             ['md5sum', 'VARCHAR(33)', 'NULL'],
             ['DataFormat', 'VARCHAR(10)', 'NOT NULL'],
@@ -126,6 +127,14 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
             ['file_state', 'VARCHAR(30)', 'NULL'],
             ['ExperimentalStrategy', 'VARCHAR(20)', 'NULL'],
             ['MetadataFilename', 'VARCHAR(200)', 'NULL'],
+            ['annotationStatus', 'VARCHAR(20)', 'NULL'],
+            ['annotationId', 'VARCHAR(36)', 'NULL'],
+            ['annotationCategoryName', 'VARCHAR(100)', 'NULL'],
+            ['annotationClassification', 'VARCHAR(30)', 'NULL'],
+            ['annotationNoteText', 'VARCHAR(700)', 'NULL'],
+            ['annotationTypeId', 'VARCHAR(36)', 'NULL'],
+            ['annotationTypeName', 'VARCHAR(20)', 'NULL'],
+            ['annotationBarcode', 'VARCHAR(28)', 'NULL'],
         ],
 #         'natural_key_cols': [
 #             'AliquotBarcode',
@@ -139,13 +148,21 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
             ['Project'],
             ['Program'],
             ['DataType'],
+            ['FileID'],
             ['FileName'],
             ['DataFormat'],
             ['access'],
             ['state'],
             ['DataCategory'],
             ['file_state'],
-            ['ExperimentalStrategy']
+            ['ExperimentalStrategy'],
+            ['annotationStatus'],
+            ['annotationId'],
+            ['annotationCategoryName'],
+            ['annotationClassification'],
+            ['annotationTypeId'],
+            ['annotationTypeName'],
+            ['annotationBarcode']
         ],
 #         'foreign_key': [
 #             'SampleBarcode',
@@ -165,9 +182,6 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
             ['SampleBarcode', 'VARCHAR(45)', 'NOT NULL'],
             ['SampleUUID', 'VARCHAR(36)', 'NOT NULL']
         ],
-#         'natural_key_cols': [
-#             'SampleBarcode'
-#         ],
         'indices_defs': [
             ['ParticipantBarcode'],
             ['SampleBarcode'],
@@ -189,7 +203,6 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
             ('metadata_gdc_samples', metadata_gdc_samples)
         ]
     )
-
 
     @classmethod
     def initialize(cls, config, log):

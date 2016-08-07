@@ -31,7 +31,6 @@ from gdc.util.gdc_util import request_facets_results
 from gdc.util.process_annotations import process_annotations
 from gdc.util.process_cases import process_cases
 from gdc.util.process_data_type import process_data_type
-from gdc.util.process_bio_type import process_bio_type
 
 import gcs_wrapper
 from util import create_log, import_module, print_list_synopsis
@@ -72,7 +71,7 @@ def process_project(config, project, log_dir):
         future2data_type = {}
         data_types = request_facets_results(config['files_endpt']['endpt'], config['facets_query'], 'data_type', log)
         for data_type in data_types:
-            if (len(config['data_type_restrict']) == 0 or data_type in config['data_type_restrict']) and 'Supplement' not in data_type:
+            if (len(config['data_type_restrict']) == 0 or data_type in config['data_type_restrict']):
                 future2data_type[executor.submit(process_data_type, config, project_id, data_type, data_types[data_type], log_dir, project_id + '_' + data_type.replace(' ', ''))] = data_type
      
         data_type2retry = {}
@@ -88,17 +87,10 @@ def process_project(config, project, log_dir):
                         if retry_ct > 3:
                             raise ValueError('%s failed multiple times--%s:%s' % (data_type, type(future.exception()).__name__, future.exception()))
                         data_type2retry[data_type] = retry_ct + 1
-                        if 'bio' == data_type:
-                            log.error('problem processing bio %s data--%s:%s' % (project_id, type(future.exception()).__name__, future.exception()))
-                            raise future.exception()
-                        else:
-                            log.warning('\tWARNING: resubmitting %s--%s:%s.  try %s' % (data_type, type(future.exception()).__name__, future.exception(), retry_ct))
-                            new_future = executor.submit(process_data_type, config, project_id, data_type, data_types[data_type], log_dir, project_id + '_' + data_type.replace(' ', '') + '_%d' % (retry_ct))
+                        log.warning('\tWARNING: resubmitting %s--%s:%s.  try %s' % (data_type, type(future.exception()).__name__, future.exception(), retry_ct))
+                        new_future = executor.submit(process_data_type, config, project_id, data_type, data_types[data_type], log_dir, project_id + '_' + data_type.replace(' ', '') + '_%d' % (retry_ct))
                         future2data_type[new_future] = data_type
                     else:
-                        # TODO: this probably isn't how to get these files, different data_types will end up pointing to the same clinical files?
-                        if 'bio' != data_type:
-                            future2data_type[executor.submit(process_bio_type, config, project_id, data_type, future.result(), data_types['Clinical Supplement'], log_dir, project_id + '_' + data_type.replace(' ', '') + '_bio_data')] = 'bio'
                         future_keys = future2data_type.keys()
             except:
                 future_keys = future2data_type.keys()
@@ -124,7 +116,7 @@ def process_program(config, program_name, projects, log_dir):
             if project in config['skip_tumor_types']:
                 log.info('\tskipping project %s' % (project['project_id']))
                 continue
-            if 'all' == config['project_names'][0] or project['project_id'] in config['project_names']:
+            if 0 == len(config['project_name_restrict']) or project['project_id'] in config['project_name_restrict']:
                 log.info('\tprocessing project %s' % (project['project_id']))
                 future2project[executor.submit(process_project, config, project, log_dir)] = project['project_id']
             else:
@@ -193,6 +185,12 @@ def process_programs(config, log_dir, log):
 
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+def initializeDB(config, log):
+    module = import_module(config['database_module'])
+    module.ISBCGC_database_helper.initialize(config, log)
+
+## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
 def uploadGDC():
     print datetime.now(), 'begin uploadGDC()'
     global executor
@@ -209,8 +207,7 @@ def uploadGDC():
         
         executor = futures.ThreadPoolExecutor(max_workers=config['threads'])
         
-        module = import_module(config['database_module'])
-        module.ISBCGC_database_helper.initialize(config, log)
+        initializeDB(config, log)
      
         if config['upload_files'] or config['upload_etl_files']:
             # open the GCS wrapper here so it can be used by all the projects/platforms to save files

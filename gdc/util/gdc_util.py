@@ -48,25 +48,6 @@ def request(url, params, msg, log, timeout = None):
     
     return response
 
-def get_ids(endpt, typeID, label, params, activity, log):
-    ids = []
-    curstart = 1
-    log.info("\t\tget request loop starting.  url:%s" % (endpt))
-    msg = '\t\tproblem getting ids for %s' % (activity)
-    while True:
-        params['from'] = curstart
-        response = request(endpt, params, msg, log)
-        rj = response.json()
-        print_list_synopsis(rj['data']['hits'], '\t\t%s for %s' % (label, activity), log, 5)
-        for index in range(len(rj['data']['hits'])):
-            ids += [rj['data']['hits'][index][typeID]]
-        
-        curstart += rj['data']['pagination']['count']
-        if curstart >= rj['data']['pagination']['total']:
-            break
-    
-    return ids
-
 def get_filtered_map_rows(url, idname, filt, mapfilter, activity, log, size = 100, timeout = None):
     count = 0
     id2map = {}
@@ -95,22 +76,6 @@ def get_filtered_map_rows(url, idname, filt, mapfilter, activity, log, size = 10
             break
 
     return id2map
-
-def get_filtered_map(url, ident, filt, mapfilter, activity, count, log):
-    params = {'filters':json.dumps(filt), 
-        'from':1, 
-        'size':100}
-    msg = '\t\tproblem getting filtered map for %s' % (activity)
-    response = request(url, params, msg, log)
-        
-    rj = response.json()
-    if 1 != len(rj['data']['hits']):
-        raise ValueError('unexpected number of hits for %s: %s' % (ident, len(rj['data']['hits'])))
-    filteredmap = filter_map(rj['data']['hits'][0], mapfilter)
-    if 0 == count % 100:
-        print_list_synopsis([filteredmap], '\t\tprocessing id %d with id %s, for %s.  filtered map:' % (count, ident, activity), log, 1)
-    return filteredmap
-
 
 def addrow(fieldnames, row2map):
     row = []
