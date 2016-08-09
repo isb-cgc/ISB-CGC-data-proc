@@ -63,9 +63,13 @@ def process_project(config, project, log_dir):
         
         log.info('begin process_project(%s)' % (project_id))
         
-        log.info('\tprocess cases for %s' % (project_id))
-        case2info = process_cases(config, project_id, log_dir)
-        log.info('\tcompleted process cases for %s' % (project_id))
+        case2info = {}
+        if config['process_case']:
+            log.info('\tprocess cases for %s' % (project_id))
+            case2info = process_cases(config, project_id, log_dir)
+            log.info('\tcompleted process cases for %s' % (project_id['project_id']))
+        else:
+            log.warning('\n\t====================\n\tnot processing cases this run for %s!\n\t====================' % (project))
         
         log.info('\tprocess data_types for %s' % (project_id))
         future2data_type = {}
@@ -213,8 +217,14 @@ def uploadGDC():
             # open the GCS wrapper here so it can be used by all the projects/platforms to save files
             gcs_wrapper.open_connection()
 
-        process_annotations(config, log_dir)
-        process_programs(config, log_dir, log)
+        if config['process_annotation']:
+            process_annotations(config, log_dir)
+        else:
+            log.warning('\n\t====================\n\tnot processing annotations this run!\n\t====================')
+        if config['process_program']:
+            process_programs(config, log_dir, log)
+        else:
+            log.warning('\n\t====================\n\tnot processing programs this run!\n\t====================')
     finally:
         if executor:
             executor.shutdown(wait=False)

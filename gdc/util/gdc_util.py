@@ -25,7 +25,7 @@ from util import filter_map, flatten_map, import_module, print_list_synopsis
 
 def request(url, params, msg, log, timeout = None):
     try:
-        response = requests.get(url, params=params)
+        response = requests.get(url, params=params, timeout=4)
         response.raise_for_status()
     except:
         retry_count = 1
@@ -35,7 +35,7 @@ def request(url, params, msg, log, timeout = None):
             time.sleep(1)
             try:
                 if timeout:
-                    response = requests.get(url, params=params, timeout = timeout)
+                    response = requests.get(url, params=params, timeout=timeout)
                 else:
                     response = requests.get(url, params=params)
                 response.raise_for_status()
