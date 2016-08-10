@@ -48,7 +48,49 @@ def request(url, params, msg, log, timeout = None):
     
     return response
 
-def get_filtered_map_rows(url, idname, filt, mapfilter, activity, log, size = 100, timeout = None):
+def __addrow(fieldnames, row2map):
+    row = []
+    for fieldname in fieldnames:
+        if fieldname in row2map:
+            row += [row2map[fieldname]]
+        else:
+            row += [None]
+    return [row]
+
+def __insert_rows(config, tablename, values, mapfilter, log):
+    maps = []
+    for value in values:
+        maps += flatten_map(value, mapfilter)
+    print_list_synopsis(maps, '\t\trows to save for %s' % (tablename), log)
+
+    module = import_module(config['database_module'])
+    fieldnames = module.ISBCGC_database_helper.field_names(tablename)
+    rows = []
+    for nextmap in maps:
+        rows += __addrow(fieldnames, nextmap)
+    if config['update_cloudsql']:
+        module.ISBCGC_database_helper.column_insert(config, rows, tablename, fieldnames, log)
+    else:
+        log.warning('\n\t====================\n\tnot saving to cloudsql to %s this run!\n\t====================' % (tablename))
+
+def save2db(config, table, endpt2info, table_mapping, log):
+    log.info('\tbegin save rows to db for %s' % table)
+    __insert_rows(config, table, endpt2info.values(), table_mapping, log)
+    log.info('\tfinished save rows to db for %s' % table)
+
+def get_map_rows(config, endpt, filt, log):
+    log.info('\tbegin select %ss' % (endpt))
+    endpt_url = config['%ss_endpt' % (endpt)]['endpt']
+    query = config['%ss_endpt' % (endpt)]['query']
+    url = endpt_url + query
+    mapfilter = config['process_%ss' % (endpt)]['filter_result']
+    
+    endpt2info = __get_filtered_map_rows(url, '%s_id' % (endpt), filt, mapfilter, endpt, log, config['process_%ss' % (endpt)]['fetch_count'])
+    
+    log.info('\tfinished select %s.  processed %s %ss' % (endpt, len(endpt2info), endpt))
+    return endpt2info
+
+def __get_filtered_map_rows(url, idname, filt, mapfilter, activity, log, size = 100, timeout = None):
     count = 0
     id2map = {}
     curstart = 1
@@ -61,8 +103,14 @@ def get_filtered_map_rows(url, idname, filt, mapfilter, activity, log, size = 10
         }
         msg = '\t\tproblem getting filtered map for %s' % (activity)
         response = request(url, params, msg, log, timeout)
+        response.raise_for_status()
             
-        rj = response.json()
+        try:
+            rj = response.json()
+        except:
+            log.exception('problem with response, not json: %s' % (response.text))
+            raise
+        
         for index in range(len(rj['data']['hits'])):
             themap = rj['data']['hits'][index]
             id2map[themap[idname]] = filter_map(themap, mapfilter)
@@ -76,29 +124,6 @@ def get_filtered_map_rows(url, idname, filt, mapfilter, activity, log, size = 10
             break
 
     return id2map
-
-def addrow(fieldnames, row2map):
-    row = []
-    for fieldname in fieldnames:
-        if fieldname in row2map:
-            row += [row2map[fieldname]]
-        else:
-            row += [None]
-    return [row]
-
-def insert_rows(config, tablename, values, mapfilter, log):
-    maps = []
-    for value in values:
-        maps += flatten_map(value, mapfilter)
-    print_list_synopsis(maps, '\t\trows to save for %s' % (tablename), log)
-
-    module = import_module(config['database_module'])
-    fieldnames = module.ISBCGC_database_helper.field_names(tablename)
-    rows = []
-    for nextmap in maps:
-        rows += addrow(fieldnames, nextmap)
-    
-    module.ISBCGC_database_helper.column_insert(config, rows, tablename, fieldnames, log)
 
 def request_facets_results(url, facet_query, facet, log, page_size = 0, params = None):
     facet_query = facet_query % (facet, page_size)

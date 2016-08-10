@@ -118,14 +118,14 @@ def create_field_report(configfilename):
                     response.raise_for_status()
                     fields = response.json()['_mapping'].keys()
                     fields.sort()
-                    log.info('\t\tgot information on the fields for %s.  found %s fields' % (endpoint, len(fields)))
-                    output.write('\t\tfound %s fields\n' % (len(fields)))
 
                     field2values = template2field2values.setdefault(url_template, {})
                     mod_count = len(fields) / 20
                     count = 0
                     log.info('\t\tfinding field values for base url \'%s\'' % (url_template.split('%')[0]))
                     output.write('\t\tfinding field values for base url \'%s\'\n' % (url_template.split('%')[0]))
+                    log.info('\t\tgot information on the fields for %s.  found %s fields' % (endpoint, len(fields)))
+                    output.write('\t\tfound %s fields\n' % (len(fields)))
                     for field in fields:
                         try:
                             progress = False if len(fields) < 50 else True if 0 == count else 0 == count % mod_count

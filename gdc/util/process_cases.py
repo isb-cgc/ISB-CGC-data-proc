@@ -19,44 +19,26 @@ limitations under the License.
 '''
 import logging
 
-from gdc.util.gdc_util import get_filtered_map_rows, insert_rows
-
+from gdc.util.gdc_util import get_map_rows, save2db
 from util import create_log
 
-def save2db(config, case2info, log):
-    log.info('\tbegin save cases to db')
-    values = case2info.values()
-    insert_rows(config, 'metadata_gdc_clinical', values, config['process_cases']['clinical_table_mapping'], log)
-    insert_rows(config, 'metadata_gdc_biospecimen', values, config['process_cases']['sample_table_mapping'], log)
-    log.info('\tfinished save cases to db')
-
-def get_case_map_rows(config, project_name, log):
-    log.info('\tbegin select cases')
-    count = 0
-    endpt = config['cases_endpt']['endpt']
-    query = config['cases_endpt']['query']
-    url = endpt + query
-    mapfilter = config['process_cases']['filter_result']
-    filt = { 'op': '=',
+def get_filter(project_name):
+    return { 'op': '=',
              'content': {
                  'field': 'project.project_id',
                  'value': [project_name]
               } 
            }
     
-    case2info = get_filtered_map_rows(url, 'case_id', filt, mapfilter, 'case', log, config['process_cases']['fetch_count'], 3)
-    
-    log.info('\tfinished select cases.  processed %s cases for %s' % (count, 'cases'))
-    return case2info
-
 def process_cases(config, project_name, log_dir):
     try:
         log_name = create_log(log_dir, project_name + '_cases')
         log = logging.getLogger(log_name)
 
         log.info('begin process_cases(%s)' % (project_name))
-        case2info = get_case_map_rows(config, project_name, log)
-        save2db(config, case2info, log)
+        case2info = get_map_rows(config, 'case', get_filter(project_name), log)
+        save2db(config, 'metadata_gdc_clinical', case2info, config['process_cases']['clinical_table_mapping'], log)
+        save2db(config, 'metadata_gdc_biospecimen', case2info, config['process_cases']['sample_table_mapping'], log)
         log.info('finished process_cases(%s)' % (project_name))
 
         return case2info

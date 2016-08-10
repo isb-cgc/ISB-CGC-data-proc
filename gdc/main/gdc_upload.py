@@ -29,6 +29,7 @@ import requests
 
 from gdc.util.gdc_util import request_facets_results
 from gdc.util.process_annotations import process_annotations
+from gdc.util.process_projects import process_projects
 from gdc.util.process_cases import process_cases
 from gdc.util.process_data_type import process_data_type
 
@@ -76,7 +77,7 @@ def process_project(config, project, log_dir):
         data_types = request_facets_results(config['files_endpt']['endpt'], config['facets_query'], 'data_type', log)
         for data_type in data_types:
             if (len(config['data_type_restrict']) == 0 or data_type in config['data_type_restrict']):
-                future2data_type[executor.submit(process_data_type, config, project_id, data_type, data_types[data_type], log_dir, project_id + '_' + data_type.replace(' ', ''))] = data_type
+                future2data_type[executor.submit(process_data_type, config, project_id, data_type, log_dir)] = data_type
      
         data_type2retry = {}
         future_keys = future2data_type.keys()
@@ -117,7 +118,7 @@ def process_program(config, program_name, projects, log_dir):
         log.info('begin process_program(%s)' % (program_name))
         future2project = {}
         for project in projects:
-            if project in config['skip_tumor_types']:
+            if project in config['skip_projects']:
                 log.info('\tskipping project %s' % (project['project_id']))
                 continue
             if 0 == len(config['project_name_restrict']) or project['project_id'] in config['project_name_restrict']:
@@ -144,10 +145,10 @@ def process_program(config, program_name, projects, log_dir):
 
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-def get_program_info (projects_endpt, program_name, log):
+def get_program_info (config, projects_endpt, program_name, log_dir, log):
 
-    log.info("\t\t>>> in get_project_info ... %s %s" % (projects_endpt, program_name))
-
+    log.info("\t\tin get_project_info: %s %s" % (program_name, projects_endpt))
+    process_projects(config, program_name, log_dir)
     filt = { 'op': '=',
              'content': {
                  'field': 'program.name',
@@ -172,7 +173,7 @@ def process_programs(config, log_dir, log):
     log.info('begin process_programs()')
     future2program = {}
     for program_name in config['program_names']:
-        projects = get_program_info (config['projects_endpt']['endpt'] + config['projects_endpt']['query'], program_name, log)
+        projects = get_program_info(config, config['projects_endpt']['endpt'] + config['projects_endpt']['query'], program_name, log_dir, log)
         future2program[executor.submit(process_program, config, program_name, projects, log_dir)] = program_name
     
     future_keys = future2program.keys()
@@ -228,8 +229,7 @@ def uploadGDC():
     finally:
         if executor:
             executor.shutdown(wait=False)
-        if gcs_wrapper:
-            gcs_wrapper.close_connection()
+        gcs_wrapper.close_connection()
     log.info('finished uploadGDC()')
     print datetime.now(), 'finished uploadGDC()'
 

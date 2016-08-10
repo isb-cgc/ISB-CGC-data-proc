@@ -19,26 +19,11 @@ limitations under the License.
 '''
 import logging
 
-from gdc.util.gdc_util import get_filtered_map_rows, insert_rows
+from gdc.util.gdc_util import get_map_rows, save2db
 from util import create_log
 
-def save2db(config, annotation2info, log):
-    log.info('\tbegin save annotations to db')
-    insert_rows(config, 'metadata_gdc_annotation', annotation2info.values(), config['process_annotations']['annotation_table_mapping'], log)
-    log.info('\tfinished save annotations to db')
-
-def get_annotation_map_rows(config, log):
-    log.info('\tbegin select annotations')
-    count = 0
-    endpt = config['annotations_endpt']['endpt']
-    query = config['annotations_endpt']['query']
-    url = endpt + query
-    mapfilter = config['process_annotations']['filter_result']
-    
-    annotation2info = get_filtered_map_rows(url, 'annotation_id', {}, mapfilter, 'annotation', log, config['process_annotations']['fetch_count'])
-    
-    log.info('\tfinished select annotations.  processed %s annotations for %s' % (count, 'annotations'))
-    return annotation2info
+def get_filter():
+    return {}
 
 def process_annotations(config, log_dir):
     try:
@@ -46,8 +31,8 @@ def process_annotations(config, log_dir):
         log = logging.getLogger(log_name)
 
         log.info('begin process_annotations')
-        annotation2info = get_annotation_map_rows(config, log)
-        save2db(config, annotation2info, log)
+        annotation2info = get_map_rows(config, 'annotation', get_filter(), log)
+        save2db(config, 'metadata_gdc_annotation', annotation2info, config['process_annotations']['annotation_table_mapping'], log)
         log.info('finished process_annotations')
 
         return annotation2info

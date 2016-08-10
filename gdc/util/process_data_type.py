@@ -19,24 +19,12 @@ limitations under the License.
 '''
 import logging
 
-from gdc.util.gdc_util import get_filtered_map_rows, insert_rows
-
+from gdc.util.gdc_util import get_map_rows, save2db
 from util import create_log
 
-def save2db(config, file2info, log):
-    log.info('\tbegin save files to db')
-    insert_rows(config, 'metadata_gdc_data', file2info.values(), config['process_files']['data_table_mapping'], log)
-    log.info('\tfinished save files to db')
-
-def get_file_map_rows(config, data_type, project_id, log):
-    log.info('\tbegin select files')
+def get_filter(config, data_type, project_id):
     data_types_legacy2use_project = config['data_types_legacy2use_project']
     use_project = data_type not in data_types_legacy2use_project or data_types_legacy2use_project[data_type]
-    count = 0
-    endpt = config['files_endpt']['endpt']
-    query = config['files_endpt']['query']
-    url = endpt + query
-    mapfilter = config['process_files']['filter_result']
     if use_project:
         filt = { 
                   'op': 'and',
@@ -70,20 +58,18 @@ def get_file_map_rows(config, data_type, project_id, log):
                      }
                   ]
                } 
+    return filt
 
-    file2info = get_filtered_map_rows(url, 'file_id', filt, mapfilter, 'file', log, config['process_files']['fetch_count'], 3)
-    
-    log.info('\tfinished select files.  processed %s files for %s' % (count, 'files'))
-    return file2info
-
-def process_data_type(config, project_id, data_type, file_count, log_dir, log_name):
+def process_data_type(config, project_id, data_type, log_dir):
     try:
-        log_name = create_log(log_dir, log_name)
+        log_name = create_log(log_dir, project_id + '_' + data_type.replace(' ', ''))
         log = logging.getLogger(log_name)
+
         log.info('begin process_data_type %s for %s' % (data_type, project_id))
-        file2info = get_file_map_rows(config, data_type, project_id, log)
-        save2db(config, file2info, log)
+        file2info = get_map_rows(config, 'file', get_filter(data_type, project_id), log)
+        save2db(config, 'metadata_gdc_data', file2info, config['process_files']['data_table_mapping'], log)
         log.info('finished process_data_type %s for %s' % (data_type, project_id))
+
         return file2info
     except:
         log.exception('problem processing data_type %s for %s' % (data_type, project_id))

@@ -40,6 +40,8 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
             ['itemTypeId', 'VARCHAR(36)', 'NOT NULL'],
             ['itemTypeName', 'VARCHAR(20)', 'NOT NULL'],
             ['itemBarcode', 'VARCHAR(28)', 'NOT NULL'],
+            ['Project', 'VARCHAR(40)', 'NULL'],
+            ['Program', 'VARCHAR(40)', 'NULL'],
             ['AliquotBarcode', 'VARCHAR(28)', 'NULL'],
             ['ParticipantBarcode', 'VARCHAR(12)', 'NOT NULL'],
             ['SampleBarcode', 'VARCHAR(16)', 'NULL'],
@@ -53,9 +55,39 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
             ['annotationClassification'],
             ['itemTypeId'],
             ['itemBarcode'],
+            ['Project'],
+            ['Program'],
             ['AliquotBarcode'],
             ['ParticipantBarcode'],
             ['SampleBarcode'],
+        ]
+    }
+    
+    metadata_gdc_project = {
+        'table_name': 'metadata_gdc_project',
+        'primary_key_name': 'metadata_gdc_project_id',
+        'columns': [
+            ['Project', 'VARCHAR(40)', 'NOT NULL'],
+            ['ProjectName', 'VARCHAR(80)', 'NOT NULL'],
+            ['released', 'VARCHAR(5)', 'NOT NULL'],
+            ['state', 'VARCHAR(10)', 'NOT NULL'],
+            ['PrimarySite', 'VARCHAR(20)', 'NULL'],
+            ['dbGaP_AccessionNumber', 'VARCHAR(12)', 'NULL'],
+            ['DiseaseType', 'VARCHAR(120)', 'NULL'],
+            ['CountCases', 'INTEGER', 'NULL'],
+            ['CountFiles', 'INTEGER', 'NULL'],
+            ['SumFileSize', 'INTEGER', 'NULL'],
+            ['Program', 'VARCHAR(40)', 'NULL'],
+            ['Program_dbGaP_AccessionNumber', 'VARCHAR(12)', 'NULL'],
+            ['ProgramID', 'VARCHAR(36)', 'NULL'],
+        ],
+#         'natural_key_cols': [
+#             'ParticipantBarcode'
+#         ],
+        'indices_defs': [
+            ['ParticipantBarcode'],
+            ['Project'],
+            ['Program'],
         ]
     }
     
