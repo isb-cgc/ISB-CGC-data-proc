@@ -66,7 +66,7 @@ def process_data_type(config, project_id, data_type, log_dir):
         log = logging.getLogger(log_name)
 
         log.info('begin process_data_type %s for %s' % (data_type, project_id))
-        file2info = get_map_rows(config, 'file', get_filter(data_type, project_id), log)
+        file2info = get_map_rows(config, 'file', get_filter(config, data_type, project_id), log)
         save2db(config, 'metadata_gdc_data', file2info, config['process_files']['data_table_mapping'], log)
         log.info('finished process_data_type %s for %s' % (data_type, project_id))
 

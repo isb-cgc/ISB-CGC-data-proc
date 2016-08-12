@@ -19,12 +19,12 @@ def get_filter(program):
     
 def process_projects(config, program, log_dir):
     try:
-        log_name = create_log(log_dir, 'projects')
+        log_name = create_log(log_dir, program + '_' + 'project')
         log = logging.getLogger(log_name)
 
         log.info('begin process_projects for %s' % (program))
         project2info = get_map_rows(config, 'project', get_filter(program), log)
-        save2db(config, 'metadata_gdc_data', project2info, config['process_projects']['data_table_mapping'], log)
+        save2db(config, 'metadata_gdc_project', project2info, config['process_projects']['project_table_mapping'], log)
         log.info('finished process_projects for %s' % (program))
 
         return project2info

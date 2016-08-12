@@ -229,6 +229,7 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
     isbcgc_cloudsql_model.ISBCGC_database_helper.metadata_tables = OrderedDict(
         [
             ('metadata_gdc_annotation', metadata_gdc_annotation),
+            ('metadata_gdc_project', metadata_gdc_project),
             ('metadata_gdc_clinical', metadata_gdc_clinical),
             ('metadata_gdc_biospecimen', metadata_gdc_biospecimen),
             ('metadata_gdc_data', metadata_gdc_data),

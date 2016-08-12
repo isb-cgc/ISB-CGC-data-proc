@@ -25,7 +25,6 @@ from concurrent import futures
 from datetime import date, datetime
 import json
 import logging
-import requests
 
 from gdc.util.gdc_util import request_facets_results
 from gdc.util.process_annotations import process_annotations
@@ -34,7 +33,7 @@ from gdc.util.process_cases import process_cases
 from gdc.util.process_data_type import process_data_type
 
 import gcs_wrapper
-from util import create_log, import_module, print_list_synopsis
+from util import create_log, import_module
 
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
@@ -57,27 +56,26 @@ def parseargs():
 
 def process_project(config, project, log_dir):
     try:
-        project_id = project['project_id']
-        log_dir += project_id + '/'
-        log_name = create_log(log_dir, project_id)
+        log_dir += project + '/'
+        log_name = create_log(log_dir, project)
         log = logging.getLogger(log_name)
         
-        log.info('begin process_project(%s)' % (project_id))
+        log.info('begin process_project(%s)' % (project))
         
         case2info = {}
         if config['process_case']:
-            log.info('\tprocess cases for %s' % (project_id))
-            case2info = process_cases(config, project_id, log_dir)
-            log.info('\tcompleted process cases for %s' % (project_id['project_id']))
+            log.info('\tprocess cases for %s' % (project))
+            case2info = process_cases(config, project, log_dir)
+            log.info('\tcompleted process cases for %s' % (project))
         else:
             log.warning('\n\t====================\n\tnot processing cases this run for %s!\n\t====================' % (project))
         
-        log.info('\tprocess data_types for %s' % (project_id))
+        log.info('\tprocess data_types for %s' % (project))
         future2data_type = {}
         data_types = request_facets_results(config['files_endpt']['endpt'], config['facets_query'], 'data_type', log)
         for data_type in data_types:
             if (len(config['data_type_restrict']) == 0 or data_type in config['data_type_restrict']):
-                future2data_type[executor.submit(process_data_type, config, project_id, data_type, log_dir)] = data_type
+                future2data_type[executor.submit(process_data_type, config, project, data_type, log_dir)] = data_type
      
         data_type2retry = {}
         future_keys = future2data_type.keys()
@@ -93,19 +91,19 @@ def process_project(config, project, log_dir):
                             raise ValueError('%s failed multiple times--%s:%s' % (data_type, type(future.exception()).__name__, future.exception()))
                         data_type2retry[data_type] = retry_ct + 1
                         log.warning('\tWARNING: resubmitting %s--%s:%s.  try %s' % (data_type, type(future.exception()).__name__, future.exception(), retry_ct))
-                        new_future = executor.submit(process_data_type, config, project_id, data_type, data_types[data_type], log_dir, project_id + '_' + data_type.replace(' ', '') + '_%d' % (retry_ct))
+                        new_future = executor.submit(process_data_type, config, project, data_type, data_types[data_type], log_dir, project + '_' + data_type.replace(' ', '') + '_%d' % (retry_ct))
                         future2data_type[new_future] = data_type
                     else:
                         future_keys = future2data_type.keys()
             except:
                 future_keys = future2data_type.keys()
                 log.exception('%s failed' % (data_type))
-        log.info('\tcompleted process data_types for %s' % (project_id))
+        log.info('\tcompleted process data_types for %s' % (project))
         
-        log.info('finished process_project(%s)' % (project_id))
+        log.info('finished process_project(%s)' % (project))
         return case2info
     except:
-        log.exception('problem processing project %s' % (project_id))
+        log.exception('problem processing project %s' % (project))
         raise
     
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -119,24 +117,24 @@ def process_program(config, program_name, projects, log_dir):
         future2project = {}
         for project in projects:
             if project in config['skip_projects']:
-                log.info('\tskipping project %s' % (project['project_id']))
+                log.info('\tskipping project %s' % (project))
                 continue
-            if 0 == len(config['project_name_restrict']) or project['project_id'] in config['project_name_restrict']:
-                log.info('\tprocessing project %s' % (project['project_id']))
-                future2project[executor.submit(process_project, config, project, log_dir)] = project['project_id']
+            if 0 == len(config['project_name_restrict']) or project in config['project_name_restrict']:
+                log.info('\tprocessing project %s' % (project))
+                future2project[executor.submit(process_project, config, project, log_dir)] = project
             else:
-                log.info('\tnot processing project %s' % (project['project_id']))
+                log.info('\tnot processing project %s' % (project))
      
         future_keys = future2project.keys()
         while future_keys:
             future_done, future_keys = futures.wait(future_keys, return_when = futures.FIRST_COMPLETED)
             for future in future_done:
-                project_id = future2project.pop(future)
+                project = future2project.pop(future)
                 if future.exception() is not None:
-                    log.exception('\t%s generated an exception--%s: %s' % (project_id, type(future.exception()).__name__, future.exception()))
+                    log.exception('\t%s generated an exception--%s: %s' % (project, type(future.exception()).__name__, future.exception()))
                 else:
 #                     result = future.result()
-                    log.info('\tfinished project %s' % (project_id))
+                    log.info('\tfinished project %s' % (project))
     
         log.info('finished process_program(%s)' % (program_name))
     except:
@@ -148,24 +146,8 @@ def process_program(config, program_name, projects, log_dir):
 def get_program_info (config, projects_endpt, program_name, log_dir, log):
 
     log.info("\t\tin get_project_info: %s %s" % (program_name, projects_endpt))
-    process_projects(config, program_name, log_dir)
-    filt = { 'op': '=',
-             'content': {
-                 'field': 'program.name',
-                 'value': [program_name] 
-              } 
-           } 
-
-    params = { 'filters': json.dumps(filt) }
-    params['from'] = 1
-    params['size'] = 1000
-
-    log.info("\t\tget request %s %s" % (projects_endpt, params))
-    response = requests.get ( projects_endpt, params=params )
-    rj = response.json()
-    print_list_synopsis(rj['data']['hits'], '\t\tprojects for %s:' % (program_name), log)
-
-    return rj['data']['hits']
+    project2info = process_projects(config, program_name, log_dir + program_name + '/')
+    return project2info.keys()
 
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
@@ -214,7 +196,7 @@ def uploadGDC():
         
         initializeDB(config, log)
      
-        if config['upload_files'] or config['upload_etl_files']:
+        if config['upload_open'] or config['upload_controlled'] or config['upload_etl_files']:
             # open the GCS wrapper here so it can be used by all the projects/platforms to save files
             gcs_wrapper.open_connection()
 
