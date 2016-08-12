@@ -23,13 +23,8 @@ import logging
 import pycurl
 from pycurl import Curl
 import requests
-import sys
 
 from util import create_log
-
-def header_function(info):
-    print info
-
 
 def request(url, params, log):
     log.info('\tstarting requests fetch of gdc files')
@@ -41,7 +36,7 @@ def request(url, params, log):
     retries = 0
     while True:
         try:
-            response = requests.post(url, params=params, headers=headers, stream=True)
+            response = requests.post(url, data=json.dumps(params), headers=headers, stream=True)
             break
         except Exception as e:
             if retries < 2:
@@ -51,8 +46,10 @@ def request(url, params, log):
             raise
     
     log.info('\tfinished fetch of gdc files')
-    response.raise_for_status()
-    lines = response.text.split('\n')
+    try:
+        response.raise_for_status()
+    except:
+        log.exception('failed request(%s): %s' % (response.status_code, response.text))
     local_filename = "gdc_download.tar.gz"
     log.info('\tstarting write of gdc files')
     with open(local_filename, 'wb') as f:
@@ -61,14 +58,6 @@ def request(url, params, log):
                 f.write(chunk)
     
     log.info('\tfinished write of gdc files')
-    # expected the compressed file but getting text
-    mirna2count = {}
-    for line in lines:
-        fields = line.split('\t')
-        count = mirna2count.setdefault(fields[0], 0)
-        mirna2count[fields[0]] = count + 1
-    
-    log.info('\n'.join('%s: %d' % (key, value) for (key, value) in mirna2count.iteritems()))
 
 
 def curl(url, params, log):
@@ -78,7 +67,6 @@ def curl(url, params, log):
         c.setopt(c.URL, url)
         c.setopt(c.WRITEDATA, f)
         c.setopt(c.HTTPHEADER, ["Content-Type: application/json"])
-        c.setopt(c.HEADERFUNCTION, header_function)
         c.setopt(pycurl.CUSTOMREQUEST, "POST")
         c.setopt(pycurl.POSTFIELDS, json.dumps(params))
         # TODO: set up using a local certificate
