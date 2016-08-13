@@ -29,10 +29,8 @@ from util import create_log
 def request(url, params, log):
     log.info('\tstarting requests fetch of gdc files')
     headers = {
-        'Content-Type':'application/json', 
-        'Accept':'*/*', 
-        'User-Agent':'python-requests/1.2.0', 
-        'Accept-Encoding':'gzip'}
+        'Content-Type':'application/json'
+    }
     retries = 0
     while True:
         try:
@@ -98,7 +96,7 @@ def main(config, log):
         get_status(log)
         params = create_json()
         url = 'https://gdc-api.nci.nih.gov/data'
-        curl(url, params, log)
+#         curl(url, params, log)
         request(url, params, log)
         log.info('finished upload of gdc files')
     except:
