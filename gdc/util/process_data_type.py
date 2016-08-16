@@ -60,9 +60,12 @@ def get_filter(config, data_type, project_id):
                } 
     return filt
 
-def process_data_type(config, project_id, data_type, log_dir):
+def process_data_type(config, project_id, data_type, log_dir, log_name = None):
     try:
-        log_name = create_log(log_dir, project_id + '_' + data_type.replace(' ', ''))
+        if log_name:
+            log_name = create_log(log_dir, log_name)
+        else:
+            log_name = create_log(log_dir, project_id + '_' + data_type.replace(' ', ''))
         log = logging.getLogger(log_name)
 
         log.info('begin process_data_type %s for %s' % (data_type, project_id))

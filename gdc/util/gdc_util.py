@@ -25,6 +25,7 @@ from util import filter_map, flatten_map, import_module, print_list_synopsis
 
 def request(url, params, msg, log, timeout = None):
     try:
+        log.info('\t\tstart request for %s' % (url))
         response = requests.get(url, params=params, timeout=4)
         response.raise_for_status()
     except:
@@ -45,6 +46,7 @@ def request(url, params, msg, log, timeout = None):
                     log.exception('%s, giving up...' % (msg))
                     raise
                 retry_count += 1 
+    log.info('\t\tfinished request for %s' % (url))
     
     return response
 

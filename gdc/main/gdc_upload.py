@@ -70,35 +70,42 @@ def process_project(config, project, log_dir):
         else:
             log.warning('\n\t====================\n\tnot processing cases this run for %s!\n\t====================' % (project))
         
-        log.info('\tprocess data_types for %s' % (project))
-        future2data_type = {}
-        data_types = request_facets_results(config['files_endpt']['endpt'], config['facets_query'], 'data_type', log)
-        for data_type in data_types:
-            if (len(config['data_type_restrict']) == 0 or data_type in config['data_type_restrict']):
-                future2data_type[executor.submit(process_data_type, config, project, data_type, log_dir)] = data_type
-     
-        data_type2retry = {}
-        future_keys = future2data_type.keys()
-        while future_keys:
-            future_done, _ = futures.wait(future_keys, return_when = futures.FIRST_COMPLETED)
-            try:
-                for future in future_done:
-                    data_type = future2data_type.pop(future)
-                    if future.exception() is not None:
-                        # TODO only retry on connection refused, not other exceptions
-                        retry_ct = data_type2retry.setdefault(data_type, 0)
-                        if retry_ct > 3:
-                            raise ValueError('%s failed multiple times--%s:%s' % (data_type, type(future.exception()).__name__, future.exception()))
-                        data_type2retry[data_type] = retry_ct + 1
-                        log.warning('\tWARNING: resubmitting %s--%s:%s.  try %s' % (data_type, type(future.exception()).__name__, future.exception(), retry_ct))
-                        new_future = executor.submit(process_data_type, config, project, data_type, data_types[data_type], log_dir, project + '_' + data_type.replace(' ', '') + '_%d' % (retry_ct))
-                        future2data_type[new_future] = data_type
-                    else:
-                        future_keys = future2data_type.keys()
-            except:
-                future_keys = future2data_type.keys()
-                log.exception('%s failed' % (data_type))
-        log.info('\tcompleted process data_types for %s' % (project))
+        if config['process_data_type']:
+            log.info('\tprocess data_types for %s' % (project))
+            future2data_type = {}
+            data_types = request_facets_results(config['files_endpt']['endpt'], config['facets_query'], 'data_type', log)
+            for data_type in data_types:
+                if (len(config['data_type_restrict']) == 0 or data_type in config['data_type_restrict']):
+                    log.info('\t\tprocess data_type \'%s\' for %s' % (data_type, project))
+                    future2data_type[executor.submit(process_data_type, config, project, data_type, log_dir)] = data_type
+                else:
+                    log.info('\t\tnot processing data_type %s for %s' % (data_type, project))
+         
+            data_type2retry = {}
+            future_keys = future2data_type.keys()
+            while future_keys:
+                future_done, _ = futures.wait(future_keys, return_when = futures.FIRST_COMPLETED)
+                try:
+                    for future in future_done:
+                        data_type = future2data_type.pop(future)
+                        if future.exception() is not None:
+                            # TODO only retry on connection refused, not other exceptions
+                            retry_ct = data_type2retry.setdefault(data_type, 0)
+                            if retry_ct > 3:
+                                raise ValueError('%s failed multiple times--%s:%s' % (data_type, type(future.exception()).__name__, future.exception()))
+                            data_type2retry[data_type] = retry_ct + 1
+                            log.warning('\tWARNING: resubmitting %s--%s:%s.  try %s' % (data_type, type(future.exception()).__name__, future.exception(), retry_ct))
+                            new_future = executor.submit(process_data_type, config, project, data_type, log_dir, project + '_' + data_type.replace(' ', '') + '_%d' % (retry_ct))
+                            future2data_type[new_future] = data_type
+                        else:
+                            log.info('\t\tfinished process data_type \'%s\' for %s' % (data_type, project))
+                            future_keys = future2data_type.keys()
+                except:
+                    future_keys = future2data_type.keys()
+                    log.exception('%s failed' % (data_type))
+            log.info('\tcompleted process data_types for %s' % (project))
+        else:
+            log.warning('\n\t====================\n\tnot processing data types this run for %s!\n\t====================' % (project))
         
         log.info('finished process_project(%s)' % (project))
         return case2info
@@ -115,15 +122,18 @@ def process_program(config, program_name, projects, log_dir):
         log = logging.getLogger(log_name)
         log.info('begin process_program(%s)' % (program_name))
         future2project = {}
-        for project in projects:
-            if project in config['skip_projects']:
-                log.info('\tskipping project %s' % (project))
-                continue
-            if 0 == len(config['project_name_restrict']) or project in config['project_name_restrict']:
-                log.info('\tprocessing project %s' % (project))
-                future2project[executor.submit(process_project, config, project, log_dir)] = project
-            else:
-                log.info('\tnot processing project %s' % (project))
+        if config['process_project']:
+            for project in projects:
+                if project in config['skip_projects']:
+                    log.info('\tskipping project %s' % (project))
+                    continue
+                if 0 == len(config['project_name_restrict']) or project in config['project_name_restrict']:
+                    log.info('\tprocessing project %s' % (project))
+                    future2project[executor.submit(process_project, config, project, log_dir)] = project
+                else:
+                    log.info('\tnot processing project %s' % (project))
+        else:
+            log.warning('\n\t====================\n\tnot processing projects this run!\n\t====================')
      
         future_keys = future2project.keys()
         while future_keys:
