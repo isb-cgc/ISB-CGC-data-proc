@@ -23,23 +23,21 @@ import time
 
 from util import filter_map, flatten_map, import_module, print_list_synopsis
 
-def request(url, params, msg, log, timeout = None):
+def request(url, params, msg, log, timeout):
     try:
         log.info('\t\tstart request for %s' % (url))
-        response = requests.get(url, params=params, timeout=4)
+        response = requests.get(url, params=params, timeout=timeout)
         response.raise_for_status()
-    except:
+    except Exception as e:
         retry_count = 1
         while True:
             # try again a few times with a brief pause
-            log.exception('%s, retry %d...' % (msg, retry_count))
-            time.sleep(1)
+            log.warning('%s, retry %d because of %s:%s...' % (msg, retry_count, type(e).__name__, e))
+            time.sleep(retry_count * 2)
             try:
-                if timeout:
-                    response = requests.get(url, params=params, timeout=timeout)
-                else:
-                    response = requests.get(url, params=params)
+                response = requests.get(url, params=params, timeout=timeout)
                 response.raise_for_status()
+                log.info('%s, retry %d successful' % (msg, retry_count))
                 break
             except:
                 if 4 == retry_count:
@@ -87,7 +85,7 @@ def get_map_rows(config, endpt, filt, log):
     url = endpt_url + query
     mapfilter = config['process_%ss' % (endpt)]['filter_result']
     
-    endpt2info = __get_filtered_map_rows(url, '%s_id' % (endpt), filt, mapfilter, endpt, log, config['process_%ss' % (endpt)]['fetch_count'])
+    endpt2info = __get_filtered_map_rows(url, '%s_id' % (endpt), filt, mapfilter, endpt, log, config['process_%ss' % (endpt)]['fetch_count'], config['map_requests_timeout'])
     
     log.info('\tfinished select %s.  processed %s %ss' % (endpt, len(endpt2info), endpt))
     return endpt2info
@@ -129,7 +127,7 @@ def __get_filtered_map_rows(url, idname, filt, mapfilter, activity, log, size = 
 
 def request_facets_results(url, facet_query, facet, log, page_size = 0, params = None):
     facet_query = facet_query % (facet, page_size)
-    response = request(url + facet_query, params, 'requesting facet %s from %s' % (facet, url), log)
+    response = request(url + facet_query, params, 'requesting facet %s from %s' % (facet, url), log, 4)
 
     rj = response.json()
     buckets = rj['data']['aggregations'][facet]['buckets']

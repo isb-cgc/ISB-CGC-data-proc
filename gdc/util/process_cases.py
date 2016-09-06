@@ -17,16 +17,39 @@ limitations under the License.
 
 @author: michael
 '''
+import json
 import logging
+import requests
 
-from gdc.util.gdc_util import get_map_rows, save2db
+from gdc.util.gdc_util import get_map_rows, request, save2db
 from util import create_log
 
+def get_omf_map_rows(config, project_name, log):
+    filt = { 
+        "op":"in",
+        "content":{ 
+            "field":"files.tags",
+            "value":[ 
+                "omf"
+            ]
+        } 
+    }
+    curstart = 0
+    size = 20
+    
+    params = {
+        'filters':json.dumps(filt), 
+        'sort': '%s:asc' % ("case_id"),
+        'from': curstart, 
+        'size': size
+    }
+
 def get_filter(project_name):
-    return { 'op': '=',
-             'content': {
-                 'field': 'project.project_id',
-                 'value': [project_name]
+    return {
+                'op': '=',
+                 'content': {
+                     'field': 'project.project_id',
+                     'value': [project_name]
               } 
            }
     
@@ -40,6 +63,11 @@ def process_cases(config, project_name, log_dir):
         save2db(config, 'metadata_gdc_clinical', case2info, config['process_cases']['clinical_table_mapping'], log)
         save2db(config, 'metadata_gdc_biospecimen', case2info, config['process_cases']['sample_table_mapping'], log)
         log.info('finished process_cases(%s)' % (project_name))
+
+#         log.info('begin process_cases(%s) for omf files' % (project_name))
+#         omf2info = get_omf_map_rows(config, project_name, log)
+#         save2db(config, 'metadata_gdc_clinical', case2info, config['process_cases']['clinical_table_mapping'], log)
+#         log.info('finished process_cases(%s) for omf files' % (project_name))
 
         return case2info
     except:

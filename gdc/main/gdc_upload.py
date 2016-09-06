@@ -25,6 +25,7 @@ from concurrent import futures
 from datetime import date, datetime
 import json
 import logging
+from multiprocessing import Semaphore
 
 from gdc.util.gdc_util import request_facets_results
 from gdc.util.process_annotations import process_annotations
@@ -37,7 +38,7 @@ from util import create_log, import_module
 
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-executor = None
+semaphore = Semaphore(20)
 
 projects_fields = set()
 cases_fields = []
@@ -71,39 +72,42 @@ def process_project(config, project, log_dir):
             log.warning('\n\t====================\n\tnot processing cases this run for %s!\n\t====================' % (project))
         
         if config['process_data_type']:
-            log.info('\tprocess data_types for %s' % (project))
-            future2data_type = {}
-            data_types = request_facets_results(config['files_endpt']['endpt'], config['facets_query'], 'data_type', log)
-            for data_type in data_types:
-                if (len(config['data_type_restrict']) == 0 or data_type in config['data_type_restrict']):
-                    log.info('\t\tprocess data_type \'%s\' for %s' % (data_type, project))
-                    future2data_type[executor.submit(process_data_type, config, project, data_type, log_dir)] = data_type
-                else:
-                    log.info('\t\tnot processing data_type %s for %s' % (data_type, project))
-         
-            data_type2retry = {}
-            future_keys = future2data_type.keys()
-            while future_keys:
-                future_done, _ = futures.wait(future_keys, return_when = futures.FIRST_COMPLETED)
-                try:
-                    for future in future_done:
-                        data_type = future2data_type.pop(future)
-                        if future.exception() is not None:
-                            # TODO only retry on connection refused, not other exceptions
-                            retry_ct = data_type2retry.setdefault(data_type, 0)
-                            if retry_ct > 3:
-                                raise ValueError('%s failed multiple times--%s:%s' % (data_type, type(future.exception()).__name__, future.exception()))
-                            data_type2retry[data_type] = retry_ct + 1
-                            log.warning('\tWARNING: resubmitting %s--%s:%s.  try %s' % (data_type, type(future.exception()).__name__, future.exception(), retry_ct))
-                            new_future = executor.submit(process_data_type, config, project, data_type, log_dir, project + '_' + data_type.replace(' ', '') + '_%d' % (retry_ct))
-                            future2data_type[new_future] = data_type
-                        else:
-                            log.info('\t\tfinished process data_type \'%s\' for %s' % (data_type, project))
-                            future_keys = future2data_type.keys()
-                except:
-                    future_keys = future2data_type.keys()
-                    log.exception('%s failed' % (data_type))
-            log.info('\tcompleted process data_types for %s' % (project))
+            with futures.ThreadPoolExecutor(max_workers=20) as executor:
+                log.info('\tprocess data_types for %s' % (project))
+                future2data_type = {}
+                data_types = request_facets_results(config['files_endpt']['endpt'], config['facets_query'], 'data_type', log)
+                for data_type in data_types:
+                    if (len(config['data_type_restrict']) == 0 or data_type in config['data_type_restrict']):
+                        with semaphore:
+                            log.info('\t\tprocess data_type \'%s\' for %s' % (data_type, project))
+                            future2data_type[executor.submit(process_data_type, config, project, data_type, log_dir)] = data_type
+                    else:
+                        log.info('\t\tnot processing data_type %s for %s' % (data_type, project))
+             
+                data_type2retry = {}
+                future_keys = future2data_type.keys()
+                while future_keys:
+                    future_done, _ = futures.wait(future_keys, return_when = futures.FIRST_COMPLETED)
+                    try:
+                        for future in future_done:
+                            data_type = future2data_type.pop(future)
+                            if future.exception() is not None:
+                                # TODO only retry on connection refused, not other exceptions
+                                retry_ct = data_type2retry.setdefault(data_type, 0)
+                                if retry_ct > 3:
+                                    raise ValueError('%s failed multiple times--%s:%s' % (data_type, type(future.exception()).__name__, future.exception()))
+                                data_type2retry[data_type] = retry_ct + 1
+                                with semaphore:
+                                    log.warning('\tWARNING: resubmitting %s--%s:%s.  try %s' % (data_type, type(future.exception()).__name__, future.exception(), retry_ct))
+                                    new_future = executor.submit(process_data_type, config, project, data_type, log_dir, project + '_' + data_type.replace(' ', '') + '_%d' % (retry_ct))
+                                    future2data_type[new_future] = data_type
+                            else:
+                                log.info('\t\tfinished process data_type \'%s\' for %s' % (data_type, project))
+                                future_keys = future2data_type.keys()
+                    except:
+                        future_keys = future2data_type.keys()
+                        log.exception('%s failed' % (data_type))
+                log.info('\tcompleted process data_types for %s' % (project))
         else:
             log.warning('\n\t====================\n\tnot processing data types this run for %s!\n\t====================' % (project))
         
@@ -123,15 +127,16 @@ def process_program(config, program_name, projects, log_dir):
         log.info('begin process_program(%s)' % (program_name))
         future2project = {}
         if config['process_project']:
-            for project in projects:
-                if project in config['skip_projects']:
-                    log.info('\tskipping project %s' % (project))
-                    continue
-                if 0 == len(config['project_name_restrict']) or project in config['project_name_restrict']:
-                    log.info('\tprocessing project %s' % (project))
-                    future2project[executor.submit(process_project, config, project, log_dir)] = project
-                else:
-                    log.info('\tnot processing project %s' % (project))
+            with futures.ThreadPoolExecutor(max_workers=config['project_threads']) as executor:
+                for project in projects:
+                    if project in config['skip_projects']:
+                        log.info('\tskipping project %s' % (project))
+                        continue
+                    if 0 == len(config['project_name_restrict']) or project in config['project_name_restrict']:
+                        log.info('\tprocessing project %s' % (project))
+                        future2project[executor.submit(process_project, config, project, log_dir)] = project
+                    else:
+                        log.info('\tnot processing project %s' % (project))
         else:
             log.warning('\n\t====================\n\tnot processing projects this run!\n\t====================')
      
@@ -164,20 +169,22 @@ def get_program_info (config, projects_endpt, program_name, log_dir, log):
 def process_programs(config, log_dir, log):
     log.info('begin process_programs()')
     future2program = {}
-    for program_name in config['program_names']:
-        projects = get_program_info(config, config['projects_endpt']['endpt'] + config['projects_endpt']['query'], program_name, log_dir, log)
-        future2program[executor.submit(process_program, config, program_name, projects, log_dir)] = program_name
+    with futures.ProcessPoolExecutor(max_workers=config['processes']) as executor:
+        for program_name in config['program_names']:
+            log.info('\tstart program %s' % (program_name))
+            projects = get_program_info(config, config['projects_endpt']['endpt'] + config['projects_endpt']['query'], program_name, log_dir, log)
+            future2program[executor.submit(process_program, config, program_name, projects, log_dir)] = program_name
     
     future_keys = future2program.keys()
     while future_keys:
         future_done, future_keys = futures.wait(future_keys, return_when = futures.FIRST_COMPLETED)
         for future in future_done:
-            program = future2program.pop(future)
+            program_name = future2program.pop(future)
             if future.exception() is not None:
-                log.exception('\t%s generated an exception--%s:%s' % (program, type(future.exception()).__name__, future.exception()))
+                log.exception('\t%s generated an exception--%s:%s' % (program_name, type(future.exception()).__name__, future.exception()))
             else:
 #                 result = future.result()
-                log.info('\tfinished program %s' % (program))
+                log.info('\tfinished program %s' % (program_name))
     log.info('finished process_programs()')
 
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -190,7 +197,6 @@ def initializeDB(config, log):
 
 def uploadGDC():
     print datetime.now(), 'begin uploadGDC()'
-    global executor
     try:
         args = parseargs()
         with open(args.config) as configFile:
@@ -201,8 +207,6 @@ def uploadGDC():
         log = logging.getLogger(log_name)
 
         log.info('begin uploadGDC()')
-        
-        executor = futures.ThreadPoolExecutor(max_workers=config['threads'])
         
         initializeDB(config, log)
      
@@ -219,8 +223,6 @@ def uploadGDC():
         else:
             log.warning('\n\t====================\n\tnot processing programs this run!\n\t====================')
     finally:
-        if executor:
-            executor.shutdown(wait=False)
         gcs_wrapper.close_connection()
     log.info('finished uploadGDC()')
     print datetime.now(), 'finished uploadGDC()'
