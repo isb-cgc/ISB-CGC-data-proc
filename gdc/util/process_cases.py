@@ -19,10 +19,9 @@ limitations under the License.
 '''
 import json
 import logging
-import requests
 
-from gdc.util.gdc_util import get_map_rows, request, save2db
-from util import create_log
+from gdc.util.gdc_util import get_map_rows, save2db
+from util import close_log, create_log
 
 def get_omf_map_rows(config, project_name, log):
     filt = { 
@@ -53,15 +52,15 @@ def get_filter(project_name):
               } 
            }
     
-def process_cases(config, project_name, log_dir):
+def process_cases(config, endpt_type, project_name, log_dir):
     try:
         log_name = create_log(log_dir, project_name + '_cases')
         log = logging.getLogger(log_name)
 
         log.info('begin process_cases(%s)' % (project_name))
-        case2info = get_map_rows(config, 'case', get_filter(project_name), log)
-        save2db(config, 'metadata_gdc_clinical', case2info, config['process_cases']['clinical_table_mapping'], log)
-        save2db(config, 'metadata_gdc_biospecimen', case2info, config['process_cases']['sample_table_mapping'], log)
+        case2info = get_map_rows(config, endpt_type, 'case', get_filter(project_name), log)
+        save2db(config, endpt_type, 'metadata_gdc_clinical', case2info, config['process_cases']['clinical_table_mapping'], log)
+        save2db(config, endpt_type, 'metadata_gdc_biospecimen', case2info, config['process_cases']['sample_table_mapping'], log)
         log.info('finished process_cases(%s)' % (project_name))
 
 #         log.info('begin process_cases(%s) for omf files' % (project_name))
@@ -73,3 +72,5 @@ def process_cases(config, project_name, log_dir):
     except:
         log.exception('problem processing cases(%s):' % (project_name))
         raise
+    finally:
+        close_log(log)

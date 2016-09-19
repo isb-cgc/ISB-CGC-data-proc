@@ -32,10 +32,10 @@ def request(url, params, msg, log, timeout):
         retry_count = 1
         while True:
             # try again a few times with a brief pause
-            log.warning('%s, retry %d because of %s:%s...' % (msg, retry_count, type(e).__name__, e))
+            log.warning('%s, retry %d(%d) because of %s:%s...' % (msg, retry_count, timeout if retry_count == 0 else timeout * (retry_count - 1) * 2, type(e).__name__, e))
             time.sleep(retry_count * 2)
             try:
-                response = requests.get(url, params=params, timeout=timeout)
+                response = requests.get(url, params=params, timeout=timeout * retry_count * 2)
                 response.raise_for_status()
                 log.info('%s, retry %d successful' % (msg, retry_count))
                 break
@@ -48,16 +48,18 @@ def request(url, params, msg, log, timeout):
     
     return response
 
-def __addrow(fieldnames, row2map):
+def __addrow(endpt_type, fieldnames, row2map):
     row = []
     for fieldname in fieldnames:
-        if fieldname in row2map:
+        if 'Endpoint' == fieldname:
+            row += [endpt_type]
+        elif fieldname in row2map:
             row += [row2map[fieldname]]
         else:
             row += [None]
     return [row]
 
-def __insert_rows(config, tablename, values, mapfilter, log):
+def __insert_rows(config, endpt_type, tablename, values, mapfilter, log):
     maps = []
     for value in values:
         maps += flatten_map(value, mapfilter)
@@ -67,20 +69,20 @@ def __insert_rows(config, tablename, values, mapfilter, log):
     fieldnames = module.ISBCGC_database_helper.field_names(tablename)
     rows = []
     for nextmap in maps:
-        rows += __addrow(fieldnames, nextmap)
+        rows += __addrow(endpt_type, fieldnames, nextmap)
     if config['update_cloudsql']:
         module.ISBCGC_database_helper.column_insert(config, rows, tablename, fieldnames, log)
     else:
         log.warning('\n\t====================\n\tnot saving to cloudsql to %s this run!\n\t====================' % (tablename))
 
-def save2db(config, table, endpt2info, table_mapping, log):
+def save2db(config, endpt_type, table, endpt2info, table_mapping, log):
     log.info('\tbegin save rows to db for %s' % table)
-    __insert_rows(config, table, endpt2info.values(), table_mapping, log)
+    __insert_rows(config, endpt_type, table, endpt2info.values(), table_mapping, log)
     log.info('\tfinished save rows to db for %s' % table)
 
-def get_map_rows(config, endpt, filt, log):
-    log.info('\tbegin select %ss' % (endpt))
-    endpt_url = config['%ss_endpt' % (endpt)]['endpt']
+def get_map_rows(config, endpt_type, endpt, filt, log):
+    log.info('\tbegin select %s %ss' % (endpt_type, endpt))
+    endpt_url = config['%ss_endpt' % (endpt)]['%s endpt' % (endpt_type)]
     query = config['%ss_endpt' % (endpt)]['query']
     url = endpt_url + query
     mapfilter = config['process_%ss' % (endpt)]['filter_result']
@@ -102,14 +104,19 @@ def __get_filtered_map_rows(url, idname, filt, mapfilter, activity, log, size = 
             'size': size
         }
         msg = '\t\tproblem getting filtered map for %s' % (activity)
-        response = request(url, params, msg, log, timeout)
-        response.raise_for_status()
-            
+        response = None
         try:
-            rj = response.json()
-        except:
-            log.exception('problem with response, not json: %s' % (response.text))
-            raise
+            response = request(url, params, msg, log, timeout)
+            response.raise_for_status()
+                
+            try:
+                rj = response.json()
+            except:
+                log.exception('problem with response, not json: %s' % (response.text))
+                raise
+        finally:
+            if response:
+                response.close
         
         for index in range(len(rj['data']['hits'])):
             themap = rj['data']['hits'][index]
@@ -126,12 +133,17 @@ def __get_filtered_map_rows(url, idname, filt, mapfilter, activity, log, size = 
     return id2map
 
 def request_facets_results(url, facet_query, facet, log, page_size = 0, params = None):
-    facet_query = facet_query % (facet, page_size)
-    response = request(url + facet_query, params, 'requesting facet %s from %s' % (facet, url), log, 4)
-
-    rj = response.json()
-    buckets = rj['data']['aggregations'][facet]['buckets']
-    retval = {}
-    for bucket in buckets:
-        retval[bucket['key']] = bucket['doc_count']
+    response = None
+    try:
+        facet_query = facet_query % (facet, page_size)
+        response = request(url + facet_query, params, 'requesting facet %s from %s' % (facet, url), log, 4)
+    
+        rj = response.json()
+        buckets = rj['data']['aggregations'][facet]['buckets']
+        retval = {}
+        for bucket in buckets:
+            retval[bucket['key']] = bucket['doc_count']
+    finally:
+        if response:
+            response.close()
     return retval

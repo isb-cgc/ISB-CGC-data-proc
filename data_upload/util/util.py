@@ -406,3 +406,9 @@ def __recurse_flatten_map(origmap, thefilter):
 
 def flatten_map(origmap, thefilter):
     return __recurse_flatten_map(origmap, thefilter)
+
+def close_log(log):
+    handlers = log.handlers[:]
+    for handler in handlers:
+        handler.close()
+        log.removeHandler(handler)

@@ -26,6 +26,9 @@ from datetime import date, datetime
 import json
 import logging
 from multiprocessing import Semaphore
+import platform
+import win32file
+
 
 from gdc.util.gdc_util import request_facets_results
 from gdc.util.process_annotations import process_annotations
@@ -34,7 +37,7 @@ from gdc.util.process_cases import process_cases
 from gdc.util.process_data_type import process_data_type
 
 import gcs_wrapper
-from util import create_log, import_module
+from util import close_log, create_log, import_module
 
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
@@ -55,7 +58,7 @@ def parseargs():
 
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-def process_project(config, project, log_dir):
+def process_project(config, endpt_type, project, log_dir):
     try:
         log_dir += project + '/'
         log_name = create_log(log_dir, project)
@@ -66,7 +69,7 @@ def process_project(config, project, log_dir):
         case2info = {}
         if config['process_case']:
             log.info('\tprocess cases for %s' % (project))
-            case2info = process_cases(config, project, log_dir)
+            case2info = process_cases(config, endpt_type, project, log_dir)
             log.info('\tcompleted process cases for %s' % (project))
         else:
             log.warning('\n\t====================\n\tnot processing cases this run for %s!\n\t====================' % (project))
@@ -75,15 +78,16 @@ def process_project(config, project, log_dir):
             with futures.ThreadPoolExecutor(max_workers=20) as executor:
                 log.info('\tprocess data_types for %s' % (project))
                 future2data_type = {}
-                data_types = request_facets_results(config['files_endpt']['endpt'], config['facets_query'], 'data_type', log)
+                data_types = request_facets_results(config['files_endpt']['%s endpt' % (endpt_type)], config['facets_query'], 'data_type', log)
                 for data_type in data_types:
                     if (len(config['data_type_restrict']) == 0 or data_type in config['data_type_restrict']):
                         with semaphore:
                             log.info('\t\tprocess data_type \'%s\' for %s' % (data_type, project))
-                            future2data_type[executor.submit(process_data_type, config, project, data_type, log_dir)] = data_type
+                            future2data_type[executor.submit(process_data_type, config, endpt_type, project, data_type, log_dir)] = data_type
                     else:
                         log.info('\t\tnot processing data_type %s for %s' % (data_type, project))
              
+                retry_ct = 0
                 data_type2retry = {}
                 future_keys = future2data_type.keys()
                 while future_keys:
@@ -99,7 +103,7 @@ def process_project(config, project, log_dir):
                                 data_type2retry[data_type] = retry_ct + 1
                                 with semaphore:
                                     log.warning('\tWARNING: resubmitting %s--%s:%s.  try %s' % (data_type, type(future.exception()).__name__, future.exception(), retry_ct))
-                                    new_future = executor.submit(process_data_type, config, project, data_type, log_dir, project + '_' + data_type.replace(' ', '') + '_%d' % (retry_ct))
+                                    new_future = executor.submit(process_data_type, config, endpt_type, project, data_type, log_dir, project + '_' + data_type.replace(' ', '') + '_%d' % (retry_ct))
                                     future2data_type[new_future] = data_type
                             else:
                                 log.info('\t\tfinished process data_type \'%s\' for %s' % (data_type, project))
@@ -119,9 +123,9 @@ def process_project(config, project, log_dir):
     
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-def process_program(config, program_name, projects, log_dir):
+def process_program(config, endpt_type, program_name, projects, log_dir):
     try:
-        log_dir += program_name + '/'
+        log_dir += program_name + '_%s' % endpt_type + '/'
         log_name = create_log(log_dir, program_name)
         log = logging.getLogger(log_name)
         log.info('begin process_program(%s)' % (program_name))
@@ -134,7 +138,7 @@ def process_program(config, program_name, projects, log_dir):
                         continue
                     if 0 == len(config['project_name_restrict']) or project in config['project_name_restrict']:
                         log.info('\tprocessing project %s' % (project))
-                        future2project[executor.submit(process_project, config, project, log_dir)] = project
+                        future2project[executor.submit(process_project, config, endpt_type, project, log_dir)] = project
                     else:
                         log.info('\tnot processing project %s' % (project))
         else:
@@ -155,25 +159,27 @@ def process_program(config, program_name, projects, log_dir):
     except:
         log.exception('problem processing program %s' % (program_name))
         raise
+    finally:
+        close_log(log)
 
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-def get_program_info (config, projects_endpt, program_name, log_dir, log):
+def get_program_info (config, endpt_type, projects_endpt, program_name, log_dir, log):
 
     log.info("\t\tin get_project_info: %s %s" % (program_name, projects_endpt))
-    project2info = process_projects(config, program_name, log_dir + program_name + '/')
+    project2info = process_projects(config, endpt_type, program_name, log_dir + program_name + '/')
     return project2info.keys()
 
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-def process_programs(config, log_dir, log):
+def process_programs(config, endpt_type, log_dir, log):
     log.info('begin process_programs()')
     future2program = {}
     with futures.ProcessPoolExecutor(max_workers=config['processes']) as executor:
         for program_name in config['program_names']:
             log.info('\tstart program %s' % (program_name))
-            projects = get_program_info(config, config['projects_endpt']['endpt'] + config['projects_endpt']['query'], program_name, log_dir, log)
-            future2program[executor.submit(process_program, config, program_name, projects, log_dir)] = program_name
+            projects = get_program_info(config, endpt_type, config['projects_endpt']['%s endpt' % (endpt_type)] + config['projects_endpt']['query'], program_name, log_dir, log)
+            future2program[executor.submit(process_program, config, endpt_type, program_name, projects, log_dir)] = program_name
     
     future_keys = future2program.keys()
     while future_keys:
@@ -197,6 +203,7 @@ def initializeDB(config, log):
 
 def uploadGDC():
     print datetime.now(), 'begin uploadGDC()'
+
     try:
         args = parseargs()
         with open(args.config) as configFile:
@@ -208,20 +215,26 @@ def uploadGDC():
 
         log.info('begin uploadGDC()')
         
+        if 'Windows' == platform.system():
+            log.info('\tupdate number of open files allowed on windows')
+            win32file._setmaxstdio(2048)
+            
         initializeDB(config, log)
      
         if config['upload_open'] or config['upload_controlled'] or config['upload_etl_files']:
             # open the GCS wrapper here so it can be used by all the projects/platforms to save files
             gcs_wrapper.open_connection()
 
-        if config['process_annotation']:
-            process_annotations(config, log_dir)
-        else:
-            log.warning('\n\t====================\n\tnot processing annotations this run!\n\t====================')
-        if config['process_program']:
-            process_programs(config, log_dir, log)
-        else:
-            log.warning('\n\t====================\n\tnot processing programs this run!\n\t====================')
+        for endpt_type in config['endpt_types']:
+            log.info('processing %s endpoints' % (endpt_type))
+            if config['process_annotation']:
+                process_annotations(config, endpt_type, log_dir)
+            else:
+                log.warning('\n\t====================\n\tnot processing annotations this run!\n\t====================')
+            if config['process_program']:
+                process_programs(config, endpt_type, log_dir, log)
+            else:
+                log.warning('\n\t====================\n\tnot processing programs this run!\n\t====================')
     finally:
         gcs_wrapper.close_connection()
     log.info('finished uploadGDC()')

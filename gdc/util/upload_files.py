@@ -77,7 +77,8 @@ def curl(url, params, log):
 def create_json():
     file_ids = []
     params = {'ids':file_ids}
-    with open('gdc/main/2016_07_28_run/TCGA/TCGA-COAD/TCGA-COAD_miRNAExpressionQuantification_file_ids.txt') as file_id_file:
+#     with open('gdc/main/2016_07_28_run/TCGA/TCGA-COAD/TCGA-COAD_miRNAExpressionQuantification_file_ids.txt') as file_id_file:
+    with open('gdc/doc/gdc_manifest.2016-09-09_head_5000.tsv') as file_id_file:
         for line in file_id_file:
             file_ids += [line.strip()]
     

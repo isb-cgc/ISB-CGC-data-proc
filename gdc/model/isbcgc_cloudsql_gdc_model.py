@@ -47,6 +47,7 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
             ['SampleBarcode', 'VARCHAR(16)', 'NULL'],
             ['dateCreated', 'DATETIME', 'NOT NULL'],
             ['dateEdited', 'DATETIME', 'NULL'],
+            ['Endpoint', 'VARCHAR(8)', 'NULL'],
         ],
 
         'indices_defs': [
@@ -60,6 +61,7 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
             ['AliquotBarcode'],
             ['ParticipantBarcode'],
             ['SampleBarcode'],
+            ['Endpoint'],
         ]
     }
     
@@ -80,14 +82,16 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
             ['Program', 'VARCHAR(40)', 'NULL'],
             ['Program_dbGaP_AccessionNumber', 'VARCHAR(12)', 'NULL'],
             ['ProgramID', 'VARCHAR(36)', 'NULL'],
+            ['Endpoint', 'VARCHAR(8)', 'NULL'],
         ],
 #         'natural_key_cols': [
 #             'ParticipantBarcode'
 #         ],
         'indices_defs': [
-            ['ParticipantBarcode'],
+            ['DiseaseType'],
             ['Project'],
             ['Program'],
+            ['Endpoint'],
         ]
     }
     
@@ -99,6 +103,7 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
             ['ParticipantUUID', 'VARCHAR(36)', 'NOT NULL'],
             ['Project', 'VARCHAR(40)', 'NULL'],
             ['Program', 'VARCHAR(40)', 'NULL'],
+            ['Endpoint', 'VARCHAR(8)', 'NULL'],
         ],
 #         'natural_key_cols': [
 #             'ParticipantBarcode'
@@ -107,6 +112,7 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
             ['ParticipantBarcode'],
             ['Project'],
             ['Program'],
+            ['Endpoint'],
         ]
     }
     
@@ -120,6 +126,7 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
             ['SampleBarcode', 'VARCHAR(45)', 'NOT NULL'],
             ['SampleUUID', 'VARCHAR(36)', 'NULL'],
             ['PathologyReportUUID', 'VARCHAR(36)', 'NULL'],
+            ['Endpoint', 'VARCHAR(8)', 'NULL'],
         ],
 #         'natural_key_cols': [
 #             'SampleBarcode'
@@ -129,6 +136,7 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
             ['SampleBarcode'],
             ['Project'],
             ['Program'],
+            ['Endpoint'],
         ],
 #         'foreign_key': [
 #             'ParticipantBarcode',
@@ -155,9 +163,10 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
             ['access', 'VARCHAR(10)', 'NOT NULL'],
             ['state', 'VARCHAR(20)', 'NULL'],
             ['DataCategory', 'VARCHAR(30)', 'NOT NULL'],
+            ['Platform', 'VARCHAR(50)', 'NOT NULL'],
             ['file_size', 'INT', 'NOT NULL'],
             ['file_state', 'VARCHAR(30)', 'NULL'],
-            ['ExperimentalStrategy', 'VARCHAR(20)', 'NULL'],
+            ['ExperimentalStrategy', 'VARCHAR(50)', 'NULL'],
             ['MetadataFilename', 'VARCHAR(200)', 'NULL'],
             ['annotationStatus', 'VARCHAR(20)', 'NULL'],
             ['annotationId', 'VARCHAR(36)', 'NULL'],
@@ -167,6 +176,7 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
             ['annotationTypeId', 'VARCHAR(36)', 'NULL'],
             ['annotationTypeName', 'VARCHAR(20)', 'NULL'],
             ['annotationBarcode', 'VARCHAR(28)', 'NULL'],
+            ['Endpoint', 'VARCHAR(8)', 'NULL'],
         ],
 #         'natural_key_cols': [
 #             'AliquotBarcode',
@@ -194,7 +204,8 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
             ['annotationClassification'],
             ['annotationTypeId'],
             ['annotationTypeName'],
-            ['annotationBarcode']
+            ['annotationBarcode'],
+            ['Endpoint'],
         ],
 #         'foreign_key': [
 #             'SampleBarcode',
@@ -212,13 +223,15 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
             ['Project', 'VARCHAR(40)', 'NOT NULL'],
             ['Program', 'VARCHAR(40)', 'NOT NULL'],
             ['SampleBarcode', 'VARCHAR(45)', 'NOT NULL'],
-            ['SampleUUID', 'VARCHAR(36)', 'NOT NULL']
+            ['SampleUUID', 'VARCHAR(36)', 'NOT NULL'],
+            ['Endpoint', 'VARCHAR(8)', 'NULL'],
         ],
         'indices_defs': [
             ['ParticipantBarcode'],
             ['SampleBarcode'],
             ['Project'],
             ['Program'],
+            ['Endpoint'],
         ],
         'natural_key_cols': ['SampleBarcode'],
 #         'foreign_key': [

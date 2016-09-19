@@ -262,7 +262,7 @@ class ISBCGC_database_helper(object):
                         if start + index == len(rows):
                             break
                         inserts += [rows[start + index]]
-                    log.info('\t\t\tinsert rows %s to %s' % (start, index))
+                    log.info('\t\t\tinsert rows %s to %s' % (start, start + index))
                     try:
                         cursor.executemany(insert_stmt, inserts)
                     except MySQLdb.OperationalError as oe:
@@ -286,7 +286,7 @@ class ISBCGC_database_helper(object):
                             log.exception('\t\t\tupdate had multiple operation errors 2006 for %s' % (insert_stmt))
                             raise oe
                     except Exception as e:
-                        log.exception('problem with update for %s: %s' % (insert_stmt, e))
+                        log.exception('problem with update for:\n%s\n\t%s' % (insert_stmt, e))
                         raise e
                     inserts = []
                 # successfully looped through so stop trying
