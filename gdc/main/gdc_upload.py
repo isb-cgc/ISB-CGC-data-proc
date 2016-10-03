@@ -32,7 +32,7 @@ import win32file
 
 from gdc.util.gdc_util import request_facets_results
 from gdc.util.process_annotations import process_annotations
-from gdc.util.process_projects import process_projects
+from gdc.util.process_projects import process_projects_for_programs, process_projects
 from gdc.util.process_cases import process_cases
 from gdc.util.process_data_type import process_data_type
 
@@ -164,7 +164,7 @@ def process_program(config, endpt_type, program_name, projects, log_dir):
 
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-def get_program_info (config, endpt_type, projects_endpt, program_name, log_dir, log):
+def get_program_info(config, endpt_type, projects_endpt, program_name, log_dir, log):
 
     log.info("\t\tin get_project_info: %s %s" % (program_name, projects_endpt))
     project2info = process_projects(config, endpt_type, program_name, log_dir + program_name + '/')
@@ -172,25 +172,41 @@ def get_program_info (config, endpt_type, projects_endpt, program_name, log_dir,
 
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+def get_programs(config, endpt_type, projects_endpt, log):
+
+    log.info("\t\tin get_programs: %s" % (projects_endpt))
+    project2info = process_projects_for_programs(config, endpt_type, projects_endpt, log)
+    programs = set()
+    for info in project2info.itervalues():
+        programs.add(info['program']['name'])
+    log.info("\t\tfinished get_programs: %s" % (programs))
+    return programs
+
+## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
 def process_programs(config, endpt_type, log_dir, log):
     log.info('begin process_programs()')
+    programs = get_programs(config, endpt_type, log_dir, log)
     future2program = {}
     with futures.ProcessPoolExecutor(max_workers=config['processes']) as executor:
-        for program_name in config['program_names']:
-            log.info('\tstart program %s' % (program_name))
-            projects = get_program_info(config, endpt_type, config['projects_endpt']['%s endpt' % (endpt_type)] + config['projects_endpt']['query'], program_name, log_dir, log)
-            future2program[executor.submit(process_program, config, endpt_type, program_name, projects, log_dir)] = program_name
-    
-    future_keys = future2program.keys()
-    while future_keys:
-        future_done, future_keys = futures.wait(future_keys, return_when = futures.FIRST_COMPLETED)
-        for future in future_done:
-            program_name = future2program.pop(future)
-            if future.exception() is not None:
-                log.exception('\t%s generated an exception--%s:%s' % (program_name, type(future.exception()).__name__, future.exception()))
+        for program_name in programs:
+            if 0 == len(config['program_name_restrict']) or program_name in config['program_name_restrict']:
+                log.info('\tstart program %s' % (program_name))
+                projects = get_program_info(config, endpt_type, config['projects_endpt']['%s endpt' % (endpt_type)] + config['projects_endpt']['query'], program_name, log_dir, log)
+                future2program[executor.submit(process_program, config, endpt_type, program_name, projects, log_dir)] = program_name
             else:
+                log.info('\tnot starting program %s' % (program_name))
+    
+        future_keys = future2program.keys()
+        while future_keys:
+            future_done, future_keys = futures.wait(future_keys, return_when = futures.FIRST_COMPLETED)
+            for future in future_done:
+                program_name = future2program.pop(future)
+                if future.exception() is not None:
+                    log.exception('\t%s generated an exception--%s:%s' % (program_name, type(future.exception()).__name__, future.exception()))
+                else:
 #                 result = future.result()
-                log.info('\tfinished program %s' % (program_name))
+                    log.info('\tfinished program %s' % (program_name))
     log.info('finished process_programs()')
 
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
