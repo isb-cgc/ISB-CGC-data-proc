@@ -27,17 +27,17 @@ class ISBCGC_database_helper(object):
     """
     this class is the base class to manage subclass the CloudSQL  uploads
     """
-    ssl_dir = 'ssl/'
-    ssl = {
-#             'ca': ssl_dir + 'server-ca.pem',
-        'cert': ssl_dir + 'client-cert.pem',
-        'key': ssl_dir + 'client-key.pem' 
-    }
 
     @classmethod
     def getDBConnection(cls, config, log):
         try:
-            db = MySQLdb.connect(host=config['cloudsql']['host'], db=config['cloudsql']['db'], user=config['cloudsql']['user'], passwd=config['cloudsql']['passwd'], ssl = cls.ssl)
+            ssl_dir = config['cloudsql']['ssl_dir']
+            ssl = {
+        #             'ca': ssl_dir + 'server-ca.pem',
+                'cert': ssl_dir + 'client-cert.pem',
+                'key': ssl_dir + 'client-key.pem' 
+            }
+            db = MySQLdb.connect(host=config['cloudsql']['host'], db=config['cloudsql']['db'], user=config['cloudsql']['user'], passwd=config['cloudsql']['passwd'], ssl = ssl)
         except Exception as e:
             # if connection requests are made too close together over a period of time, the connection attempt might fail
             count = 7
@@ -46,7 +46,7 @@ class ISBCGC_database_helper(object):
                 time.sleep(count)
                 log.warning('\n\n!!!!!!sleeping on error to reattempt db connection!!!!!!\n')
                 try:
-                    db = MySQLdb.connect(host=config['cloudsql']['host'], db=config['cloudsql']['db'], user=config['cloudsql']['user'], passwd=config['cloudsql']['passwd'], ssl = cls.ssl)
+                    db = MySQLdb.connect(host=config['cloudsql']['host'], db=config['cloudsql']['db'], user=config['cloudsql']['user'], passwd=config['cloudsql']['passwd'], ssl = ssl)
                     break
                 except Exception as e:
                     if 1 == count:
@@ -80,13 +80,15 @@ class ISBCGC_database_helper(object):
     
     @classmethod
     def setup_tables(cls, config, log):
+        if config['cloudsql']['update_schema']:
+            cls.drop_tables(config, log)
         cls.process_tables(config, cls._create_schema, log)
     
     @classmethod
     def _drop_schema(cls, cursor, config, tables, log):
         drop_schema_template = 'DROP TABLE IF EXISTS %s.%s'
         
-        for table in tables.keys():
+        for table in tables.keys()[::-1]:
             drop_statement = drop_schema_template % (config['cloudsql']['db'], table)
             log.info('\tdropping table %s:\n%s' % (table, drop_statement))
             try:
@@ -260,7 +262,7 @@ class ISBCGC_database_helper(object):
                         if start + index == len(rows):
                             break
                         inserts += [rows[start + index]]
-                    log.info('\t\t\tinsert rows %s to %s' % (start, index))
+                    log.info('\t\t\tinsert rows %s to %s' % (start, start + index))
                     try:
                         cursor.executemany(insert_stmt, inserts)
                     except MySQLdb.OperationalError as oe:
@@ -284,7 +286,7 @@ class ISBCGC_database_helper(object):
                             log.exception('\t\t\tupdate had multiple operation errors 2006 for %s' % (insert_stmt))
                             raise oe
                     except Exception as e:
-                        log.exception('problem with update for %s: %s' % (insert_stmt, e))
+                        log.exception('problem with update for:\n%s\n\t%s' % (insert_stmt, e))
                         raise e
                     inserts = []
                 # successfully looped through so stop trying

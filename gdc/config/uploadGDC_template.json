@@ -1,0 +1,503 @@
+{
+    "mode": "test",
+    "processes": 6,
+    "project_threads": 40,
+    "process_annotation": true,
+    "process_program": true,
+    "process_project": true,
+    "process_case": true,
+    "process_data_type": true,
+    "upload_files": true,
+    "upload_etl_files": false,
+    "upload_open": false,
+    "upload_controlled": false,
+    "update_cloudsql": false,
+    "program_names": [
+        "TCGA",
+        "TARGET"
+    ],
+    "project_name_restrict": [
+        "TCGA-UCS"
+    ],
+    "skip_projects": [
+        "cntl",
+        "fppp"
+    ],
+    "data_type_restrict": [
+        "Gene Expression Quantification"
+    ],
+    "data_categories": [
+        "Simple Nucleotide Variation",
+        "Transcriptome Profiling",
+        "Raw Sequencing Data",
+        "Copy Number Variation",
+        "Biospecimen",
+        "Clinical"
+    ],
+    "category2type": {
+        "Simple Nucleotide Variation": ["Annotated Somatic Mutation", "Raw Simple Somatic Mutation"],
+        "Transcriptome Profiling": ["miRNA Expression Quantification", "Isoform Expression Quantification", "Gene Expression Quantification"],
+        "Raw Sequencing Data": ["Aligned Reads"],
+        "Copy Number Variation": ["Copy Number Segment", "Masked Copy Number Segment"],
+        "Biospecimen": ["Biospecimen"],
+        "Clinical": ["Clinical"]
+    },
+    "metadata_modules": [
+        "store_metadata_cloudsql"
+    ],
+    "field_report": {
+        "endpoints": [
+            "annotations",
+            "projects",
+            "cases",
+            "files"
+        ],
+        "endpoint_mapping_templates": [
+            "https://gdc-api.nci.nih.gov/%s/_mapping",
+            "https://gdc-api.nci.nih.gov/legacy/%s/_mapping"
+        ],
+        "url_templates": [
+            "https://gdc-api.nci.nih.gov/v0/%s?facets=%s&size=0&pretty=true", 
+            "https://gdc-api.nci.nih.gov/v0/legacy/%s?facets=%s&size=0&pretty=true"
+        ],
+        "field_file": "Z:/tcga/cgc/dataproc/gdc/doc/2016_06_22_gdc_endpoint_fields.txt",
+        "output_path": "Z:/tcga/cgc/dataproc/gdc/doc/",
+        "output_file": "gdc_endpoint_field_values.txt"
+    },
+    "map_requests_timeout": 8,
+    "endpt_types": [
+        "regular"
+    ],
+    "endpt_types_all": [
+        "regular",
+        "legacy"
+    ],
+    "annotations_endpt": {
+        "regular endpt": "https://gdc-api.nci.nih.gov/annotations",
+        "legacy endpt": "https://gdc-api.nci.nih.gov/legacy/annotations",
+        "query": "?expand=project,project.program"
+    },
+    "projects_endpt": {
+        "regular endpt": "https://gdc-api.nci.nih.gov/projects",
+        "legacy endpt": "https://gdc-api.nci.nih.gov/legacy/projects",
+        "query": "?expand=program,summary,summary.experimental_strategies,summary.data_categories&pretty=true"
+    },
+    "cases_endpt": {
+        "regular endpt": "https://gdc-api.nci.nih.gov/cases",
+        "legacy endpt": "https://gdc-api.nci.nih.gov/legacy/cases",
+        "query": "?expand=annotations,project,project.program,samples,samples.annotations,samples.portions,samples.portions.center,samples.portions.analytes,samples.portions.analytes.aliquots,samples.portions.analytes.aliquots.center,samples.portions.analytes.aliquots.annotation&pretty=true"
+    },
+    "files_endpt": {
+        "regular endpt": "https://gdc-api.nci.nih.gov/files",
+        "legacy endpt": "https://gdc-api.nci.nih.gov/legacy/files",
+        "query": "?expand=archive,annotations,cases,cases.project,cases.project.program,cases.annotations,cases.samples,cases.samples.annotations,cases.samples.portions,cases.samples.portions.annotations,cases.samples.portions.analytes.annotations,cases.samples.portions.analytes.aliquots,cases.samples.portions.analytes.aliquots.annotations,center&pretty=true"
+    },
+    "facets_query": "?facets=%s&size=%d&pretty=true",
+    "database_module": "gdc.model.isbcgc_cloudsql_gdc_model",
+    "cloudsql": {
+        "host": "173.194.225.46",
+        "db": "test",
+        "user": "<user>",
+        "passwd": "<password>",
+        "update_schema": true,
+        "ssl_dir": "../../ssl/"
+    },
+    "log_dir_tag": "run",
+    "process_annotations": {
+        "fetch_count": 1000,
+        "filter_result": {
+            "value": {
+                "status": "status",
+                "category": "annotationCategoryName",
+                "entity_id": "itemTypeId",
+                "classification": "annotationClassification",
+                "updated_datetime": "dateEdited",
+                "created_datetime": "dateCreated",
+                "annotation_id": "annotationId",
+                "notes": "annotationNoteText",
+                "entity_type": "itemTypeName",
+                "entity_submitter_id": "itemBarcode",
+                "case_submitter_id": "ParticipantBarcode"
+            },
+            "map": {
+                "project": {
+                    "project": "project",
+                    "value": {
+                        "project_id": "project_id"
+                    },
+                    "map": {
+                        "program": {
+                            "program": "program",
+                            "value": {
+                                "name": "program_name"
+                            }
+                        }
+                    }
+                    
+                }
+            }
+        },
+        "annotation_table_mapping": {
+            "value": {
+                "status": "status",
+                "annotationCategoryName": "annotationCategoryName",
+                "itemTypeId": "itemTypeId",
+                "annotationClassification": "annotationClassification",
+                "dateEdited": "substr,0,19,dateEdited",
+                "dateCreated": "substr,0,19,dateCreated",
+                "annotationId": "annotationId",
+                "annotationNoteText": "annotationNoteText",
+                "itemTypeName": "itemTypeName",
+                "itemBarcode": "itemBarcode",
+                "ParticipantBarcode": "ParticipantBarcode"
+            },
+            "map": {
+                "project": {
+                    "project": "project",
+                    "value": {
+                        "project_id": "Project"
+                    },
+                    "map": {
+                        "program": {
+                            "program": "program",
+                            "value": {
+                                "program_name": "Program"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "process_projects": {
+        "fetch_count": 1000,
+        "filter_result": {
+            "value": {
+                "project_id": "project_id",
+                "name": "name",
+                "released": "released",
+                "state": "state",
+                "primary_site": "primary_site",
+                "dbgap_accession_number": "dbgap_accession_number",
+                "disease_type": "disease_type"
+            },
+            "map": {
+                "summary": {
+                    "summary": "summary",
+                    "value": {
+                        "case_count": "case_count",
+                        "file_count": "file_count",
+                        "file_size": "file_size"
+                    }
+                },
+                "program": {
+                    "program": "program",
+                    "value": {
+                        "dbgap_accession_number": "dbgap_accession_number",
+                        "name": "name",
+                        "program_id": "program_id"
+                    }
+                }
+            }
+        },
+        "project_table_mapping": {
+            "value": {
+                "project_id": "Project",
+                "name": "ProjectName",
+                "released": "released",
+                "state": "state",
+                "primary_site": "PrimarySite",
+                "dbgap_accession_number": "dbGaP_AccessionNumber",
+                "disease_type": "DiseaseType"
+            },
+            "map": {
+                "summary": {
+                    "summary": "summary",
+                    "value": {
+                        "case_count": "CountCases",
+                        "file_count": "CountFiles",
+                        "file_size": "SumFileSize"
+                    }
+                },
+                "program": {
+                    "program": "program",
+                    "value": {
+                        "dbgap_accession_number": "Program_dbGaP_AccessionNumber",
+                        "name": "Program",
+                        "program_id": "ProgramID"
+                    }
+                }
+            }
+        }
+    },
+    "process_cases": {
+        "fetch_count": 20,
+        "filter_result": {
+            "value": {
+                "submitter_id": "tcga_barcode", 
+                "case_id": "case_id"
+            },
+            "map": {
+                "project": {
+                    "project": "project",
+                    "value": {
+                        "project_id": "project_id"
+                    },
+                    "map": {
+                        "program": {
+                            "program": "program",
+                            "value": {
+                                "name": "program_name"
+                            }
+                        }
+                    }
+                }
+            },
+            "map_list": {
+                "samples": {
+                    "samples": "samples",
+                    "value": {
+                        "submitter_id": "tcga_barcode", 
+                        "sample_id": "sample_id", 
+                        "is_ffpe": "is_ffpe", 
+                        "pathology_report_uuid": "pathology_report_uuid"
+                    }
+                }
+            }
+        },
+        "clinical_table_mapping": {
+            "value": {
+                "tcga_barcode": "ParticipantBarcode", 
+                "case_id": "ParticipantUUID"
+            },
+            "map": {
+                "project": {
+                    "project": "project",
+                    "value": {
+                        "project_id": "Project"
+                    },
+                    "map": {
+                        "program": {
+                            "program": "program",
+                            "value": {
+                                "program_name": "Program"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "sample_table_mapping": {
+            "value": {
+                "tcga_barcode": "ParticipantBarcode"
+            },
+            "map": {
+                "project": {
+                    "project": "project",
+                    "value": {
+                        "project_id": "Project"
+                    },
+                    "map": {
+                        "program": {
+                            "program": "program",
+                            "value": {
+                                "program_name": "Program"
+                            }
+                        }
+                    }
+                }
+            },
+            "map_list": {
+                "samples": {
+                    "samples": "samples",
+                    "value": {
+                        "tcga_barcode": "SampleBarcode", 
+                        "sample_id": "SampleUUID", 
+                        "pathology_report_uuid": "PathologyReportUUID"
+                    }
+                }
+            }
+        }
+    },
+    "process_files": {
+        "fetch_count": 10,
+        "filter_result": {
+            "value": {
+                "acl": "acl",
+                "file_id": "file_id",
+                "data_type": "data_type", 
+                "file_name": "file_name", 
+                "md5sum": "md5sum", 
+                "data_format": "data_format", 
+                "platform": "platform",
+                "access": "access", 
+                "state": "state", 
+                "data_category": "data_category", 
+                "file_size": "filesize", 
+                "type": "type", 
+                "file_state": "file_state", 
+                "experimental_strategy": "experimental_strategy"
+            },
+            "map_list": {
+                "annotations": {
+                    "annotations": "annotations",
+                    "value": {
+                        "status": "status",
+                        "category": "annotationCategoryName",
+                        "entity_id": "itemTypeId",
+                        "classification": "annotationClassification",
+                        "updated_datetime": "dateEdited",
+                        "created_datetime": "dateCreated",
+                        "annotation_id": "annotationId",
+                        "notes": "annotationNoteText",
+                        "entity_type": "itemTypeName",
+                        "entity_submitter_id": "itemBarcode"
+                    }
+                },
+                "cases": {
+                    "cases": "cases",
+                    "value": {
+                        "submitter_id": "tcga_barcode", 
+                        "case_id": "case_id"
+                    },
+                    "map": {
+                        "project": {
+                            "project": "project",
+                            "value": {
+                                "project_id": "project_id"
+                            },
+                            "map": {
+                                "program": {
+                                    "program": "program",
+                                    "value": {
+                                        "name": "program_name"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "map_list": {
+                        "samples": {
+                            "samples": "samples",
+                            "value": {
+                                "submitter_id": "tcga_barcode"
+                            },
+                            "map_list": {
+                                "portions": {
+                                    "portions": "portions",
+                                    "map_list": {
+                                        "analytes": {
+                                            "analytes": "analytes",
+                                            "map_list": {
+                                                "aliquots": {
+                                                    "aliquots": "aliquots",
+                                                    "value": {
+                                                        "submitter_id": "tcga_barcode", 
+                                                        "aliquot_id": "aliquot_id" 
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "metadata_files": {
+                    "metadata_files": "metadata_files",
+                    "value": {
+                        "file_name": "file_name" 
+                    }
+                }
+            }
+        },
+        "data_table_mapping": {
+            "value": {
+                "data_type": "DataType", 
+                "file_name": "FileName", 
+                "md5sum": "md5sum", 
+                "data_format": "DataFormat", 
+                "access": "access", 
+                "state": "state", 
+                "data_category": "DataCategory",
+                "platform": "Platform", 
+                "file_id": "FileID", 
+                "file_size": "filesize", 
+                "file_state": "file_state", 
+                "experimental_strategy": "ExperimentalStrategy"
+            },
+            "map_list": {
+                "annotations": {
+                    "annotations": "annotations",
+                    "value": {
+                        "status": "annotationStatus",
+                        "annotationCategoryName": "annotationCategoryName",
+                        "itemTypeId": "annotationTypeId",
+                        "annotationClassification": "annotationClassification",
+                        "annotationId": "annotationId",
+                        "annotationNoteText": "annotationNoteText",
+                        "itemTypeName": "annotationTypeName",
+                        "itemBarcode": "annotationBarcode"
+                    }
+                },
+                "cases": {
+                    "cases": "cases",
+                    "value": {
+                        "tcga_barcode": "ParticipantBarcode"
+                    },
+                    "map": {
+                        "project": {
+                            "project": "project",
+                            "value": {
+                                "project_id": "Project"
+                            },
+                            "map": {
+                                "program": {
+                                    "program": "program",
+                                    "value": {
+                                        "program_name": "Program"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "map_list": {
+                        "samples": {
+                            "samples": "samples",
+                            "value": {
+                                "tcga_barcode": "SampleBarcode"
+                            },
+                            "map_list": {
+                                "portions": {
+                                    "portions": "portions",
+                                    "map_list": {
+                                        "analytes": {
+                                            "analytes": "analytes",
+                                            "map_list": {
+                                                "aliquots": {
+                                                    "aliquots": "aliquots",
+                                                    "value": {
+                                                        "tcga_barcode": "AliquotBarcode", 
+                                                        "aliquot_id": "AliquotUUID" 
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "metadata_files": {
+                    "metadata_files": "metadata_files",
+                    "value": {
+                        "file_name": "MetadataFilename" 
+                    }
+                }
+            }
+        }
+    }
+}
+

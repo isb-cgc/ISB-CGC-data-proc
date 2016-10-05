@@ -21,7 +21,9 @@ limitations under the License.
 '''
 # import boto
 import base64
+from copy import deepcopy
 from cStringIO import StringIO
+import importlib
 import json
 import logging
 from multiprocessing import Lock
@@ -292,7 +294,7 @@ def merge_metadata(master_metadata, current_metadata, platform, log):
     log.info('\t\tmerge_metadata(%s): found %s matching aliquots and %s additional aliquots.  total of %s files' % (platform, count_exist, count_new, len(total_files)))
     
 def import_module(metadata_module):
-    mod = __import__(metadata_module)
+    mod = importlib.import_module(metadata_module)
     return mod
 
 def getTumorTypes(config, log):
@@ -308,3 +310,105 @@ def getTumorTypes(config, log):
     else:
         log.info('\tprocessing %s tumor types' % (', '.join(process)))
     return processAll, process
+
+def print_list_synopsis(fulllist, label, log, count = 2):
+    if (count * 2) + 1 > len(fulllist):
+        log.info("%s\n%s" % (label, json.dumps (fulllist, indent=4)))
+    else:
+        log.info("%s: size %d\n%s\n\t...\n%s\n\n" % (label, len(fulllist), json.dumps (fulllist[:count], indent=4), json.dumps (fulllist[-count:], indent=4)))
+
+def __recurse_filter_map(retmap, origmap, thefilter):
+    if 'value' in thefilter:
+        for value in thefilter['value']:
+            if value in origmap:
+                newlabel = thefilter['value'][value]
+                retmap[newlabel] = origmap[value]
+    
+    # TODO: map might have a list might have nested fields so might return multiple rows
+    if 'list' in thefilter:
+        for value in thefilter['list']:
+            if value in origmap:
+                newlabel = thefilter['list'][value]
+                retmap[newlabel] = deepcopy(origmap[value])
+    
+    if 'map' in thefilter:
+        for value in thefilter['map']:
+            if value in origmap:
+                newlabel = thefilter['map'][value][value]
+                retmap[newlabel] = __recurse_filter_map({}, origmap[value], thefilter['map'][value])
+    
+    if 'map_list' in thefilter:
+        for value in thefilter['map_list']:
+            if value in origmap:
+                newfilter = thefilter['map_list'][value]
+                newlabel = newfilter[value]
+                retmap[newlabel] = []
+                for nextmap in origmap[value]:
+                    retmap[newlabel] += [__recurse_filter_map({}, nextmap, newfilter)]
+
+    return retmap
+
+def filter_map(origmap, thefilter):
+    return __recurse_filter_map({}, origmap, thefilter)
+
+def __recurse_flatten_map(origmap, thefilter):
+    initmap = {}
+    if 'value' in thefilter:
+        for value in thefilter['value']:
+            if value in origmap:
+                fields = thefilter['value'][value].split(',')
+                if 1 == len(fields):
+                    newlabel = thefilter['value'][value]
+                    initmap[newlabel] = origmap[value]
+                elif 'substr' == fields[0]:
+                    substr = origmap[value][int(fields[1]):int(fields[2])]
+                    initmap[fields[3]] = substr
+                else:
+                    raise ValueError('unknown operation specification: %s %s' % (origmap[value], thefilter['value'][value]))
+    
+    # TODO: map might have a list might have nested fields so might return multiple rows
+    maplists = []
+    if 'map' in thefilter:
+        for value in thefilter['map']:
+            if value in origmap:
+                # flatten the key/values from the nested map with the top level key/values
+                initmap.update(__recurse_flatten_map(origmap[value], thefilter['map'][value])[0])
+    
+    # for every value on the list, a new row needs to be created in the returned list
+    listmaps = []
+    if 'list' in thefilter:
+        for value in thefilter['list']:
+            newlabel += [thefilter['list'][value]]
+            for value in origmap[value]:
+                newmap = dict(initmap)
+                newmap.update([(newlabel, value)])
+                listmaps += [newmap]
+        if 0 == len(listmaps):
+            listmaps += [initmap]
+    else:
+        listmaps += [initmap]
+        
+    # for every map on the list, a new row needs to be created in the returned list
+    if 'map_list' in thefilter:
+        retlist = []
+        for value in thefilter['map_list']:
+            newfilter = thefilter['map_list'][value]
+            if value in origmap:
+                for nextmap in origmap[value]:
+                    newmap = dict(initmap)
+                    newmap.update(__recurse_flatten_map(nextmap, newfilter)[0])
+                    retlist += [newmap]
+        if 0 == len(retlist):
+            retlist = listmaps
+    else:
+        retlist = listmaps
+    return retlist
+
+def flatten_map(origmap, thefilter):
+    return __recurse_flatten_map(origmap, thefilter)
+
+def close_log(log):
+    handlers = log.handlers[:]
+    for handler in handlers:
+        handler.close()
+        log.removeHandler(handler)

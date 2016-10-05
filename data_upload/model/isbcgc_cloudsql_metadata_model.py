@@ -18,8 +18,9 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 '''
-import isbcgc_cloudsql_model
 from collections import OrderedDict
+
+import isbcgc_cloudsql_model
 
 class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
     """
