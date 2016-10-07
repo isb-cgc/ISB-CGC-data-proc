@@ -58,8 +58,7 @@ def request_try(config, url, file_ids, start, end, log):
             response = None
             if retries < 3:
                 retries += 1
-                time.sleep(1 * retries)
-                log.warn('\t\trequest try %d after error %s' % (retries, e))
+                log.warn('\t\trequest try %d on error %s for fetch of %s' % (retries, e, end - start))
                 continue
 #             if 100 < start - end:
 #                 log.error('range too small to continue--%s:%s' % (end, start))
@@ -82,15 +81,34 @@ def request(config, url, file_ids, log):
         
     log.info('\tfinished fetch of gdc files')
 
-def upload_files(config, file_ids, log):
-    try:
-        log.info('starting upload of gdc files')
-        url = 'https://gdc-api.nci.nih.gov/data'
-        start = time.clock()
-        request(config, url, file_ids, log)
-        log.info('finished upload of gdc files in %s minutes' % ((time.clock() - start) / 60))
-    except:
-        raise
+def curl(url, file_ids, log):
+    log.info('\tstarting curl fetch of gdc files')
+    params = {'ids':file_ids}
+    c = None
+    with open('gdc_curl_download.tar.gz', 'wb') as f:
+        try:
+            c = Curl()
+            c.setopt(c.URL, url)
+            c.setopt(c.WRITEDATA, f)
+            c.setopt(c.HTTPHEADER, ["Content-Type: application/json"])
+            c.setopt(pycurl.CUSTOMREQUEST, "POST")
+            c.setopt(pycurl.POSTFIELDS, json.dumps(params))
+            # TODO: set up using a local certificate
+            c.setopt(pycurl.SSL_VERIFYPEER, 0)
+            c.setopt(pycurl.SSL_VERIFYHOST, 0)
+            c.perform()
+        except:
+            log.exception('problem with curl')
+            raise
+        finally:
+            if None != c:
+                if int(c.getinfo(pycurl.RESPONSE_CODE)) != 200:
+                    f.close()
+                    with open('gdc_curl_download.tar.gz') as e:
+                        err = e.read()
+                    log.error('\tbad status on curl call(%s):\n%s' % (c.getinfo(pycurl.RESPONSE_CODE), err))
+                c.close()
+            
 
 def get_file_ids(config):
     file_ids = []
@@ -99,6 +117,25 @@ def get_file_ids(config):
             file_ids += [line.strip()]
     
     return file_ids
+
+def get_status(log):
+    log.info('\tgetting gdc status')
+    status_endpt = 'https://gdc-api.nci.nih.gov/status'
+    response = requests.get(status_endpt)
+    log.info('\n' + json.dumps(response.json(), indent=2))
+
+def main(config, log):
+    try:
+        log.info('starting upload of gdc files')
+        get_status(log)
+        file_ids = get_file_ids(config)
+        url = 'https://gdc-api.nci.nih.gov/data'
+#         curl(url, file_ids, log)
+        start = time.clock()
+        request(config, url, file_ids, log)
+        log.info('finished upload of gdc files in %s minutes' % ((time.clock() - start) / 60))
+    except:
+        raise
 
 if __name__ == '__main__':
     config = {
@@ -110,10 +147,10 @@ if __name__ == '__main__':
     log_dir = str(date.today()).replace('-', '_') + '_gdc_upload_run/'
     log_name = create_log(log_dir, 'gdc_upload')
     log = logging.getLogger(log_name)
-    file_ids = get_file_ids(config)
     for lines_per in (2000, 1000, 500, 100, 50, 10):
         config['lines_per'] = lines_per
         try:
-            upload_files(config, file_ids, log)
+            main(config, log)
         except:
             log.exception('failed with lines per @ %d' % (lines_per))
+

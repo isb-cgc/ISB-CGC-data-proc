@@ -135,7 +135,7 @@ def create_field_report(configfilename):
                             raise
                         count += 1
         
-                log.info('start field value comparison between regular and legacy endpoints')
+                log.info('start field value comparison between current and legacy endpoints')
                 output.write('\nField value comparison report:\n')
                 regfield2values = None
                 legfield2values = None
@@ -174,11 +174,11 @@ def create_field_report(configfilename):
                                 same_counts += [field]
                         elif 'buckets' in legvalues:
                             # this (not surprisingly) doesn't appear to happen
-                            output.write('\t\t%s is a count field for the regular endpoint and a buckets field for legacy\n' % (field))
+                            output.write('\t\t%s is a count field for the current endpoint and a buckets field for legacy\n' % (field))
                     if 'buckets' in regvalues:
                         if 'count' in legvalues:
                             # this (not surprisingly) doesn't appear to happen
-                            output.write('\t\t%s is a buckets field for the regular endpoint and a count field for legacy\n' % (field))
+                            output.write('\t\t%s is a buckets field for the current endpoint and a count field for legacy\n' % (field))
                         elif 'buckets' in legvalues:
                             if 'no values' == regvalues['buckets'] and 'no values' != legvalues['buckets']:
                                 reg_nobucketvalues += [field]
@@ -191,7 +191,7 @@ def create_field_report(configfilename):
                             elif regvalues['buckets'] not in ('no values', 'many values') and legvalues['buckets'] not in ('no values', 'many values'):
                                 equiv = True
                                 if 0 < len(regvalues['buckets'] - legvalues['buckets']):
-                                    output.write('\t\t\tthe regular endpoint has these additional values:\n\t\t\t\t%s\n' % 
+                                    output.write('\t\t\tthe current endpoint has these additional values:\n\t\t\t\t%s\n' % 
                                         ('\n\t\t\t\t'.join(str(value) for value in (regvalues['buckets'] - legvalues['buckets']))))
                                     equiv = False
                                 if 0 < len(legvalues['buckets'] - regvalues['buckets']):
@@ -201,7 +201,7 @@ def create_field_report(configfilename):
                                 if equiv:
                                     same_buckets += [field]
                                 else:
-                                    output.write('\t\t\tthe regular and legacy endpoint share these values:\n\t\t\t\t%s\n' % 
+                                    output.write('\t\t\tthe current and legacy endpoint share these values:\n\t\t\t\t%s\n' % 
                                         ('\n\t\t\t\t'.join(str(value) for value in (legvalues['buckets'] - regvalues['buckets']))))
                             else:
                                 if 'no values' == regvalues['buckets']:
@@ -216,7 +216,7 @@ def create_field_report(configfilename):
                 if ( 0 < len(reg_nocounts)):
                     output.write('\tregular endpoints that have no count values but the legacy does:\n\t\t%s\n' % ('\n\t\t'.join(reg_nocounts)))
                 if ( 0 < len(leg_nocounts)):
-                    output.write('\tlegacy endpoints that have no values but the regular does:\n\t\t%s\n' % ('\n\t\t'.join(leg_nocounts)))
+                    output.write('\tlegacy endpoints that have no values but the current does:\n\t\t%s\n' % ('\n\t\t'.join(leg_nocounts)))
         
                 if ( 0 < len(same_buckets)):
                     output.write('\teqivalent bucket fields for both endpoints:\n\t\t%s\n' % ('\n\t\t'.join(same_buckets)))
@@ -227,19 +227,19 @@ def create_field_report(configfilename):
                 if ( 0 < len(reg_nobucketvalues)):
                     output.write('\tregular endpoints that have no bucket values but the legacy does:\n\t\t%s\n' % ('\n\t\t'.join(reg_nobucketvalues)))
                 if ( 0 < len(leg_nobucketvalues)):
-                    output.write('\tlegacy endpoints that have no bucket but the regular does:\n\t\t%s\n' % ('\n\t\t'.join(leg_nobucketvalues)))
+                    output.write('\tlegacy endpoints that have no bucket but the current does:\n\t\t%s\n' % ('\n\t\t'.join(leg_nobucketvalues)))
                 if ( 0 < len(reg_nomanybucketvalues)):
                     output.write('\tregular endpoints that don\'t have many bucket values but the legacy does:\n\t\t%s\n' % ('\n\t\t'.join(reg_nomanybucketvalues)))
                 if ( 0 < len(leg_nomanybucketvalues)):
-                    output.write('\tlegacy endpoints that don\'t have many bucket values but the regular does:\n\t\t%s\n' % ('\n\t\t'.join(leg_nomanybucketvalues)))
+                    output.write('\tlegacy endpoints that don\'t have many bucket values but the current does:\n\t\t%s\n' % ('\n\t\t'.join(leg_nomanybucketvalues)))
         
-                output.write('\tfields only in regular endpoint:\n\t\t%s\n' % '\n\t\t'.join(onlyreg))
+                output.write('\tfields only in current endpoint:\n\t\t%s\n' % '\n\t\t'.join(onlyreg))
                 onlyleg = []
                 for field in legfield2values:
                     if field not in regfield2values:
                         onlyleg += [field]
                 output.write('\tfields only in legacy endpoint:\n\t\t%s\n' % '\n\t\t'.join(onlyleg))
-                log.info('finished field value comparison between regular and legacy endpoints')
+                log.info('finished field value comparison between current and legacy endpoints')
 
         log.info('finished create_field_report()')
     except:
