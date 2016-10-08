@@ -25,7 +25,7 @@ from pycurl import Curl
 import requests
 import time
 
-from util import create_log
+from util import create_log, delete_dir_contents
 
 def write_response(config, response, start, end, log):
     log.info('\t\tstarting write of gdc files')
@@ -36,12 +36,12 @@ def write_response(config, response, start, end, log):
         chunk_size=2048
         for chunk in response.iter_content(chunk_size):
             if chunk: # filter out keep-alive new chunks
-                if 0 == count % 1000:
-                    log.info('\t\t\twritten %s kb' % (accum / 1024))
+                if 0 == count % 8000:
+                    log.info('\t\t\twritten %skb' % (accum / 1024))
                 count += 1
                 accum += chunk_size
                 f.write(chunk)
-    log.info('\t\tfinished write of gdc files to %s.  wrote <= %s kb' % (file_name, accum / 1024))
+    log.info('\t\tfinished write of gdc files to %s.  wrote <= %skb' % (file_name, accum / 1024))
 
 def request_try(config, url, file_ids, start, end, log):
     headers = {
@@ -63,6 +63,8 @@ def request_try(config, url, file_ids, start, end, log):
 #             if 100 < start - end:
 #                 log.error('range too small to continue--%s:%s' % (end, start))
             # divide the interval into 2 segments
+            else:
+                raise RuntimeError('request failed too many times')
     
     if response:
         write_response(config, response, start, end, log)
@@ -79,6 +81,7 @@ def request(config, url, file_ids, log):
         start = end
         end += lines_per
         
+    delete_dir_contents(config['output_dir'])
     log.info('\tfinished fetch of gdc files')
 
 def curl(url, file_ids, log):
@@ -131,23 +134,23 @@ def main(config, log):
         file_ids = get_file_ids(config)
         url = 'https://gdc-api.nci.nih.gov/data'
 #         curl(url, file_ids, log)
-        start = time.clock()
+        begin = time.clock()
         request(config, url, file_ids, log)
-        log.info('finished upload of gdc files in %s minutes' % ((time.clock() - start) / 60))
+        log.info('finished upload of gdc files in %s minutes for %s lines per' % ((time.clock() - begin) / 60), config['lines_per'])
     except:
         raise
 
 if __name__ == '__main__':
     config = {
         'output_dir': './',
-        'output_file': 'gdc_download_%s_%s.tar.gz',
-        'input_id_file': 'gdc/doc/gdc_manifest.2016-09-09_head_5000.tsv',
+        'output_file': 'gdc_download_eq_%s_%s.tar.gz',
+        'input_id_file': 'gdc/doc/2016_10_05_expression_quantification_file_ids_5000.txt',
         'lines_per': 0
     }
-    log_dir = str(date.today()).replace('-', '_') + '_gdc_upload_run/'
+    log_dir = str(date.today()).replace('-', '_') + '_ge_gdc_upload_run/'
     log_name = create_log(log_dir, 'gdc_upload')
     log = logging.getLogger(log_name)
-    for lines_per in (2000, 1000, 500, 100, 50, 10):
+    for lines_per in [500, 100, 50]:
         config['lines_per'] = lines_per
         try:
             main(config, log)
