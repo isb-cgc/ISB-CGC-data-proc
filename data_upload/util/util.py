@@ -407,6 +407,16 @@ def __recurse_flatten_map(origmap, thefilter):
 def flatten_map(origmap, thefilter):
     return __recurse_flatten_map(origmap, thefilter)
 
+def delete_dir_contents(folder, delete_dir = False):
+    files = os.listdir(folder)
+    for curfile in files:
+        if os.path.isfile(curfile):
+            os.remove(curfile)
+        else:
+            delete_dir_contents(curfile, True)
+    if delete_dir:
+        os.rmdir(folder)
+
 def close_log(log):
     handlers = log.handlers[:]
     for handler in handlers:
