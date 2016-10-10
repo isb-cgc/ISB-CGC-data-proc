@@ -407,15 +407,27 @@ def __recurse_flatten_map(origmap, thefilter):
 def flatten_map(origmap, thefilter):
     return __recurse_flatten_map(origmap, thefilter)
 
+def delete_objects(config, bucket, path, log):
+    global gcs_wrapper
+    if None == gcs_wrapper:
+        gcs_wrapper = import_module(config['gcs_wrapper'])
+    contents = gcs_wrapper.get_bucket_contents(bucket, path)
+    gcs_wrapper.delete_objects(bucket, contents, log)
+    
 def delete_dir_contents(folder, delete_dir = False):
     files = os.listdir(folder)
+    if '/' != folder[-1]:
+        folder += '/'
     for curfile in files:
-        if os.path.isfile(curfile):
-            os.remove(curfile)
+        path = folder + curfile
+        if os.path.isfile(path):
+            os.remove(path)
+        elif os.path.isdir(path):
+            delete_dir_contents(path, True)
         else:
-            delete_dir_contents(curfile, True)
+            raise RuntimeError('unexpected problem removing %s from %s' % (curfile, folder))
     if delete_dir:
-        os.rmdir(folder)
+        os.rmdir(path)
 
 def close_log(log):
     handlers = log.handlers[:]
