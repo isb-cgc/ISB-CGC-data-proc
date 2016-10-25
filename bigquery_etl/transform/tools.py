@@ -27,11 +27,14 @@ log = logging.getLogger(__name__)
 #--------------------------------------
 # Clean up the dataframe
 #--------------------------------------
-def cleanup_dataframe(df):
+def cleanup_dataframe(df, caller_log = None):
     """Cleans the dataframe
         - strips new lines, double, single quotes; None -> nan, etc
         - formats the column names for Bigquery input
     """
+    if caller_log:
+        log = caller_log
+        
     log.info("Cleaning up the dataframe")
 
     if df.empty:
@@ -53,7 +56,7 @@ def cleanup_dataframe(df):
     log.info('\tconvert to utf-8, strip spaces (including ^M) and quotes')
     df = df.applymap(lambda x: convert_encoding(x).strip().strip("'").strip('"'))
 
-    log.info('replace back the np.nan')
+    log.info('\treplace back the np.nan')
     df = df.replace(r'_mv_', np.nan)
 
     #------------

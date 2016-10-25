@@ -17,10 +17,14 @@ limitations under the License.
 
 @author: michael
 '''
+from datetime import date
+import json
 import logging
+from sys import argv
 
 from gdc.util.gdc_util import get_map_rows, save2db
 from util import close_log, create_log
+from upload_files import upload_files
 
 def get_filter(config, data_type, project_id):
     data_types_legacy2use_project = config['data_types_legacy2use_project']
@@ -71,6 +75,7 @@ def process_data_type(config, endpt_type, project_id, data_type, log_dir, log_na
         log.info('begin process_data_type %s for %s' % (data_type, project_id))
         file2info = get_map_rows(config, endpt_type, 'file', get_filter(config, data_type, project_id), log)
         save2db(config, endpt_type, 'metadata_gdc_data', file2info, config['process_files']['data_table_mapping'], log)
+        upload_files(config, file2info, project_id, data_type, log)
         log.info('finished process_data_type %s for %s' % (data_type, project_id))
 
         return file2info
@@ -79,3 +84,31 @@ def process_data_type(config, endpt_type, project_id, data_type, log_dir, log_na
         raise
     finally:
         close_log(log)
+
+if __name__ == '__main__':
+    with open(argv[1]) as configFile:
+        config = json.load(configFile)
+    
+    config.update(
+        {
+            'output_file': 'gdc_download_%s_%s.tar.gz',
+            'lines_per': 0,
+            'upload_folder': 'gdc/test_gdc_upload/',
+            'upload_run_folder': 'gdc/test_gdc_upload_run/',
+            'data_types_legacy2use_project': {}
+        }
+    )
+    log_dir = str(date.today()).replace('-', '_') + '_gdc_upload_run/'
+    log_name = create_log(log_dir, 'gdc_upload')
+    log = logging.getLogger(log_name)
+    from util import import_module
+    gcs_wrapper = import_module(config['gcs_wrapper'])
+    gcs_wrapper.open_connection(config, log)
+    data_type = 'Gene Expression Quantification'
+#     data_type = 'Aligned Reads'
+    for lines_per in [50]:
+        config['lines_per'] = lines_per
+        try:
+            process_data_type(config, 'current', 'TCGA-UCS', data_type, log_dir, 'TCGA-UCS_' + data_type.replace(' ', ''))
+        except:
+            log.exception('process data type failed')

@@ -238,6 +238,21 @@ class ISBCGC_database_helper(object):
         field_names = cls.field_names(table)
         cls.column_insert(config, rows, table, field_names, log)
 
+    @classmethod
+    def processOEError(self, cls, config, cursor, db, msg, log):
+        log.warning('\t\t\t%s' % (msg))
+        time.sleep(1) # rollback any previous inserts
+        cursor.execute("ROLLBACK")
+    # and setup to retry
+        retrying = True
+        try:
+            db.close() # make sure connection is closed
+        except:
+            one = 1
+        db = cls.getDBConnection(config, log)
+        cursor = db.cursor()
+        cursor.execute("START TRANSACTION")
+        return cursor, db
 
     @classmethod
     def column_insert(cls, config, rows, table, field_names, log):
@@ -266,25 +281,18 @@ class ISBCGC_database_helper(object):
                     try:
                         cursor.executemany(insert_stmt, inserts)
                     except MySQLdb.OperationalError as oe:
-                        if oe.errno == 2006 and 2 > tries:
-                            log.warning('\t\t\tupdate had operation error 2006, lost connection for %s, sleeping' % (insert_stmt))
-                            time.sleep(1)
-                            # rollback any previous inserts
-                            cursor.execute("ROLLBACK")
-
-                            # and setup to retry
-                            retrying = True
-                            try:
-                                # make sure connection is closed
-                                db.close()
-                            except:
-                                pass
-                            db = cls.getDBConnection(config, log)
-                            cursor = db.cursor()
-                            cursor.execute("START TRANSACTION")
-                        else:
-                            log.exception('\t\t\tupdate had multiple operation errors 2006 for %s' % (insert_stmt))
-                            raise oe
+                        try:
+                            if oe.errno == 2006 and 3 > tries:
+                                cursor, db = cls.processOEError(config, cursor, db, 'update had operation error 2006, lost connection for %s, sleeping' % (insert_stmt), log)
+                            else:
+                                log.exception('\t\t\tupdate had multiple operation errors 2006 for %s' % (insert_stmt))
+                                raise oe
+                        except AttributeError:
+                            if 3 > tries:
+                                cursor, db = cls.processOEError(config, cursor, db, 'update had operation error, lost connection for %s, sleeping' % (insert_stmt), log)
+                            else:
+                                log.exception('\t\t\tupdate had multiple operation errors for %s' % (insert_stmt))
+                                raise oe
                     except Exception as e:
                         log.exception('problem with update for:\n%s\n\t%s' % (insert_stmt, e))
                         raise e
