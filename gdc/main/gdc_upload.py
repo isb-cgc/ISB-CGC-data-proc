@@ -27,8 +27,7 @@ import json
 import logging
 from multiprocessing import Semaphore
 import platform
-import win32file
-
+import sys
 
 from gdc.util.gdc_util import request_facets_results
 from gdc.util.process_annotations import process_annotations
@@ -36,7 +35,6 @@ from gdc.util.process_projects import process_projects_for_programs, process_pro
 from gdc.util.process_cases import process_cases
 from gdc.util.process_data_type import process_data_type
 
-import gcs_wrapper
 from util import close_log, create_log, import_module
 
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -129,6 +127,12 @@ def process_program(config, endpt_type, program_name, projects, log_dir):
         log_name = create_log(log_dir, program_name)
         log = logging.getLogger(log_name)
         log.info('begin process_program(%s)' % (program_name))
+
+        if config['upload_open'] or config['upload_controlled'] or config['upload_etl_files']:
+            # open the GCS wrapper here so it can be used by all the projects/platforms to save files
+            gcs_wrapper = import_module(config['gcs_wrapper'])
+            gcs_wrapper.open_connection(config, log)
+
         future2project = {}
         if config['process_project']:
             with futures.ThreadPoolExecutor(max_workers=config['project_threads']) as executor:
@@ -160,6 +164,7 @@ def process_program(config, endpt_type, program_name, projects, log_dir):
         log.exception('problem processing program %s' % (program_name))
         raise
     finally:
+        gcs_wrapper.close_connection()
         close_log(log)
 
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -205,7 +210,7 @@ def process_programs(config, endpt_type, log_dir, log):
                 if future.exception() is not None:
                     log.exception('\t%s generated an exception--%s:%s' % (program_name, type(future.exception()).__name__, future.exception()))
                 else:
-#                 result = future.result()
+#                     result = future.result()
                     log.info('\tfinished program %s' % (program_name))
     log.info('finished process_programs()')
 
@@ -231,16 +236,8 @@ def uploadGDC():
 
         log.info('begin uploadGDC()')
         
-        if 'Windows' == platform.system():
-            log.info('\tupdate number of open files allowed on windows')
-            win32file._setmaxstdio(2048)
-            
         initializeDB(config, log)
      
-        if config['upload_open'] or config['upload_controlled'] or config['upload_etl_files']:
-            # open the GCS wrapper here so it can be used by all the projects/platforms to save files
-            gcs_wrapper.open_connection()
-
         for endpt_type in config['endpt_types']:
             log.info('processing %s endpoints' % (endpt_type))
             if config['process_annotation']:
@@ -251,8 +248,8 @@ def uploadGDC():
                 process_programs(config, endpt_type, log_dir, log)
             else:
                 log.warning('\n\t====================\n\tnot processing programs this run!\n\t====================')
-    finally:
-        gcs_wrapper.close_connection()
+    except:
+        raise
     log.info('finished uploadGDC()')
     print datetime.now(), 'finished uploadGDC()'
 

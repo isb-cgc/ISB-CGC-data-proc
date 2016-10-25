@@ -80,18 +80,6 @@ def save2db(config, endpt_type, table, endpt2info, table_mapping, log):
     __insert_rows(config, endpt_type, table, endpt2info.values(), table_mapping, log)
     log.info('\tfinished save rows to db for %s' % table)
 
-def get_map_rows(config, endpt_type, endpt, filt, log):
-    log.info('\tbegin select %s %ss' % (endpt_type, endpt))
-    endpt_url = config['%ss_endpt' % (endpt)]['%s endpt' % (endpt_type)]
-    query = config['%ss_endpt' % (endpt)]['query']
-    url = endpt_url + query
-    mapfilter = config['process_%ss' % (endpt)]['filter_result']
-    
-    endpt2info = __get_filtered_map_rows(url, '%s_id' % (endpt), filt, mapfilter, endpt, log, config['process_%ss' % (endpt)]['fetch_count'], config['map_requests_timeout'])
-    
-    log.info('\tfinished select %s.  processed %s %ss' % (endpt, len(endpt2info), endpt))
-    return endpt2info
-
 def __get_filtered_map_rows(url, idname, filt, mapfilter, activity, log, size = 100, timeout = None):
     count = 0
     id2map = {}
@@ -131,6 +119,18 @@ def __get_filtered_map_rows(url, idname, filt, mapfilter, activity, log, size = 
             break
 
     return id2map
+
+def get_map_rows(config, endpt_type, endpt, filt, log):
+    log.info('\tbegin select %s %ss' % (endpt_type, endpt))
+    endpt_url = config['%ss_endpt' % (endpt)]['%s endpt' % (endpt_type)]
+    query = config['%ss_endpt' % (endpt)]['query']
+    url = endpt_url + query
+    mapfilter = config['process_%ss' % (endpt)]['filter_result']
+    
+    endpt2info = __get_filtered_map_rows(url, '%s_id' % (endpt), filt, mapfilter, endpt, log, config['process_%ss' % (endpt)]['fetch_count'], config['map_requests_timeout'])
+    
+    log.info('\tfinished select %s.  processed %s %ss' % (endpt, len(endpt2info), endpt))
+    return endpt2info
 
 def request_facets_results(url, facet_query, facet, log, page_size = 0, params = None):
     response = None

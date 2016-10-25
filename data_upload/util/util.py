@@ -411,7 +411,7 @@ def delete_objects(config, bucket, path, log):
     global gcs_wrapper
     if None == gcs_wrapper:
         gcs_wrapper = import_module(config['gcs_wrapper'])
-    contents = gcs_wrapper.get_bucket_contents(bucket, path)
+    contents = gcs_wrapper.get_bucket_contents(bucket, path, log)
     gcs_wrapper.delete_objects(bucket, contents, log)
     
 def delete_dir_contents(folder, delete_dir = False):
@@ -427,7 +427,7 @@ def delete_dir_contents(folder, delete_dir = False):
         else:
             raise RuntimeError('unexpected problem removing %s from %s' % (curfile, folder))
     if delete_dir:
-        os.rmdir(path)
+        os.rmdir(folder)
 
 def close_log(log):
     handlers = log.handlers[:]

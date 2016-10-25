@@ -23,7 +23,7 @@ import logging
 
 log = logging.getLogger(__name__)
 
-def convert_file_to_dataframe(filepath_or_buffer, sep="\t", skiprows=0, rollover=False, nrows=None):
+def convert_file_to_dataframe(filepath_or_buffer, sep="\t", skiprows=0, rollover=False, nrows=None, header = 'infer'):
     """does some required data cleaning and
       then converts into a dataframe
     """
@@ -37,7 +37,7 @@ def convert_file_to_dataframe(filepath_or_buffer, sep="\t", skiprows=0, rollover
 
         # read the table/file
         data_df = pd.read_table(filepath_or_buffer, sep=sep, skiprows=skiprows, lineterminator='\n',
-                                comment='#', na_values=na_values, dtype='object', nrows=nrows)
+                                comment='#', na_values=na_values, dtype='object', nrows=nrows, header = header)
 
     except Exception as exp:
         log.exception('problem converting to dataframe: %s' % (exp.message))

@@ -20,6 +20,7 @@ limitations under the License.
 from datetime import date
 import json
 import logging
+import os
 import pycurl
 from pycurl import Curl
 import requests
@@ -129,22 +130,27 @@ def get_status(log):
 
 def main(config, log):
     try:
-        log.info('starting upload of gdc files')
         get_status(log)
         file_ids = get_file_ids(config)
+        if not os.path.isdir(config['output_dir']):
+            os.makedirs(config['output_dir'])
+        
         url = 'https://gdc-api.nci.nih.gov/data'
 #         curl(url, file_ids, log)
+        log.info('starting upload of gdc files')
         begin = time.clock()
         request(config, url, file_ids, log)
-        log.info('finished upload of gdc files in %s minutes for %s lines per' % ((time.clock() - begin) / 60), config['lines_per'])
+        end = time.clock()
+        log.info('finished upload of gdc files in %s minutes for %s lines per' % (((end - begin) / 60), config['lines_per']))
     except:
         raise
 
 if __name__ == '__main__':
     config = {
-        'output_dir': './',
+        'output_dir': './gdc_download/',
         'output_file': 'gdc_download_eq_%s_%s.tar.gz',
         'input_id_file': 'gdc/doc/2016_10_05_expression_quantification_file_ids_5000.txt',
+#         'input_id_file': 'Z:\\tcga\\cgc\\dataproc\\gdc\\doc\\gdc_manifest.2016-09-09_head_1000.tsv',
         'lines_per': 0
     }
     log_dir = str(date.today()).replace('-', '_') + '_ge_gdc_upload_run/'

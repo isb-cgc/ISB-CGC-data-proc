@@ -132,18 +132,16 @@ def __attempt_download(file_path, bucket_name, key_name, log):
 
     log.info('successfully downloaded %s' % key_name)
 
-def delete_object(bucket_name, key_name, log):
+def delete_objects(bucket_name, key_names, log):
     bucket = __get_bucket(bucket_name)
-    if key_name not in bucket:
-        raise ValueError('did not find %s in %s' % (key_name, bucket_name))
-    key = boto.gs.key.Key(bucket, key_name)
     try:
-        key.delete()
-    finally:
-        key.close()
+        results = bucket.delete_keys(key_names, True)
+    except:
+        raise
+    log.info('problem deleting keys: %s' % (results))
 
-    log.info('successfully deleted %s' % key_name)
+    log.info('successfully deleted %s keys' % (len(key_names)))
 
-def get_bucket_contents(bucket_name, prefix):
+def get_bucket_contents(bucket_name, prefix, log):
     bucket = __get_bucket(bucket_name)
     return bucket.list(prefix)

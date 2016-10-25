@@ -81,7 +81,7 @@ def __attempt_upload(file_path, bucket_name, key_name, log):
         raise ValueError('found %s in %s' % (key_name, bucket_name))
     blob = bucket.blob(key_name)
     blob.upload_from_filename(file_path)
-    log.info('successfully uploaded %s' % key_name)
+    log.info('\t\tsuccessfully uploaded %s' % key_name)
 
 def download_file(file_path, bucket_name, key_name, log):
     global backoff
@@ -115,9 +115,18 @@ def __attempt_download(file_path, bucket_name, key_name, log):
         blob.download_to_filename(file_path)
     log.info('successfully downloaded %s' % key_name)
 
-def get_bucket_contents(bucket_name, log):
+def delete_objects(bucket_name, keys, log):
     bucket = __get_bucket(bucket_name)
-    iterfiles = bucket.list_blobs()
+    try:
+        bucket.delete_blobs(keys)
+#         for key_name in key_names:
+#             bucket.delete_blob(key_name)
+    except:
+        raise
+
+def get_bucket_contents(bucket_name, prefix, log):
+    bucket = __get_bucket(bucket_name)
+    iterfiles = bucket.list_blobs(prefix = prefix)
     count = 0
     for fileinfo in iterfiles:
         if 0 == count % 1028:
