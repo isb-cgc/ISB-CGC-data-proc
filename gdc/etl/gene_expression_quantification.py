@@ -17,16 +17,14 @@ limitations under the License.
 
 @author: michael
 '''
-import os
 import gzip
 import pandas as pd
 
 from bigquery_etl.extract.utils import convert_file_to_dataframe
 from bigquery_etl.transform.tools import cleanup_dataframe
 from bigquery_etl.extract.gcloud_wrapper import GcsConnector
-from gdc.util.load import load 
+from gdc.etl.load import load
 from util import flatten_map
-from __builtin__ import range
 
 def add_metadata(data_df, info, config):
     """Add metadata info to the dataframe
