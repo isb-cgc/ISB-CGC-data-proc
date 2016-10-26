@@ -363,6 +363,9 @@ def __recurse_flatten_map(origmap, thefilter):
                 elif 'substr' == fields[0]:
                     substr = origmap[value][int(fields[1]):int(fields[2])]
                     initmap[fields[3]] = substr
+                elif 'list2str' == fields[0]:
+                    string = ','.join(origmap[value])
+                    initmap[fields[1]] = string
                 else:
                     raise ValueError('unknown operation specification: %s %s' % (origmap[value], thefilter['value'][value]))
     
