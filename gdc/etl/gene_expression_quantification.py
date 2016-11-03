@@ -23,7 +23,7 @@ import pandas as pd
 from bigquery_etl.extract.utils import convert_file_to_dataframe
 from bigquery_etl.transform.tools import cleanup_dataframe
 from bigquery_etl.extract.gcloud_wrapper import GcsConnector
-from gdc.etl.load import load
+from . import load
 from util import flatten_map
 
 def add_metadata(data_df, info, config):
@@ -61,7 +61,7 @@ def process_per_sample_files(config, outputdir, associated_paths, types, info, l
         add_metadata(dfs[curindex], info, config)
         if 'HTSeq - Counts' == types[curindex]:
             dfs[curindex] = dfs[curindex].drop(dfs[curindex].index[[60483, 60484, 60485, 60486, 60487]])
-        log.info('\t\tdone calling convert_file_to_dataframe() for %s:\n%s\n%s\n%s' % (associated_path, dfs[curindex].head(3), '\t...', dfs[curindex].tail(3)))
+        log.info('\t\tdone calling convert_file_to_dataframe() for %s' % (associated_path))
         curindex += 1
     
     merge_df = dfs[0]
@@ -123,7 +123,7 @@ def process_paths(config, outputdir, paths, file2info, log):
     return complete_df
 
 def upload_batch_etl(config, outputdir, paths, file2info, project, data_type, log):
-    log.info('\tstart upload_batch_etl() for gene expression quantification')
+    log.info('\tstart upload_batch_etl() for gene expression quantification for %s and %s' % (project, data_type))
     try:
         if 0 != len(paths) % 3:
             raise RuntimeError('need to process the three RNA files per sample together.  adjust the configuration option \'download_files_per\' accordingly')
@@ -136,7 +136,7 @@ def upload_batch_etl(config, outputdir, paths, file2info, project, data_type, lo
     except Exception as e:
         log.exception('problem finishing the etl: %s' % (e))
         raise
-    log.info('\tstart upload_batch_etl() for gene expression quantification')
+    log.info('\tfinished upload_batch_etl() for gene expression quantification for %s and %s' % (project, data_type))
 
 def finish_etl(config, project, data_type, log):
     log.info('\tstart finish_etl() for gene expression quantification')

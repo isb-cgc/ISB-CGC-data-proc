@@ -41,11 +41,11 @@ def cleanup_dataframe(df, caller_log = None):
         raise RuntimeError("Empty dataframe passed to clean_up_dataframe function")
 
     # why again, we are doing it in convert_to_dataframe, right?
-    # because we can call this function separately
-    log.info('\tconsolidate na values')
-    na_values = ['none', 'None', 'NONE', 'null', 'Null', 'NULL', ' ', 'NA', '__UNKNOWN__', '?']
-    for rep in na_values:
-        df = df.replace(rep, np.nan)
+    # because we can call this function separately.  but this takes time, so commenting it out
+#     log.info('\tconsolidate na values')
+#     na_values = ['none', 'None', 'NONE', 'null', 'Null', 'NULL', ' ', 'NA', '__UNKNOWN__', '?']
+#     for rep in na_values:
+#         df = df.replace(rep, np.nan)
 
     log.info('\tremove empty spaces(this removes more than 1 space)')
     df = df.applymap(lambda x: np.nan if isinstance(x, basestring) and x.isspace() else x)
@@ -53,9 +53,13 @@ def cleanup_dataframe(df, caller_log = None):
     log.info('\tprevent problems with nan(numpy.nan) in the convert and strip step by replacing with \'_mv_\'')
     df = df.fillna("_mv_")
 
-    log.info('\tconvert to utf-8, strip spaces (including ^M) and quotes')
-    df = df.applymap(lambda x: convert_encoding(x).strip().strip("'").strip('"'))
+# this can also be specified on load of df from file
+#    log.info('\tconvert to utf-8')
+#     [df[column].str.encode('utf-8') for column in df.columns]
 
+    log.info('\tstrip spaces (including ^M) and quotes')
+    df.replace(r'((^[\s"\'])|([\s"\']$))', '', regex=True)
+    
     log.info('\treplace back the np.nan')
     df = df.replace(r'_mv_', np.nan)
 
