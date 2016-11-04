@@ -146,7 +146,7 @@ def finish_etl(config, project, data_type, log):
         schema_file = config['process_files']['datatype2bqscript']['Gene Expression Quantification']['schema_file']
         gcs_file_path = 'gs://' + config['buckets']['open'] + '/' + config['buckets']['folders']['base_run_folder'] + 'etl/%s/%s' % (project, data_type)
         write_disposition = config['process_files']['datatype2bqscript']['Gene Expression Quantification']['write_disposition']
-        load(config['cloud_projects']['open'], [bq_dataset], [bq_table], [schema_file], [gcs_file_path], [write_disposition], log)
+        load.load(config['cloud_projects']['open'], [bq_dataset], [bq_table], [schema_file], [gcs_file_path], [write_disposition], log)
     except Exception as e:
         log.exception('problem finishing the etl: %s' % (e))
         raise
