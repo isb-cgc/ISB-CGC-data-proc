@@ -128,6 +128,7 @@ def upload_batch_etl(config, outputdir, paths, file2info, project, data_type, lo
         if 0 != len(paths) % 3:
             raise RuntimeError('need to process the three RNA files per sample together.  adjust the configuration option \'download_files_per\' accordingly')
         complete_df = process_paths(config, outputdir, paths, file2info, log)
+        log.info('unique column counts:\n%s' % (complete_df.apply(pd.Series.nunique)))
         gcs = GcsConnector(config['cloud_projects']['open'], config['buckets']['open'])
         keyname = config['buckets']['folders']['base_run_folder'] + 'etl/%s/%s/%s' % (project, data_type, paths[0].split('/')[1][:-3])
         log.info('start convert and upload %s to the cloud' % (keyname))

@@ -294,7 +294,7 @@ class ISBCGC_database_helper(object):
                                 log.exception('\t\t\tupdate had multiple operation errors for %s' % (insert_stmt))
                                 raise oe
                     except Exception as e:
-                        log.exception('problem with update for:\n%s\n\t%s' % (insert_stmt, e))
+                        log.exception('problem with update for:\n%s\n\t%s\n%s' % (insert_stmt, e, inserts[:20]))
                         raise e
                     inserts = []
                 # successfully looped through so stop trying
