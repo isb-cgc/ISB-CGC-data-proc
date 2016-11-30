@@ -85,7 +85,7 @@ def process_files(config, file2info, outputdir, start, end, project, data_type, 
             log.info('\t\textract files from %s' % (filepath))
             tf.extractall(outputdir)
             log.info('\t\tdone extract files from %s' % (filepath))
-        
+         
         with open(outputdir + 'MANIFEST.txt') as manifest:
             lines = manifest.read().split('\n')
             paths = []
@@ -95,7 +95,7 @@ def process_files(config, file2info, outputdir, start, end, project, data_type, 
                 paths += [filepath]
                 filenames.add(filepath.split('/')[1])
         paths.sort(key = lambda path:path.split('/')[1])
-        
+         
         if config['upload_files']:
             use_dir_in_name = False if len(paths) == len(filenames) else True
             for path in paths:
@@ -104,7 +104,7 @@ def process_files(config, file2info, outputdir, start, end, project, data_type, 
                 log.info('\t\tuploading %s' % (key_name))
                 upload_file(config, outputdir + path, config['buckets']['open'], key_name, log)
             
-        if config['upload_etl_files'] and data_type in config['process_files']['datatype2bqscript']:
+        if config['upload_etl_files'] and data_type in config['process_files']['datatype2bqscript'] and etl_module is not None:
             etl_module.upload_batch_etl(config, outputdir, paths, file2info, project, data_type, log)
         else:
             log.warning('\t\tnot processing files for ETL for project %s and datatype %s%s' % (project, data_type, ' because there is no script specified' if config['upload_etl_files'] else ''))
@@ -121,7 +121,9 @@ def request(config, url, file2info, outputdir, project, data_type, log):
     download_files_per = min(config['download_files_per'], len(file2info))
     start = 0
     end = download_files_per
-    etl_module = import_module(config['process_files']['datatype2bqscript'][data_type]['python_script'])
+    etl_module = None
+    if data_type in config['process_files']['datatype2bqscript']:
+        etl_module = import_module(config['process_files']['datatype2bqscript'][data_type]['python_script'])
     while start < len(file2info):
         log.info('\t\tfetching range %d:%d' % (start, end))
         request_try(config, url, ordered2info.keys(), start, end, outputdir, log)
@@ -129,7 +131,7 @@ def request(config, url, file2info, outputdir, project, data_type, log):
         start = end
         end += download_files_per
         
-    if config['upload_etl_files'] and data_type in config['process_files']['datatype2bqscript']:
+    if config['upload_etl_files'] and data_type in config['process_files']['datatype2bqscript'] and etl_module is not None:
         etl_module.finish_etl(config, project, data_type, log)
     else:
         log.warning('\t\tnot finishing for ETL for project %s and datatype %s%s' % (project, data_type, ' because there is no script specified' if config['upload_etl_files'] else ''))

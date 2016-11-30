@@ -23,10 +23,10 @@ import pandas as pd
 from bigquery_etl.extract.utils import convert_file_to_dataframe
 from bigquery_etl.transform.tools import cleanup_dataframe
 from bigquery_etl.extract.gcloud_wrapper import GcsConnector
-from gdc.etl.load import load
+from . import load
 from util import flatten_map
 
-def add_metadata(data_df, info, config):
+def add_metadata(data_df, info, project, config):
     """Add metadata info to the dataframe
     """
     metadata_list = flatten_map(info, config['process_files']['data_table_mapping'])
@@ -34,6 +34,10 @@ def add_metadata(data_df, info, config):
     for next_metadata in metadata_list[1:]:
         metadata.update(next_metadata)
 
+    program = project.split('-')[0]
+    start_samplecode = config['sample_code_position'][program]['start']
+    end_samplecode = config['sample_code_position'][program]['end']
+    
     data_df['FileID'] = metadata['FileID']
     data_df['AliquotsAliquotID'] = metadata['AliquotsAliquotID']
     data_df['AliquotsSubmitterID'] = metadata['AliquotsSubmitterID']
@@ -43,14 +47,14 @@ def add_metadata(data_df, info, config):
     data_df['CasesSubmitterID'] = metadata['CasesSubmitterID']
     data_df['ProgramName'] = metadata['ProgramName'].upper()
     data_df['ProjectID'] = metadata['ProjectID'].upper()
-    data_df['SampleTypeLetterCode'] = config['sample_code2letter'][metadata['SamplesSubmitterID'][13:15]]
+    data_df['SampleTypeLetterCode'] = config['sample_code2letter'][metadata['SamplesSubmitterID'][start_samplecode:end_samplecode]]
     data_df['DataType'] = metadata['DataType']
     data_df['ExperimentalStrategy'] = metadata['ExperimentalStrategy']
 
     return data_df
 
 
-def process_per_sample_files(config, outputdir, associated_paths, types, info, log):
+def process_per_sample_files(config, outputdir, associated_paths, types, info, project, log):
     dfs = [None] * 3
     curindex = 0
     for associated_path in associated_paths:
@@ -58,10 +62,10 @@ def process_per_sample_files(config, outputdir, associated_paths, types, info, l
         log.info('\t\tcalling convert_file_to_dataframe() for %s' % (associated_path))
         dfs[curindex] = convert_file_to_dataframe(gzip.open(outputdir + associated_path), header=None)
         dfs[curindex].columns = ['Ensembl_versioned_gene_ID', types[curindex]]
-        add_metadata(dfs[curindex], info, config)
+        add_metadata(dfs[curindex], info, project, config)
         if 'HTSeq - Counts' == types[curindex]:
             dfs[curindex] = dfs[curindex].drop(dfs[curindex].index[[60483, 60484, 60485, 60486, 60487]])
-        log.info('\t\tdone calling convert_file_to_dataframe() for %s:\n%s\n%s\n%s' % (associated_path, dfs[curindex].head(3), '\t...', dfs[curindex].tail(3)))
+        log.info('\t\tdone calling convert_file_to_dataframe() for %s' % (associated_path))
         curindex += 1
     
     merge_df = dfs[0]
@@ -84,7 +88,7 @@ def process_per_sample_files(config, outputdir, associated_paths, types, info, l
     log.info('merge workflow(%d):\n%s\n\t...\n%s' % (len(merge_df), merge_df.head(3), merge_df.tail(3)))
     return merge_df
 
-def process_paths(config, outputdir, paths, file2info, log):
+def process_paths(config, outputdir, paths, project, file2info, log):
     types = config['process_files']['datatype2bqscript']['Gene Expression Quantification']['analysis_types']
     idents = set()
     count = 0
@@ -102,7 +106,7 @@ def process_paths(config, outputdir, paths, file2info, log):
         associated_paths[type_index] = path
         count += 1
         if 0 == count % 3:
-            merge_df = process_per_sample_files(config, outputdir, associated_paths, types, info, log)
+            merge_df = process_per_sample_files(config, outputdir, associated_paths, types, info, project, log)
             if complete_df is None:
                 complete_df = merge_df
             else:
@@ -123,12 +127,13 @@ def process_paths(config, outputdir, paths, file2info, log):
     return complete_df
 
 def upload_batch_etl(config, outputdir, paths, file2info, project, data_type, log):
-    log.info('\tstart upload_batch_etl() for gene expression quantification')
+    log.info('\tstart upload_batch_etl() for gene expression quantification for %s and %s' % (project, data_type))
     try:
         if 0 != len(paths) % 3:
             raise RuntimeError('need to process the three RNA files per sample together.  adjust the configuration option \'download_files_per\' accordingly')
-        complete_df = process_paths(config, outputdir, paths, file2info, log)
+        complete_df = process_paths(config, outputdir, paths, project, file2info, log)
         log.info('unique column counts:\n%s' % (complete_df.apply(pd.Series.nunique)))
+        
         gcs = GcsConnector(config['cloud_projects']['open'], config['buckets']['open'])
         keyname = config['buckets']['folders']['base_run_folder'] + 'etl/%s/%s/%s' % (project, data_type, paths[0].split('/')[1][:-3])
         log.info('start convert and upload %s to the cloud' % (keyname))
@@ -137,7 +142,7 @@ def upload_batch_etl(config, outputdir, paths, file2info, project, data_type, lo
     except Exception as e:
         log.exception('problem finishing the etl: %s' % (e))
         raise
-    log.info('\tstart upload_batch_etl() for gene expression quantification')
+    log.info('\tfinished upload_batch_etl() for gene expression quantification for %s and %s' % (project, data_type))
 
 def finish_etl(config, project, data_type, log):
     log.info('\tstart finish_etl() for gene expression quantification')
@@ -147,7 +152,7 @@ def finish_etl(config, project, data_type, log):
         schema_file = config['process_files']['datatype2bqscript']['Gene Expression Quantification']['schema_file']
         gcs_file_path = 'gs://' + config['buckets']['open'] + '/' + config['buckets']['folders']['base_run_folder'] + 'etl/%s/%s' % (project, data_type)
         write_disposition = config['process_files']['datatype2bqscript']['Gene Expression Quantification']['write_disposition']
-        load(config['cloud_projects']['open'], [bq_dataset], [bq_table], [schema_file], [gcs_file_path], [write_disposition], log)
+        load.load(config['cloud_projects']['open'], [bq_dataset], [bq_table], [schema_file], [gcs_file_path], [write_disposition], log)
     except Exception as e:
         log.exception('problem finishing the etl: %s' % (e))
         raise

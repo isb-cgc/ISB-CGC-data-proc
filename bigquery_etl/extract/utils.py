@@ -37,7 +37,8 @@ def convert_file_to_dataframe(filepath_or_buffer, sep="\t", skiprows=0, rollover
 
         # read the table/file
         data_df = pd.read_table(filepath_or_buffer, sep=sep, skiprows=skiprows, lineterminator='\n',
-                                comment='#', na_values=na_values, dtype='object', nrows=nrows, header = header)
+                                comment='#', na_values=na_values, dtype='object', nrows=nrows, header = header,
+                                encoding='utf-8')
 
     except Exception as exp:
         log.exception('problem converting to dataframe: %s' % (exp.message))
