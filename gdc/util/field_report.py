@@ -48,8 +48,8 @@ def get_values_for_field(endpoint, field, field2values, output, template, print_
     if print_status:
         log.info('\t\t\tfinding values for field \'%s\'' % (field))
     data = json['data']
-    output.write('\t\t\t%s\n' % (field))
     if 'aggregations' not in data:
+        output.write('\t\t\t%s\n' % (field))
         if 'warnings' in json:
             if 'facets' in json['warnings']:
                 if 'unrecognized values: ' in json['warnings']['facets']:
@@ -63,6 +63,7 @@ def get_values_for_field(endpoint, field, field2values, output, template, print_
             log.error('unknown response format: %s' % (json))
             output.write('\t\t\t\tunknown response format: %s' % (json))
     elif 'buckets' not in data['aggregations'][field]:
+        output.write('\t\t\t%s\n' % (field))
         field_info = data['aggregations'][field]
         if 'count' in field_info:
             if 0 == field_info['count']:
@@ -77,15 +78,19 @@ def get_values_for_field(endpoint, field, field2values, output, template, print_
     else:
         buckets = data['aggregations'][field]['buckets']
         too_many = False
+        buckets.sort()
         if 60 < len(buckets):
             too_many = True
         if 0 == len(buckets) or (1 == len(buckets) and '_missing' == buckets[0]['key']):
+            output.write('\t\t\t%s\n' % (field))
             field2values[field] = {'buckets':'no values'}
             output.write('\t\t\t\t<no values>\n')
         elif too_many:
+            output.write('\t\t\t%s (max=%d)\n' % (field, max(map(len, [str(bucket['key']) for bucket in buckets]))))
             field2values[field] = {'buckets':'many values'}
             output.write('\t\t\t\tfirst values of greater than %s: %s\n' % (len(buckets), ', '.join('%s(%s)' % (bucket['key'], bucket['doc_count']) for bucket in buckets[:3])))
         else:
+            output.write('\t\t\t%s (max=%d)\n' % (field, max(map(len, [str(bucket['key']) for bucket in buckets]))))
             field2values[field] = {'buckets':set(bucket['key'] for bucket in buckets)}
             output.write('\t\t\t\tvalues(%d):\n\t\t\t\t\t%s\n' % (len(buckets), '\n\t\t\t\t\t'.join('%s(%s)' % (bucket['key'], bucket['doc_count']) for bucket in buckets)))
     return field

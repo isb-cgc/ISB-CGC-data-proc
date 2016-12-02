@@ -23,17 +23,21 @@ import requests
 import time
 
 from gcloud import storage
+from gcloud_requests.connection import storage_http
+
 # value to delay resubmitting
 backoff = 0
 name2bucket = {}
 lock = Lock()
 storage_service = None
+
 def open_connection(config = None, log = None):
     global storage_service
     if storage_service:
         raise ValueError('storage has already been initialized')
     log.info('opening GCS service')
-    storage_service = storage.Client(project = config['cloud_projects']['open'])
+    
+    storage_service = storage.Client(project = config['cloud_projects']['open'], http = storage_http)
     
 def close_connection():
     pass

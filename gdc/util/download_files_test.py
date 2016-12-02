@@ -82,7 +82,7 @@ def request(config, url, file_ids, log):
         start = end
         end += lines_per
         
-    delete_dir_contents(config['output_dir'])
+#     delete_dir_contents(config['output_dir'])
     log.info('\tfinished fetch of gdc files')
 
 def curl(url, file_ids, log):
@@ -115,6 +115,19 @@ def curl(url, file_ids, log):
             
 
 def get_file_ids(config):
+    return [
+        'ed935a40-3e5e-49ca-ac8c-93e9faf0e79b',
+        '46cb1dd1-f498-48fb-8f33-7161a0cdbf87',
+        'c1971c16-ef58-4417-9d47-a60b51a75527',
+        '769c02ba-a3c8-40c7-a9c6-3c2c9bfe24b8',
+        '8f625078-9301-4b5e-b234-b1c8870b36b4',
+        '05ddb6d8-771a-44c9-8005-d3d96fb1f274',
+        '09757d3b-0fff-4413-8e07-f1250f139368',
+        '550451f7-29fb-437d-bd89-4d0a43273d57',
+        '06275b6b-258a-4a9f-b755-5c8bef2b8e75',
+        'd3c016cf-8051-4bea-9f8a-2a076496f449',
+        '2d7133e5-8c61-445c-840c-4fbaf33d554f'
+    ]
     file_ids = []
     with open(config['input_id_file']) as file_id_file:
         for line in file_id_file:
@@ -141,7 +154,7 @@ def main(config, log):
         begin = time.clock()
         request(config, url, file_ids, log)
         end = time.clock()
-        log.info('finished upload of gdc files in %s minutes for %s lines per' % (((end - begin) / 60), config['lines_per']))
+        log.info('finished upload of gdc files in %s minutes for %s lines per' % (int(float(end - begin) / float(60)), config['lines_per']))
     except:
         raise
 
@@ -156,7 +169,8 @@ if __name__ == '__main__':
     log_dir = str(date.today()).replace('-', '_') + '_ge_gdc_upload_run/'
     log_name = create_log(log_dir, 'gdc_upload')
     log = logging.getLogger(log_name)
-    for lines_per in [500, 100, 50]:
+#     for lines_per in [500, 100, 50]:
+    for lines_per in [50]:
         config['lines_per'] = lines_per
         try:
             main(config, log)

@@ -108,7 +108,7 @@ def process_project(config, endpt_type, project, log_dir):
                                 future_keys = future2data_type.keys()
                     except:
                         future_keys = future2data_type.keys()
-                        log.exception('%s failed' % (data_type))
+                        log.exception('%s failed for %s' % (data_type, project))
                 log.info('\tcompleted process data_types for %s' % (project))
         else:
             log.warning('\n\t====================\n\tnot processing data types this run for %s!\n\t====================' % (project))
@@ -219,6 +219,12 @@ def process_programs(config, endpt_type, log_dir, log):
 def initializeDB(config, log):
     module = import_module(config['database_module'])
     module.ISBCGC_database_helper.initialize(config, log)
+    
+## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+def get_run_info(config):
+    return
+    first_input = raw_input('input something:')
 
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
@@ -233,6 +239,10 @@ def uploadGDC():
         log_dir = str(date.today()).replace('-', '_') + '_' + config['log_dir_tag'] + '/'
         log_name = create_log(log_dir, 'top_processing')
         log = logging.getLogger(log_name)
+        
+        log.info('getting run input')
+        get_run_info(config)
+        log.info('finished getting run input')
 
         log.info('begin uploadGDC()')
         
