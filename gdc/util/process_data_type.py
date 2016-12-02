@@ -75,7 +75,7 @@ def process_data_type(config, endpt_type, project_id, data_type, log_dir, log_na
         log.info('begin process_data_type %s for %s' % (data_type, project_id))
         file2info = get_map_rows(config, endpt_type, 'file', get_filter(config, data_type, project_id), log)
         save2db(config, endpt_type, 'metadata_gdc_data', file2info, config['process_files']['data_table_mapping'], log)
-        upload_files(config, file2info, project_id, data_type, log)
+        upload_files(config, endpt_type, file2info, project_id, data_type, log)
         log.info('finished process_data_type %s for %s' % (data_type, project_id))
 
         return file2info

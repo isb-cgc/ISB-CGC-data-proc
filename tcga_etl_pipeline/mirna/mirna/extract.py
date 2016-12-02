@@ -41,7 +41,7 @@ def identify_data(config):
         FROM metadata_data
         WHERE DataType='Expression-miRNA'
         AND DatafileUploaded='true'
-        AND DatafileNameKey LIKE '%.mirna.quantification.txt'
+        AND DatafileNameKey LIKE '%hg19.mirbase20.mirna.quantification.txt'
         AND IncludeForAnalysis='yes'
         """
     # connect to db and get results in a dataframe
