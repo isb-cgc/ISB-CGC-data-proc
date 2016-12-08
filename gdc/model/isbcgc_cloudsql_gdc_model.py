@@ -435,7 +435,7 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
             ['case_barcode'],
             ['sample_gdc_id'],
             ['sample_barcode'],
-            ['sample_type_id'],
+            ['sample_type_code'],
             ['aliquot_barcode'],
             ['aliquot_gdc_id'],
             ['project_short_name'],
