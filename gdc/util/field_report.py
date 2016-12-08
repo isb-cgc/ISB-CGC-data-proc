@@ -78,7 +78,7 @@ def get_values_for_field(endpoint, field, field2values, output, template, print_
     else:
         buckets = data['aggregations'][field]['buckets']
         too_many = False
-        buckets.sort()
+        buckets.sort(key = lambda bucket: bucket['key'])
         if 60 < len(buckets):
             too_many = True
         if 0 == len(buckets) or (1 == len(buckets) and '_missing' == buckets[0]['key']):
