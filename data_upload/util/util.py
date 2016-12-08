@@ -361,8 +361,11 @@ def __recurse_flatten_map(origmap, thefilter):
                     newlabel = thefilter['value'][value]
                     initmap[newlabel] = origmap[value]
                 elif 'substr' == fields[0]:
-                    substr = origmap[value][int(fields[1]):int(fields[2])]
-                    initmap[fields[3]] = substr
+                    if origmap[value] is not None:
+                        substr = origmap[value][int(fields[1]):int(fields[2])]
+                        initmap[fields[3]] = substr
+                    else:
+                        initmap[fields[3]] = None
                 elif 'list2str' == fields[0]:
                     string = ','.join(origmap[value])
                     initmap[fields[1]] = string

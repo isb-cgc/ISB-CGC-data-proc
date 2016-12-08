@@ -51,10 +51,15 @@ def request(url, params, msg, log, timeout):
 def __addrow(endpt_type, fieldnames, row2map):
     row = []
     for fieldname in fieldnames:
-        if 'Endpoint' == fieldname:
+        if 'endpoint_type' == fieldname:
             row += [endpt_type]
+        elif 'species' == fieldname:
+            row += ['Homo sapiens']
         elif fieldname in row2map:
-            row += [row2map[fieldname]]
+            if [row2map[fieldname]] is not None:
+                row += [row2map[fieldname]]
+            else:
+                row += [None]
         else:
             row += [None]
     return [row]

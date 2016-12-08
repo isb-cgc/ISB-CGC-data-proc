@@ -24,6 +24,8 @@ def process_projects(config, endpt_type, program, log_dir):
 
         log.info('begin process_projects for %s' % (program))
         project2info = get_map_rows(config, endpt_type, 'project', get_filter(program), log)
+        program2info = {program: project2info[project2info.keys()[0]]}
+        save2db(config, endpt_type, 'metadata_gdc_program', program2info, config['process_projects']['program_table_mapping'], log)
         save2db(config, endpt_type, 'metadata_gdc_project', project2info, config['process_projects']['project_table_mapping'], log)
         log.info('finished process_projects for %s' % (program))
         return project2info
@@ -37,7 +39,7 @@ def process_projects_for_programs(config, endpt_type, projects_endpt, log):
     try:
         log.info('begin process_projects_for_programs')
         project2info = get_map_rows(config, endpt_type, 'project', {}, log)
-        save2db(config, endpt_type, 'metadata_gdc_project', project2info, config['process_projects']['project_table_mapping'], log)
+#         save2db(config, endpt_type, 'metadata_gdc_project', project2info, config['process_projects']['project_table_mapping'], log)
         log.info('finished process_projects_for_programs')
         return project2info
     except:

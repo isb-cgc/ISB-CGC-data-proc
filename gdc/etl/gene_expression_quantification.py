@@ -22,11 +22,10 @@ import pandas as pd
 
 from bigquery_etl.extract.utils import convert_file_to_dataframe
 from bigquery_etl.transform.tools import cleanup_dataframe
-from bigquery_etl.extract.gcloud_wrapper import GcsConnector
 from gdc.etl import etl
 from util import flatten_map
 
-class gene_expression_quantification(etl.etl):
+class Gene_expression_quantification(etl.Etl):
     
     def __init__(self):
         '''
@@ -45,19 +44,20 @@ class gene_expression_quantification(etl.etl):
         program = project.split('-')[0]
         start_samplecode = config['sample_code_position'][program]['start']
         end_samplecode = config['sample_code_position'][program]['end']
+        sample_type_code = metadata['sample_barcode'][start_samplecode:end_samplecode]
         
-        data_df['FileID'] = metadata['FileID']
-        data_df['AliquotsAliquotID'] = metadata['AliquotsAliquotID']
-        data_df['AliquotsSubmitterID'] = metadata['AliquotsSubmitterID']
-        data_df['SampleID'] = metadata['SampleID']
-        data_df['SamplesSubmitterID'] = metadata['SamplesSubmitterID']
-        data_df['CaseID'] = metadata['CaseID']
-        data_df['CasesSubmitterID'] = metadata['CasesSubmitterID']
-        data_df['ProgramName'] = metadata['ProgramName'].upper()
-        data_df['ProjectID'] = metadata['ProjectID'].upper()
-        data_df['SampleTypeLetterCode'] = config['sample_code2letter'][metadata['SamplesSubmitterID'][start_samplecode:end_samplecode]]
-        data_df['DataType'] = metadata['DataType']
-        data_df['ExperimentalStrategy'] = metadata['ExperimentalStrategy']
+        data_df['file_gdc_id'] = metadata['file_gdc_id']
+        data_df['aliquot_barcode'] = metadata['aliquot_barcode']
+        data_df['aliquot_barcode'] = metadata['aliquot_barcode']
+        data_df['sample_gdc_id'] = metadata['sample_gdc_id']
+        data_df['sample_barcode'] = metadata['sample_barcode']
+        data_df['case_gdc_id'] = metadata['case_gdc_id']
+        data_df['case_barcode'] = metadata['case_barcode']
+        data_df['program_name'] = metadata['program_name'].upper()
+        data_df['project_short_name'] = metadata['project_short_name'].upper()
+        data_df['sample_type_letter_code'] = config['sample_code2letter'][sample_type_code]
+        data_df['data_type'] = metadata['data_type']
+        data_df['experimental_strategy'] = metadata['experimental_strategy']
     
         return data_df
     
@@ -80,23 +80,25 @@ class gene_expression_quantification(etl.etl):
         for df in dfs[1:]:
             merge_df = merge_df.merge(df, how='inner', on=[
                     'Ensembl_versioned_gene_ID', 
-                    'FileID',
-                    'AliquotsAliquotID',
-                    'AliquotsSubmitterID',
-                    'SampleID',
-                    'SamplesSubmitterID', 
-                    'CaseID',
-                    'CasesSubmitterID', 
-                    'ProgramName', 
-                    'ProjectID', 
-                    'SampleTypeLetterCode', 
-                    'DataType', 
-                    'ExperimentalStrategy'])
+                    'file_gdc_id',
+                    'aliquot_barcode',
+                    'aliquot_barcode',
+                    'sample_gdc_id',
+                    'sample_barcode', 
+                    'case_gdc_id',
+                    'case_barcode', 
+                    'program_name', 
+                    'project_short_name', 
+                    'sample_type_letter_code', 
+                    'data_type', 
+                    'experimental_strategy'])
         
         log.info('merge workflow(%d):\n%s\n\t...\n%s' % (len(merge_df), merge_df.head(3), merge_df.tail(3)))
         return merge_df
     
-    def process_paths(self, config, outputdir, paths, project, file2info, log):
+    def process_paths(self, config, outputdir, data_type, paths, project, file2info, log):
+        if 0 != len(paths) % 3:
+            raise RuntimeError('need to process the three RNA files per sample together.  adjust the configuration option \'download_files_per\' accordingly')
         types = config['process_files']['datatype2bqscript']['Gene Expression Quantification']['analysis_types']
         idents = set()
         count = 0
@@ -133,22 +135,6 @@ class gene_expression_quantification(etl.etl):
     
         log.info('\tcomplete data frame(%d):\n%s\n%s' % (len(complete_df), complete_df.head(3), complete_df.tail(3)))
         return complete_df
-    
-    def upload_batch_etl(self, config, outputdir, paths, file2info, project, data_type, log):
-        log.info('\tstart upload_batch_etl() for gene expression quantification for %s and %s' % (project, data_type))
-        try:
-            if 0 != len(paths) % 3:
-                raise RuntimeError('need to process the three RNA files per sample together.  adjust the configuration option \'download_files_per\' accordingly')
-            complete_df = self.process_paths(config, outputdir, paths, project, file2info, log)
-            gcs = GcsConnector(config['cloud_projects']['open'], config['buckets']['open'])
-            keyname = config['buckets']['folders']['base_run_folder'] + 'etl/%s/%s/%s' % (project, data_type, paths[0].split('/')[1][:-3])
-            log.info('start convert and upload %s to the cloud' % (keyname))
-            gcs.convert_df_to_njson_and_upload(complete_df, keyname)
-            log.info('finished convert and upload %s to the cloud' % (keyname))
-        except Exception as e:
-            log.exception('problem finishing the etl: %s' % (e))
-            raise
-        log.info('\tfinished upload_batch_etl() for gene expression quantification for %s and %s' % (project, data_type))
     
     def finish_etl(self, config, project, data_type, log):
         log.info('\tstart finish_etl() for gene expression quantification')

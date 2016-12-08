@@ -25,9 +25,8 @@ import os
 import requests
 import tarfile
 import time
-import zipfile
 
-from util import create_log, delete_dir_contents, delete_objects, import_module, upload_file
+from util import create_log, delete_dir_contents, delete_objects, flatten_map, import_module, upload_file
 
 def write_response(config, response, start, end, outputdir, log):
     try:
@@ -79,7 +78,7 @@ def request_try(config, url, file_ids, start, end, outputdir, log):
     return 
 
 
-def process_files(config, file2info, outputdir, start, end, project, data_type, etl_class, log):
+def process_files(config, endpt_type, file2info, outputdir, start, end, project, data_type, etl_class, log):
     try:
         filepath = outputdir + config['download_output_file_template'] % (start, end - 1)
         with tarfile.open(filepath) as tf:
@@ -98,11 +97,26 @@ def process_files(config, file2info, outputdir, start, end, project, data_type, 
         paths.sort(key = lambda path:path.split('/')[1])
          
         if config['upload_files']:
-#             use_dir_in_name = False if len(paths) == len(filenames) else True
-            use_dir_in_name = True
             for path in paths:
                 basefolder = config['buckets']['folders']['base_file_folder']
-                key_name = basefolder + '%s/%s/' % (project, data_type) + (path.replace('/', '_') if use_dir_in_name else path.split('/')[1])
+                
+                metadata = flatten_map(file2info[path], config['process_files']['data_table_mapping'])
+                keypath_template = config['process_files']['bucket_path_template']
+                key_path_components = []
+                for part in config['process_files']['bucket_path']:
+                    fields = part.split(':')
+                    if 1 == len(fields):
+                        if 'endpoint_type' == part:
+                            key_path_components += [endpt_type]
+                        else:
+                            key_path_components += [metadata[0][part]]
+                    elif 'alt' == fields[0]:
+                        if fields[1] in metadata[0] and metadata[0][fields[1]]:
+                            key_path_components += [metadata[0][fields[1]]]
+                        else:
+                            key_path_components += [metadata[0][fields[2]]]
+                
+                key_name = basefolder + (keypath_template % tuple(key_path_components))
                 log.info('\t\tuploading %s' % (key_name))
                 upload_file(config, outputdir + path, config['buckets']['open'], key_name, log)
             
@@ -117,7 +131,7 @@ def process_files(config, file2info, outputdir, start, end, project, data_type, 
         if 'delete_dir_contents' not in config or config['delete_dir_contents']:
             delete_dir_contents(outputdir)
 
-def request(config, url, file2info, outputdir, project, data_type, log):
+def request(config, endpt_type, url, file2info, outputdir, project, data_type, log):
     log.info('\tstarting requests fetch of gdc files')
     log.info('first set of sorted files:\n\t' + '\n\t'.join(sorted([(info['file_id'] + '/' + info['file_name']) for info in file2info.values()], key = lambda t:t.split('/')[1])[:20]))
     ordered2info = OrderedDict(sorted([(info['file_id'] + '/' + info['file_name'], info) for info in file2info.values()], key = lambda t:t[1]['file_name']))
@@ -134,7 +148,7 @@ def request(config, url, file2info, outputdir, project, data_type, log):
     while start < len(file2info):
         log.info('\t\tfetching range %d:%d' % (start, end))
         request_try(config, url, ordered2info.keys(), start, end, outputdir, log)
-        process_files(config, ordered2info, outputdir, start, end, project, data_type, etl_class, log)
+        process_files(config, endpt_type, ordered2info, outputdir, start, end, project, data_type, etl_class, log)
         start = end
         end += download_files_per
         
@@ -154,7 +168,7 @@ def upload_files(config, endpt_type, file2info, project, data_type, log):
         
         url = config['data_endpt']['%s endpt' % (endpt_type)]
         start = time.clock()
-        request(config, url, file2info, outputdir, project, data_type, log)
+        request(config, endpt_type, url, file2info, outputdir, project, data_type, log)
         log.info('finished upload of gdc files in %s minutes' % ((time.clock() - start) / 60))
     except:
         # clean-up
@@ -169,30 +183,30 @@ def setup_file_ids(config):
     with open(config['input_id_file']) as file_id_file:
         for line in file_id_file:
             info = {
-                'data_type': '', 
-                'experimental_strategy': '',
+                'data_type': 'Methylation Beta Value', 
+                'experimental_strategy': 'Methylation Array',
                 'analysis': {
                 },
                 'cases': [
                     {
-                        'submitter_id': '', 
-                        'case_id': '',
+                        'submitter_id': 'TCGA-00-0000', 
+                        'case_id': 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx',
                         'project': {
-                            'project_id': '',
+                            'project_id': 'TCGA-UCS',
                             'program': {
-                                    'name': ''
+                                    'name': 'TCGA'
                             }
                         },
                         'samples': [
                             {
-                                'sample_id': '', 
+                                'sample_id': 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx', 
                                 'submitter_id': 'TCGA-00-0000-01A',
                                 'portions': [
                                     {
                                         'analytes': [{
                                             'aliquots': [{
-                                                'submitter_id': '', 
-                                                'aliquot_id': '' 
+                                                'submitter_id': 'TCGA-00-0000-01A-01D-A385-10', 
+                                                'aliquot_id': 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx' 
                                             }]
                                         }]
                                     }
@@ -205,6 +219,13 @@ def setup_file_ids(config):
             fields = line.strip().split('\t')
             info['file_id'] = fields[1]
             info['file_name'] = fields[2]
+            if 'Methylation27' in fields[2]:
+                info['platform'] = 'Illumina Human Methylation 27'
+                info['cases'][0]['samples'][0]['portions'][0]['analytes'][0]['aliquots'][0]['submitter_id'] = fields[2].split('.')[5]
+            elif 'Methylation450' in fields[2]:
+                info['platform'] = 'Illumina Human Methylation 450'
+                info['cases'][0]['samples'][0]['portions'][0]['analytes'][0]['aliquots'][0]['submitter_id'] = fields[2].split('.')[5]
+            
             file_fields = fields[2].split('.')
             if 'htseq' == file_fields[1]:
                 info['analysis']['workflow_type'] = 'HTSeq - Counts'
@@ -231,8 +252,8 @@ if __name__ == '__main__':
             "open": "isb-cgc-scratch",
             "controlled": "62f2c827-test-a",
             "folders": {
-                "base_file_folder": "gdc/test_local_gdc_upload/",
-                "base_run_folder": "gdc/test_local_gdc_upload_run/"
+            "base_file_folder": "gdc/NCI-GDC_local/",
+            "base_run_folder": "gdc/NCI-GDC_local_run/"
             }
         },
         "sample_code_position" : {
@@ -270,33 +291,66 @@ if __name__ == '__main__':
             "current endpt": "https://gdc-api.nci.nih.gov/data?compress=true",
             "legacy endpt": "https://gdc-api.nci.nih.gov/legacy/data?compress=true"
         },
-        'process_files': {
-            'upload_run_folder': 'gdc/test_gdc_upload_run/',
+        "process_files": {
+            "fetch_count": 10,
+            "bucket_path_template": "%s/%s/%s/%s/%s/%s/%s",
+            "bucket_path": [
+                "endpoint_type",
+                "program_name",
+                "project_short_name",
+                "alt:experimental_strategy:data_category",
+                "data_type",
+                "file_gdc_id",
+                "file_name"
+            ],
             "data_table_mapping": {
                 "value": {
-                    "file_id": "FileID",
-                    "data_type": "DataType", 
-                    "file_name": "FileName", 
-                    "experimental_strategy": "ExperimentalStrategy"
+                    "acl": "list2str,acl",
+                    "access": "access",
+                    "file_id": "file_gdc_id",
+                    "submitter_id": "file_submitter_id",
+                    "data_type": "data_type", 
+                    "file_name": "file_name", 
+                    "md5sum": "md5sum", 
+                    "data_format": "data_format", 
+                    "platform": "platform",
+                    "state": "state", 
+                    "data_category": "data_category", 
+                    "file_size": "file_size", 
+                    "type": "type", 
+                    "file_state": "file_state", 
+                    "experimental_strategy": "experimental_strategy",
+                    "created_datetime": "substr,0,10,created_datetime",
+                    "updated_datetime": "substr,0,10,updated_datetime"
+                },
+                "map": {
+                    "analysis": {
+                        "analysis": "analysis",
+                        "value": {
+                            "analysis_id": "analysis_analysis_id",
+                            "workflow_link": "analysis_workflow_link",
+                            "workflow_type": "analysis_workflow_type"
+                        },
+                    }
                 },
                 "map_list": {
                     "cases": {
                         "cases": "cases",
                         "value": {
-                            "submitter_id": "CasesSubmitterID", 
-                            "case_id": "CaseID"
+                            "submitter_id": "case_barcode", 
+                            "case_id": "case_gdc_id"
                         },
                         "map": {
                             "project": {
                                 "project": "project",
                                 "value": {
-                                    "project_id": "ProjectID",
+                                    "project_id": "project_short_name"
                                 },
                                 "map": {
                                     "program": {
                                         "program": "program",
                                         "value": {
-                                            "name": "ProgramName",
+                                            "name": "program_name"
                                         }
                                     }
                                 }
@@ -306,8 +360,8 @@ if __name__ == '__main__':
                             "samples": {
                                 "samples": "samples",
                                 "value": {
-                                    "sample_id": "SampleID", 
-                                    "submitter_id": "SamplesSubmitterID"
+                                    "sample_id": "sample_gdc_id", 
+                                    "submitter_id": "sample_barcode"
                                 },
                                 "map_list": {
                                     "portions": {
@@ -319,8 +373,8 @@ if __name__ == '__main__':
                                                     "aliquots": {
                                                         "aliquots": "aliquots",
                                                         "value": {
-                                                            "submitter_id": "AliquotsSubmitterID", 
-                                                            "aliquot_id": "AliquotsAliquotID" 
+                                                            "submitter_id": "aliquot_barcode", 
+                                                            "aliquot_id": "aliquot_gdc_id" 
                                                         }
                                                     }
                                                 }
@@ -330,14 +384,15 @@ if __name__ == '__main__':
                                 }
                             }
                         }
-                    }
+                    },
                 }
             },
             "datatype2bqscript": {
                 "Gene Expression Quantification": {
                     "python_module":"gdc.etl.gene_expression_quantification",
-                    "class":"gene_expression_quantification",
-                    "bq_dataset": "GDC_data_open",
+                    "class":"Gene_expression_quantification",
+                    "file_compressed": True,
+                    "bq_dataset": "test",
                     "bq_table": "TCGA_GeneExpressionQuantification_local_test",
                     "schema_file": "gdc/schemas/geq.json",
                     "write_disposition": "WRITE_APPEND",
@@ -345,6 +400,47 @@ if __name__ == '__main__':
                         "HTSeq - FPKM-UQ",
                         "HTSeq - FPKM",
                         "HTSeq - Counts"
+                    ]
+                },
+                "Methylation Beta Value": {
+                    "python_module":"gdc.etl.methylation",
+                    "class":"Methylation",
+                    "file_compressed": False,
+                    "bq_dataset": "test",
+                    "bq_table": "TCGA_Methylation_local_test",
+                    "schema_file": "gdc/schemas/meth.json",
+                    "write_disposition": "WRITE_APPEND",
+                    "use_columns": {
+                        "Composite Element REF": "probe_id",
+                        "Beta_value": "beta_value"
+                    },
+                    "add_metadata_columns": [
+                        "sample_barcode",
+                        "project_short_name",
+                        "program_name",
+                        "sample_type_code",
+                        "file_name",
+                        "file_gdc_id",
+                        "aliquot_barcode",
+                        "case_barcode",
+                        "case_gdc_id",
+                        "sample_gdc_id",
+                        "aliquot_gdc_id"
+                    ],
+                    "order_columns": [
+                        "sample_barcode",
+                        "probe_id",
+                        "beta_value",
+                        "project_short_name",
+                        "program_name",
+                        "sample_type_code",
+                        "file_name",
+                        "file_gdc_id",
+                        "aliquot_barcode",
+                        "case_barcode",
+                        "case_gdc_id",
+                        "sample_gdc_id",
+                        "aliquot_gdc_id"
                     ]
                 }
             }
@@ -361,7 +457,7 @@ if __name__ == '__main__':
         file_ids = setup_file_ids(config)
         project = 'TCGA-UCS'
         data_type = 'Gene Expression Quantification'
-        for download_files_per in [6]:
+        for download_files_per in [3]:
             config['download_files_per'] = download_files_per
             try:
                 upload_files(config, 'current', file_ids, project, data_type, log)
