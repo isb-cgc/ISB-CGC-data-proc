@@ -55,7 +55,6 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
             ['category'],
             ['classification'],
             ['status'],
-            ['state'],
             ['entity_type'],
             ['entity_gdc_id'],
             ['entity_barcode'],
