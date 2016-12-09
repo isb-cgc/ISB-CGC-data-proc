@@ -93,7 +93,7 @@ class Etl(object):
             info = file2info[fields[-2] + '/' + fields[-1]]
             if self.skip_file(config, path, file2info, info, log):
                 continue
-            file_df = self.process_file(config, data_type, outputdir, path, info, project, log)
+            file_df = self.process_file(config, outputdir, data_type, path, info, project, log)
             if complete_df is None:
                 complete_df = file_df
             else:
