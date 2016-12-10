@@ -85,7 +85,7 @@ def __attempt_upload(file_path, bucket_name, key_name, log):
         raise ValueError('found %s in %s' % (key_name, bucket_name))
     blob = bucket.blob(key_name)
     blob.upload_from_filename(file_path)
-    log.info('\t\tsuccessfully uploaded %s' % key_name)
+    log.info('\t\tsuccessfully uploaded %s' % bucket_name + '/' + key_name)
 
 def download_file(file_path, bucket_name, key_name, log):
     global backoff
