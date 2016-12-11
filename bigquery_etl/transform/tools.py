@@ -25,6 +25,8 @@ import chardet
 
 log = logging.getLogger(__name__)
 
+lock = Lock()
+
 #--------------------------------------
 # Clean up the dataframe
 #--------------------------------------
@@ -48,7 +50,6 @@ def cleanup_dataframe(df, caller_log = None):
 #     for rep in na_values:
 #         df = df.replace(rep, np.nan)
 
-    lock = Lock()
     with lock:
         log.info('\tremove empty spaces(this removes more than 1 space)')
         df = df.applymap(lambda x: np.nan if isinstance(x, basestring) and x.isspace() else x)
