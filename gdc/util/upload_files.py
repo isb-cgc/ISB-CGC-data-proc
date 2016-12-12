@@ -64,7 +64,7 @@ def request_try(config, url, file_ids, start, end, outputdir, log):
             if retries < 3:
                 retries += 1
                 time.sleep(1 * retries)
-                log.warn('\t\trequest try %d after error %s' % (retries, e))
+                log.warn('\t\trequest try %d after error %s for %s' % (retries, e, params))
                 continue
 #             if 100 < start - end:
 #                 log.error('range too small to continue--%s:%s' % (end, start))
@@ -178,7 +178,7 @@ def upload_files(config, endpt_type, file2info, project, data_type, log):
         log.warning('finished cleaning up GCS for failed project %s and datatype %s' % (project, data_type))
         raise
 
-def setup_file_ids(config):
+def setup_file_ids(config, data_type):
     file_ids = {}
     with open(config['input_id_file']) as file_id_file:
         for line in file_id_file:
@@ -226,11 +226,12 @@ def setup_file_ids(config):
                 info['platform'] = 'Illumina Human Methylation 450'
                 info['cases'][0]['samples'][0]['portions'][0]['analytes'][0]['aliquots'][0]['submitter_id'] = fields[2].split('.')[5]
             
-            file_fields = fields[2].split('.')
-            if 'htseq' == file_fields[1]:
-                info['analysis']['workflow_type'] = 'HTSeq - Counts'
-            else:
-                info['analysis']['workflow_type'] = 'HTSeq - ' + file_fields[1]
+            if data_type == 'Gene Expression Quantification':
+                file_fields = fields[2].split('.')
+                if 'htseq' == file_fields[1]:
+                    info['analysis']['workflow_type'] = 'HTSeq - Counts'
+                else:
+                    info['analysis']['workflow_type'] = 'HTSeq - ' + file_fields[1]
             
             file_ids[fields[1]] = info
     
@@ -242,7 +243,7 @@ if __name__ == '__main__':
         'upload_etl_files': True,
         'download_base_output_dir': '/tmp/project/datatype/',
         'download_output_file_template': 'gdc_download_%s_%s.tar.gz',
-        'input_id_file': 'gdc/doc/gdc_manifest_geq.2016-12-02_test_60.tsv',
+        'input_id_file': 'gdc/doc/gdc_manifest_mirnaeq.2016-12-09_test_100.tsv',
         'download_files_per': 0,
         'gcs_wrapper': 'gcs_wrapper_gcloud',
         'cloud_projects': {
@@ -252,8 +253,8 @@ if __name__ == '__main__':
             "open": "isb-cgc-scratch",
             "controlled": "62f2c827-test-a",
             "folders": {
-            "base_file_folder": "gdc/NCI-GDC_local/",
-            "base_run_folder": "gdc/NCI-GDC_local_run/"
+                "base_file_folder": "gdc/NCI-GDC_local/",
+                "base_run_folder": "gdc/NCI-GDC_local_run/"
             }
         },
         "sample_code_position" : {
@@ -442,6 +443,51 @@ if __name__ == '__main__':
                         "sample_gdc_id",
                         "aliquot_gdc_id"
                     ]
+                },
+                "miRNA Expression Quantification": {
+                    "python_module":"gdc.etl.mirna_expression_quantification",
+                    "class":"Mirna_expression_quantification",
+                    "file_compressed": False,
+                    "bq_dataset": "test",
+                    "bq_table": "TCGA_miRNAExpressionQuantification_local_test",
+                    "schema_file": "gdc/schemas/mirnaeq.json",
+                    "write_disposition": "WRITE_APPEND",
+                    "use_columns": {
+                        "miRNA_ID": "miRNA_ID",
+                        "read_count": "read_count",
+                        "reads_per_million_miRNA_mapped": "reads_per_million_miRNA_mapped",
+                        "cross-mapped": "cross-mapped"
+                    },
+                    "add_metadata_columns": [
+                        "sample_barcode",
+                        "project_short_name",
+                        "program_name",
+                        "sample_type_code",
+                        "file_name",
+                        "file_gdc_id",
+                        "aliquot_barcode",
+                        "case_barcode",
+                        "case_gdc_id",
+                        "sample_gdc_id",
+                        "aliquot_gdc_id"
+                    ],
+                    "order_columns": [
+                        "sample_barcode",
+                        "miRNA_ID",
+                        "read_count",
+                        "reads_per_million_miRNA_mapped",
+                        "cross-mapped",
+                        "project_short_name",
+                        "program_name",
+                        "sample_type_code",
+                        "file_name",
+                        "file_gdc_id",
+                        "aliquot_barcode",
+                        "case_barcode",
+                        "case_gdc_id",
+                        "sample_gdc_id",
+                        "aliquot_gdc_id"
+                    ]
                 }
             }
         }
@@ -454,10 +500,10 @@ if __name__ == '__main__':
     module.open_connection(config, log)
 
     try:
-        file_ids = setup_file_ids(config)
         project = 'TCGA-UCS'
-        data_type = 'Gene Expression Quantification'
-        for download_files_per in [3]:
+        data_type = 'miRNA Expression Quantification'
+        file_ids = setup_file_ids(config, data_type)
+        for download_files_per in [20]:
             config['download_files_per'] = download_files_per
             try:
                 upload_files(config, 'current', file_ids, project, data_type, log)

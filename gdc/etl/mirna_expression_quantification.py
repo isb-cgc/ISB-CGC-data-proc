@@ -17,13 +17,7 @@ limitations under the License.
 
 @author: michael
 '''
-import gzip
-import pandas as pd
-
-from bigquery_etl.extract.utils import convert_file_to_dataframe
-from bigquery_etl.transform.tools import cleanup_dataframe
 from gdc.etl import etl
-from util import flatten_map
 
 class Mirna_expression_quantification(etl.Etl):
     

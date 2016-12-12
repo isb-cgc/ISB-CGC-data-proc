@@ -69,11 +69,22 @@ class Etl(object):
         #now filter down to the desired columns
         use_columns = config['process_files']['datatype2bqscript'][data_type]['use_columns']
         file_df = file_df[use_columns.keys()]
-        #modify to BigQuery desired names
+        #modify to BigQuery desired names, checking for columns that will be split in the next step
         new_names = []
         for colname in file_df.columns:
-            new_names += [use_columns[colname]]
+            fields = use_columns[colname].split(':')
+            if 1 == len(fields):
+                new_names += [use_columns[colname]]
+            else:
+                new_names = [colname]
         file_df.columns = new_names
+                
+        # now process the splits
+        for colname in file_df.columns:
+            fields = use_columns[colname].split(':')
+            if 2 == len(fields) and 'split' == fields[0]:
+                file_df.add(file_df[[colname]].str.extract(fields[1]))
+        
         # add the metadata columns
         file_df = self.add_metadata(file_df, data_type, info, project, config)
         # and reorder them
@@ -104,7 +115,7 @@ class Etl(object):
         # clean-up dataframe
         if complete_df is not None:
             log.info('\t\tcalling cleanup_dataframe() for %s' % (paths))
-            complete_df = cleanup_dataframe(file_df, log)
+            complete_df = cleanup_dataframe(complete_df, log)
             log.info('\t\tdone calling cleanup_dataframe() for %s' % (paths))
             log.info('\tcomplete data frame(%d):\n%s\n%s' % (len(complete_df), complete_df.head(3), complete_df.tail(3)))
         else:
@@ -117,7 +128,7 @@ class Etl(object):
             complete_df = self.process_paths(config, outputdir, data_type, paths, project, file2info, log)
             if complete_df is not None:
                 gcs = GcsConnector(config['cloud_projects']['open'], config['buckets']['open'])
-                keyname = config['buckets']['folders']['base_run_folder'] + 'etl/%s/%s/%s' % (project, data_type, paths[0].split('/')[1][:-3])
+                keyname = config['buckets']['folders']['base_run_folder'] + 'etl/%s/%s/%s' % (project, data_type, paths[0].replace('/', '_'))
                 log.info('start convert and upload %s to the cloud' % (keyname))
                 gcs.convert_df_to_njson_and_upload(complete_df, keyname)
                 log.info('finished convert and upload %s to the cloud' % (keyname))
@@ -169,8 +180,8 @@ if __name__ == '__main__':
             "open": "isb-cgc-scratch",
             "controlled": "62f2c827-test-a",
             "folders": {
-                "base_file_folder": "gdc/test_local_gdc_upload/",
-                "base_run_folder": "gdc/test_local_gdc_upload_run/"
+                "base_file_folder": "gdc/NCI-GDC_local/",
+                "base_run_folder": "gdc/NCI-GDC_local_run/"
             }
         },
         "process_files": {
@@ -191,7 +202,7 @@ if __name__ == '__main__':
                 },
                 "Methylation Beta Value": {
                     "python_module":"gdc.etl.methylation",
-                    "class":"methylation",
+                    "class":"Methylation",
                     "file_compressed": False,
                     "bq_dataset": "test",
                     "bq_table": "TCGA_Methylation_local_test",
@@ -201,6 +212,51 @@ if __name__ == '__main__':
                         "Composite Element REF": "probe_id",
                         "Beta_value": "beta_value"
                     },
+                },
+                "miRNA Expression Quantification": {
+                    "python_module":"gdc.etl.mirna_expression_quantification",
+                    "class":"Mirna_expression_quantification",
+                    "file_compressed": False,
+                    "bq_dataset": "test",
+                    "bq_table": "TCGA_miRNAExpressionQuantification_local_test",
+                    "schema_file": "gdc/schemas/mirnaeq.json",
+                    "write_disposition": "WRITE_APPEND",
+                    "use_columns": {
+                        "miRNA_ID": "miRNA_ID",
+                        "read_count": "read_count",
+                        "reads_per_million_miRNA_mapped": "reads_per_million_miRNA_mapped",
+                        "cross-mapped": "cross_mapped"
+                    },
+                    "add_metadata_columns": [
+                        "sample_barcode",
+                        "project_short_name",
+                        "program_name",
+                        "sample_type_code",
+                        "file_name",
+                        "file_gdc_id",
+                        "aliquot_barcode",
+                        "case_barcode",
+                        "case_gdc_id",
+                        "sample_gdc_id",
+                        "aliquot_gdc_id"
+                    ],
+                    "order_columns": [
+                        "sample_barcode",
+                        "miRNA_ID",
+                        "read_count",
+                        "reads_per_million_miRNA_mapped",
+                        "cross-mapped",
+                        "project_short_name",
+                        "program_name",
+                        "sample_type_code",
+                        "file_name",
+                        "file_gdc_id",
+                        "aliquot_barcode",
+                        "case_barcode",
+                        "case_gdc_id",
+                        "sample_gdc_id",
+                        "aliquot_gdc_id"
+                    ]
                 }
             }
         }
@@ -208,9 +264,9 @@ if __name__ == '__main__':
     
     from datetime import date
     import logging
-    from methylation import Methylation
+    from mirna_expression_quantification import Mirna_expression_quantification
     from util import create_log
     log_dir = str(date.today()).replace('-', '_') + '_gdc_etl_load_run/'
     log_name = create_log(log_dir, 'gdc_upload')
     log = logging.getLogger(log_name)
-    Methylation().finish_etl(config, 'TCGA-UCS', 'Methylation Beta Value', log)
+    Mirna_expression_quantification().finish_etl(config, 'TCGA-UCS', 'miRNA Expression Quantification', log)

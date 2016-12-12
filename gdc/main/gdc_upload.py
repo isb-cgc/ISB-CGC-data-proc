@@ -192,26 +192,13 @@ def get_programs(config, endpt_type, projects_endpt, log):
 def process_programs(config, endpt_type, log_dir, log):
     log.info('begin process_programs()')
     programs = get_programs(config, endpt_type, log_dir, log)
-    future2program = {}
-    with futures.ProcessPoolExecutor(max_workers=config['processes']) as executor:
-        for program_name in programs:
-            if 0 == len(config['program_name_restrict']) or program_name in config['program_name_restrict']:
-                log.info('\tstart program %s' % (program_name))
-                projects = get_program_info(config, endpt_type, config['projects_endpt']['%s endpt' % (endpt_type)] + config['projects_endpt']['query'], program_name, log_dir, log)
-                future2program[executor.submit(process_program, config, endpt_type, program_name, projects, log_dir)] = program_name
-            else:
-                log.info('\tnot starting program %s' % (program_name))
-    
-        future_keys = future2program.keys()
-        while future_keys:
-            future_done, future_keys = futures.wait(future_keys, return_when = futures.FIRST_COMPLETED)
-            for future in future_done:
-                program_name = future2program.pop(future)
-                if future.exception() is not None:
-                    log.exception('\t%s generated an exception--%s:%s' % (program_name, type(future.exception()).__name__, future.exception()))
-                else:
-#                     result = future.result()
-                    log.info('\tfinished program %s' % (program_name))
+    for program_name in programs:
+        if 0 == len(config['program_name_restrict']) or program_name in config['program_name_restrict']:
+            log.info('\tstart program %s' % (program_name))
+            projects = get_program_info(config, endpt_type, config['projects_endpt']['%s endpt' % (endpt_type)] + config['projects_endpt']['query'], program_name, log_dir, log)
+            process_program(config, endpt_type, program_name, projects, log_dir)
+            log.info('\tfinished program %s' % (program_name))
+            
     log.info('finished process_programs()')
 
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
