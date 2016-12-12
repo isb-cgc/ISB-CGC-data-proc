@@ -155,7 +155,7 @@ class Methylation(etl.Etl):
         super(Methylation, self).finish_etl(config, project, data_type, log)
         # now create the tables per chromosome
         log.info('start splitting methylation data by chromosome')
-        project_id = config['project_id']
+        project_id = config['cloud_projects']['open']
         dataset_id = config['process_files']['datatype2bqscript'][data_type]['bq_dataset']
         table_name = config['process_files']['datatype2bqscript'][data_type]['bq_table']
         chromosomes = map(str,range(1,23)) + ['X', 'Y']
