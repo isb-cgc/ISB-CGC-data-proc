@@ -21,12 +21,15 @@ from collections import OrderedDict
 from datetime import date
 import json
 import logging
+from multiprocessing import Semaphore
 import os
 import requests
 import tarfile
 import time
 
 from util import create_log, delete_dir_contents, delete_objects, flatten_map, import_module, upload_file
+
+semaphore = Semaphore(4)
 
 def write_response(config, response, start, end, outputdir, log):
     try:
@@ -82,9 +85,11 @@ def process_files(config, endpt_type, file2info, outputdir, start, end, project,
     try:
         filepath = outputdir + config['download_output_file_template'] % (start, end - 1)
         with tarfile.open(filepath) as tf:
-            log.info('\t\textract tar files from %s' % (filepath))
-            tf.extractall(outputdir)
-            log.info('\t\tdone extract tar files from %s' % (filepath))
+            log.info('\t\tacquire lock to extract tar files from %s' % (filepath))
+            with semaphore:
+                log.info('\t\textract tar files from %s' % (filepath))
+                tf.extractall(outputdir)
+                log.info('\t\tdone extract tar files from %s' % (filepath))
      
         with open(outputdir + 'MANIFEST.txt') as manifest:
             lines = manifest.read().split('\n')
