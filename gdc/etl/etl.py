@@ -37,6 +37,9 @@ class Etl(object):
         '''
         pass
 
+    def data_type_specific(self, file_df):
+        return
+    
     def add_metadata(self, file_df, data_type, info, project, config):
         """Add metadata info to the dataframe
         """
@@ -72,21 +75,23 @@ class Etl(object):
         #modify to BigQuery desired names, checking for columns that will be split in the next step
         new_names = []
         for colname in file_df.columns:
-            fields = use_columns[colname].split(':')
+            fields = use_columns[colname].split('~')
             if 1 == len(fields):
                 new_names += [use_columns[colname]]
             else:
-                new_names = [colname]
+                new_names += [colname]
         file_df.columns = new_names
                 
         # now process the splits
-        for colname in file_df.columns:
-            fields = use_columns[colname].split(':')
+        for colname in use_columns:
+            fields = use_columns[colname].split('~')
             if 2 == len(fields) and 'split' == fields[0]:
-                file_df.add(file_df[[colname]].str.extract(fields[1]))
-        
+                extracted_df = file_df[colname].str.extract(fields[1], expand = True)
+                file_df = pd.concat([file_df, extracted_df], axis=1)
         # add the metadata columns
         file_df = self.add_metadata(file_df, data_type, info, project, config)
+        # allow subclasses to make final updates
+        self.data_type_specific(config, file_df)
         # and reorder them
         file_df = file_df[config['process_files']['datatype2bqscript'][data_type]['order_columns']]
         
