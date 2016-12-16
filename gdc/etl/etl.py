@@ -37,7 +37,7 @@ class Etl(object):
         '''
         pass
 
-    def data_type_specific(self, file_df):
+    def data_type_specific(self, config, file_df):
         return
     
     def add_metadata(self, file_df, data_type, info, project, config):
