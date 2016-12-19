@@ -16,7 +16,6 @@
 # -*- coding: utf-8 -*-
 import re
 from collections import OrderedDict
-from multiprocessing import Lock
 import pandas as pd
 import numpy as np
 from StringIO import StringIO
@@ -25,7 +24,6 @@ import chardet
 
 log = logging.getLogger(__name__)
 
-lock = Lock()
 
 #--------------------------------------
 # Clean up the dataframe
@@ -50,43 +48,43 @@ def cleanup_dataframe(df, caller_log = None):
 #     for rep in na_values:
 #         df = df.replace(rep, np.nan)
 
-    with lock:
-        log.info('\tremove empty spaces(this removes more than 1 space)')
-        df = df.applymap(lambda x: np.nan if isinstance(x, basestring) and x.isspace() else x)
+    log.info('\tremove empty spaces(this removes more than 1 space)')
+    df = df.applymap(lambda x: np.nan if isinstance(x, basestring) and x.isspace() else x)
+
+    log.info('\tprevent problems with nan(numpy.nan) in the convert and strip step by replacing with \'_mv_\'')
+    df = df.fillna("_mv_")
+
+# this can also be specified on load of df from file
+#    log.info('\tconvert to utf-8')
+#     [df[column].str.encode('utf-8') for column in df.columns]
+
+    log.info('\tstrip spaces (including ^M) and quotes')
+    df.replace(r'((^[\s"\'])|([\s"\']$))', '', regex=True)
     
-        log.info('\tprevent problems with nan(numpy.nan) in the convert and strip step by replacing with \'_mv_\'')
-        df = df.fillna("_mv_")
+    log.info('\treplace back the np.nan')
+    df = df.replace(r'_mv_', np.nan)
+
+    #------------
+    # Fix columns
+    #------------
+    replace_column_strings = (
+        (" ", "_"), # blank space to underscore
+        ("-", "_"), # dashes to underscore (BQ doesnt allow dashes)
+        (")", ""),  # delete closing bracket
+        ("(", "_"), # opening bracket to underscore
+        ("+", "_"), # plus to underscore
+        (".", "_"), # dot to underscore
+        ("__", "_") # double underscore to just underscore
+    )
+    replace_column_strings = OrderedDict(replace_column_strings)
+
+    log.info('\tstrip column names')
+    df.columns = df.columns.map(lambda x: x.strip())
+
+    log.info('\treplace all non-desired characters(space, dash, etc.) in column names with underscore')
+    for repl in replace_column_strings:
+        df.columns = df.columns.map(lambda x: x.replace(repl, replace_column_strings[repl]))
     
-    # this can also be specified on load of df from file
-    #    log.info('\tconvert to utf-8')
-    #     [df[column].str.encode('utf-8') for column in df.columns]
-    
-        log.info('\tstrip spaces (including ^M) and quotes')
-        df.replace(r'((^[\s"\'])|([\s"\']$))', '', regex=True)
-        
-        log.info('\treplace back the np.nan')
-        df = df.replace(r'_mv_', np.nan)
-    
-        #------------
-        # Fix columns
-        #------------
-        replace_column_strings = (
-            (" ", "_"), # blank space to underscore
-            ("-", "_"), # dashes to underscore (BQ doesnt allow dashes)
-            (")", ""),  # delete closing bracket
-            ("(", "_"), # opening bracket to underscore
-            ("+", "_"), # plus to underscore
-            (".", "_"), # dot to underscore
-            ("__", "_") # double underscore to just underscore
-        )
-        replace_column_strings = OrderedDict(replace_column_strings)
-    
-        log.info('\tstrip column names')
-        df.columns = df.columns.map(lambda x: x.strip())
-    
-        log.info('\treplace all non-desired characters(space, dash, etc.) in column names with underscore')
-        for repl in replace_column_strings:
-            df.columns = df.columns.map(lambda x: x.replace(repl, replace_column_strings[repl]))
     log.info("Finished cleaning up the dataframe")
     return df
 
