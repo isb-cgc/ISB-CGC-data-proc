@@ -28,12 +28,14 @@ For more information, see the README.md under /bigquery.
 
 import argparse
 import json
+from math import ceil
 import time
 import uuid
-import sys
+
+from gcloud import storage
+from gcloud_requests.connection import storage_http
 from googleapiclient import discovery
 from oauth2client.client import GoogleCredentials
-
 
 # [START load_table]
 def load_table(bigquery, project_id, dataset_id, table_name, source_schema,
@@ -114,12 +116,30 @@ def poll_job(bigquery, job):
 
 
 # [START run]
-def run(project_id, dataset_id, table_name, schema_file, data_path,
+
+def __check_contents(data_path, project_id, batch_count):
+    # wait for all the etl json files to be visible in cloud storage
+    storage_service = storage.Client(project=project_id, http=storage_http)
+    present = 0
+    check_count = 0
+    bucket_name = data_path.split('/')[2]
+    prefix = '/'.join(data_path.split('/')[3:])
+    bucket = storage_service.get_bucket(bucket_name)
+    while batch_count != present:
+        time.sleep(1 + (int(ceil(check_count / 5))))
+        present = len(bucket.list_blobs(prefix=prefix))
+        if 40 == check_count:
+            raise ValueError('waited 40 seconds for all the etl files to be presented')
+        check_count += 1
+
+def run(project_id, batch_count, dataset_id, table_name, schema_file, data_path,
          source_format='NEWLINE_DELIMITED_JSON', write_disposition='WRITE_EMPTY', num_retries=5, poll_interval=1):
     # [START build_service]
     # Grab the application's default credentials from the environment.
     credentials = GoogleCredentials.get_application_default()
 
+    __check_contents(data_path, project_id, batch_count)
+    
     # Construct the service object for interacting with the BigQuery API.
     bigquery = discovery.build('bigquery', 'v2', credentials=credentials)
     # [END build_service]
