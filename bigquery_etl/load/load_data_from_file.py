@@ -120,16 +120,20 @@ def poll_job(bigquery, job):
 def __check_contents(data_path, project_id, batch_count):
     # wait for all the etl json files to be visible in cloud storage
     storage_service = storage.Client(project=project_id, http=storage_http)
-    present = 0
+    cur_count = 0
     check_count = 0
     bucket_name = data_path.split('/')[2]
-    prefix = '/'.join(data_path.split('/')[3:])
+    prefix = '/'.join(data_path.split('/')[3:-1])
     bucket = storage_service.get_bucket(bucket_name)
-    while batch_count != present:
-        time.sleep(1 + (int(ceil(check_count / 5))))
-        present = len(bucket.list_blobs(prefix=prefix))
+    while batch_count != cur_count:
+        time.sleep(1 + (int(ceil(check_count / 10))))
+        cur_count = 0
+        # _Blob_iter doesn't support len() so need to iterate through the contents to get a count
+        bucket_iter = bucket.list_blobs(prefix=prefix)
+        for _ in bucket_iter:
+            cur_count += 1
         if 40 == check_count:
-            raise ValueError('waited 40 seconds for all the etl files to be presented')
+            raise ValueError('waited 40 seconds for all the etl files to be present')
         check_count += 1
 
 def run(project_id, batch_count, dataset_id, table_name, schema_file, data_path,
