@@ -27,7 +27,7 @@ from util import flatten_map
 
 class Gene_expression_quantification(etl.Etl):
     
-    def __init__(self):
+    def __init__(self, config):
         '''
         Constructor
         '''

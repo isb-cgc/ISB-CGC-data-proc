@@ -21,12 +21,12 @@ from collections import OrderedDict
 from datetime import date
 import json
 import logging
-from multiprocessing import Semaphore
 import os
 import requests
 import tarfile
 import time
 
+from gdc_util import instantiate_etl_class
 from util import create_log, delete_dir_contents, delete_objects, flatten_map, import_module, upload_file
 
 def write_response(config, response, start, end, outputdir, log):
@@ -83,7 +83,6 @@ def process_files(config, endpt_type, file2info, outputdir, start, end, project,
     try:
         filepath = outputdir + config['download_output_file_template'] % (start, end - 1)
         with tarfile.open(filepath) as tf:
-            log.info('\t\tacquire lock to extract tar files from %s' % (filepath))
             log.info('\t\textract tar files from %s' % (filepath))
             tf.extractall(outputdir)
             log.info('\t\tdone extract tar files from %s' % (filepath))
@@ -135,27 +134,24 @@ def process_files(config, endpt_type, file2info, outputdir, start, end, project,
 
 def request(config, endpt_type, url, file2info, outputdir, project, data_type, log):
     log.info('\tstarting requests fetch of gdc files')
-    log.info('first set of sorted files:\n\t' + '\n\t'.join(sorted([(info['file_id'] + '/' + info['file_name']) for info in file2info.values()], key = lambda t:t.split('/')[1])[:20]))
+    log.info('first set of sorted files of %d:\n\t' % (len(file2info)) + '\n\t'.join(sorted([(info['file_id'] + '/' + info['file_name']) for info in file2info.values()], key = lambda t:t.split('/')[1])[:20]))
     ordered2info = OrderedDict(sorted([(info['file_id'] + '/' + info['file_name'], info) for info in file2info.values()], key = lambda t:t[1]['file_name']))
     download_files_per = min(config['download_files_per'], len(file2info))
     start = 0
     end = download_files_per
-    etl_class = None
-    if data_type in config['process_files']['datatype2bqscript']:
-        etl_module_name = config['process_files']['datatype2bqscript'][data_type]['python_module']
-        module = import_module(etl_module_name)
-        etl_class_name = config['process_files']['datatype2bqscript'][data_type]['class']
-        Etl_class = getattr(module, etl_class_name)
-        etl_class = Etl_class()
+    etl_class = instantiate_etl_class(config, data_type, log)
+    
+    batch_count = 0
     while start < len(file2info):
         log.info('\t\tfetching range %d:%d' % (start, end))
         request_try(config, url, ordered2info.keys(), start, end, outputdir, log)
         process_files(config, endpt_type, ordered2info, outputdir, start, end, project, data_type, etl_class, log)
         start = end
         end += download_files_per
+        batch_count += 1
         
     if config['upload_etl_files'] and data_type in config['process_files']['datatype2bqscript'] and etl_class is not None:
-        etl_class.finish_etl(config, project, data_type, log)
+        etl_class.finish_etl(config, project, data_type, batch_count, log)
     else:
         log.warning('\t\tnot finishing for ETL for project %s and datatype %s%s' % (project, data_type, ' because there is no script specified' if config['upload_etl_files'] else ''))
 
@@ -243,9 +239,9 @@ if __name__ == '__main__':
     config = {
         "upload_files": True,
         'upload_etl_files': True,
-        'download_base_output_dir': '/tmp/project/datatype/',
+        'download_base_output_dir': '/tmp/',
         'download_output_file_template': 'gdc_download_%s_%s.tar.gz',
-        'input_id_file': 'gdc/doc/gdc_manifest_mirnaeq.2016-12-09_test_100.tsv',
+        'input_id_file': 'gdc/doc/gdc_manifest_mirnaiso.2016-12-12_test_40.tsv',
         'download_files_per': 0,
         'gcs_wrapper': 'gcs_wrapper_gcloud',
         'cloud_projects': {
@@ -446,7 +442,7 @@ if __name__ == '__main__':
                         "aliquot_gdc_id"
                     ]
                 },
-                "miRNA Expression Quantification": {
+                "miRNA Expression Quantification normal": {
                     "python_module":"gdc.etl.mirna_expression_quantification",
                     "class":"Mirna_expression_quantification",
                     "file_compressed": False,
@@ -490,6 +486,161 @@ if __name__ == '__main__':
                         "sample_gdc_id",
                         "aliquot_gdc_id"
                     ]
+                },
+                "miRNA Expression Quantification": {
+                    "python_module":"gdc.etl.mirna_matrix",
+                    "class":"miRNA_matrix",
+                    "file_compressed": False,
+                    "bq_dataset": "test",
+                    "bq_table": "TCGA_miRNA_Matrix_local_test",
+                    "schema_file": "gdc/schemas/mirnamatrix.json",
+                    "write_disposition": "WRITE_APPEND",
+                    "use_columns": {
+                        "miRNA_ID": "miRNA_ID",
+                        "read_count": "read_count",
+                        "reads_per_million_miRNA_mapped": "reads_per_million_miRNA_mapped",
+                        "cross-mapped": "cross-mapped"
+                    },
+                    "add_metadata_columns": [
+                        "sample_barcode",
+                        "project_short_name",
+                        "program_name",
+                        "sample_type_code",
+                        "file_name",
+                        "file_gdc_id",
+                        "aliquot_barcode",
+                        "case_barcode",
+                        "case_gdc_id",
+                        "sample_gdc_id",
+                        "aliquot_gdc_id"
+                    ],
+                    "order_columns": [
+                        "sample_barcode",
+                        "miRNA_ID",
+                        "read_count",
+                        "reads_per_million_miRNA_mapped",
+                        "cross-mapped",
+                        "project_short_name",
+                        "program_name",
+                        "sample_type_code",
+                        "file_name",
+                        "file_gdc_id",
+                        "aliquot_barcode",
+                        "case_barcode",
+                        "case_gdc_id",
+                        "sample_gdc_id",
+                        "aliquot_gdc_id"
+                    ]
+                },
+                "Isoform Expression Quantification": {
+                    "python_module":"gdc.etl.mirna_matrix",
+                    "class":"miRNA_matrix",
+                    "only_matrix": False,
+                    "file_compressed": False,
+                    "matrix_subdir": "isoform_matrix_files/",
+                    "bq_dataset": "test",
+                    "bq_table": "TCGA_miRNAIsoformQuantification_local_test",
+                    "schema_file": "gdc/schemas/mirnaiso.json",
+                    "write_disposition": "WRITE_APPEND",
+                    "use_columns": {
+                        "miRNA_ID": "miRNA_ID",
+                        "isoform_coords": "split~(?P<genomic_build>.+):(?P<chromosome>.+):(?P<start>.+)-(?P<end>.+):(?P<strand>.)",
+                        "read_count": "read_count",
+                        "reads_per_million_miRNA_mapped": "reads_per_million_miRNA_mapped",
+                        "cross-mapped": "cross_mapped",
+                        "miRNA_region": "split~(?P<mirna_transcript>.+),(?P<mirna_accession>.+)|(?P<mirna_trans>[^,]+)"
+                    },
+                    "add_metadata_columns": [
+                        "sample_barcode",
+                        "project_short_name",
+                        "program_name",
+                        "sample_type_code",
+                        "file_name",
+                        "file_gdc_id",
+                        "aliquot_barcode",
+                        "case_barcode",
+                        "case_gdc_id",
+                        "sample_gdc_id",
+                        "aliquot_gdc_id"
+                    ],
+                    "order_columns": [
+                        "sample_barcode",
+                        "miRNA_ID",
+                        "read_count",
+                        "reads_per_million_miRNA_mapped",
+                        "genomic_build",
+                        "chromosome",
+                        "start",
+                        "end",
+                        "strand",
+                        "cross_mapped",
+                        "mirna_accession",
+                        "mirna_transcript",
+                        "project_short_name",
+                        "program_name",
+                        "sample_type_code",
+                        "file_name",
+                        "file_gdc_id",
+                        "aliquot_barcode",
+                        "case_barcode",
+                        "case_gdc_id",
+                        "sample_gdc_id",
+                        "aliquot_gdc_id"
+                    ]
+                },
+                "Isoform Expression Quantification not": {
+                    "python_module":"gdc.etl.isoform_expression_quantification",
+                    "class":"Isoform_expression_quantification",
+                    "file_compressed": False,
+                    "bq_dataset": "test",
+                    "bq_table": "TCGA_miRNAIsoformQuantification_local_test",
+                    "schema_file": "gdc/schemas/isoform_matrix.json",
+                    "write_disposition": "WRITE_APPEND",
+                    "use_columns": {
+                        "miRNA_ID": "miRNA_ID",
+                        "isoform_coords": "split~(?P<genomic_build>.+):(?P<chromosome>.+):(?P<start>.+)-(?P<end>.+):(?P<strand>.)",
+                        "read_count": "read_count",
+                        "reads_per_million_miRNA_mapped": "reads_per_million_miRNA_mapped",
+                        "cross-mapped": "cross_mapped",
+                        "miRNA_region": "split~(?P<mirna_transcript>.+),(?P<mirna_accession>.+)|(?P<mirna_trans>[^,]+)"
+                    },
+                    "add_metadata_columns": [
+                        "sample_barcode",
+                        "project_short_name",
+                        "program_name",
+                        "sample_type_code",
+                        "file_name",
+                        "file_gdc_id",
+                        "aliquot_barcode",
+                        "case_barcode",
+                        "case_gdc_id",
+                        "sample_gdc_id",
+                        "aliquot_gdc_id"
+                    ],
+                    "order_columns": [
+                        "sample_barcode",
+                        "miRNA_ID",
+                        "read_count",
+                        "reads_per_million_miRNA_mapped",
+                        "genomic_build",
+                        "chromosome",
+                        "start",
+                        "end",
+                        "strand",
+                        "cross_mapped",
+                        "mirna_accession",
+                        "mirna_transcript",
+                        "project_short_name",
+                        "program_name",
+                        "sample_type_code",
+                        "file_name",
+                        "file_gdc_id",
+                        "aliquot_barcode",
+                        "case_barcode",
+                        "case_gdc_id",
+                        "sample_gdc_id",
+                        "aliquot_gdc_id"
+                    ]
                 }
             }
         }
@@ -503,13 +654,16 @@ if __name__ == '__main__':
 
     try:
         project = 'TCGA-UCS'
-        data_type = 'miRNA Expression Quantification'
+        data_type = 'Isoform Expression Quantification'
         file_ids = setup_file_ids(config, data_type)
-        for download_files_per in [20]:
+
+        instantiate_etl_class(config, data_type, log).initialize(config, log)
+        for download_files_per in [40]:
             config['download_files_per'] = download_files_per
             try:
                 upload_files(config, 'current', file_ids, project, data_type, log)
             except:
                 log.exception('failed with lines per @ %d' % (download_files_per))
+        instantiate_etl_class(config, data_type, log).finalize(config, file_ids, log)
     finally:
         module.close_connection()

@@ -23,7 +23,7 @@ from gdc.etl import etl
 
 class Isoform_expression_quantification(etl.Etl):
     
-    def __init__(self):
+    def __init__(self, config):
         '''
         Constructor
 

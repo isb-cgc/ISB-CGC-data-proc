@@ -21,7 +21,7 @@ from gdc.etl import etl
 
 class Mirna_expression_quantification(etl.Etl):
     
-    def __init__(self):
+    def __init__(self, config):
         '''
         Constructor
         '''

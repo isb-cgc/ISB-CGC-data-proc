@@ -29,6 +29,7 @@ from multiprocessing import Semaphore
 import platform
 import sys
 
+from gdc.util.gdc_util import instantiate_etl_class
 from gdc.util.gdc_util import request_facets_results
 from gdc.util.process_annotations import process_annotations
 from gdc.util.process_projects import process_projects_for_programs, process_projects
@@ -105,6 +106,7 @@ def process_project(config, endpt_type, project, log_dir):
                                     future2data_type[new_future] = data_type
                             else:
                                 log.info('\t\tfinished process data_type \'%s\' for %s' % (data_type, project))
+                                file2info = future.result()
                                 future_keys = future2data_type.keys()
                     except:
                         future_keys = future2data_type.keys()
@@ -114,11 +116,24 @@ def process_project(config, endpt_type, project, log_dir):
             log.warning('\n\t====================\n\tnot processing data types this run for %s!\n\t====================' % (project))
         
         log.info('finished process_project(%s)' % (project))
-        return case2info
+        return case2info, file2info
     except:
         log.exception('problem processing project %s' % (project))
         raise
     
+## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+def initialize_etl(config, log):
+    for data_type in config['process_files']['datatype2bqscript'].keys():
+        instantiate_etl_class(config, data_type, log).initialize(config, log)
+
+
+## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+def finalize_etl(config, log):
+    for data_type in config['process_files']['datatype2bqscript'].keys():
+        instantiate_etl_class(config, data_type, log).finalize(config, log)
+
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 def process_program(config, endpt_type, program_name, projects, log_dir):
@@ -128,13 +143,14 @@ def process_program(config, endpt_type, program_name, projects, log_dir):
         log = logging.getLogger(log_name)
         log.info('begin process_program(%s)' % (program_name))
 
-        if config['upload_open'] or config['upload_controlled'] or config['upload_etl_files']:
+#         if config['upload_open'] or config['upload_controlled'] or config['upload_etl_files']:
             # open the GCS wrapper here so it can be used by all the projects/platforms to save files
-            gcs_wrapper = import_module(config['gcs_wrapper'])
-            gcs_wrapper.open_connection(config, log)
+#             gcs_wrapper = import_module(config['gcs_wrapper'])
+#             gcs_wrapper.open_connection(config, log)
 
         future2project = {}
         if config['process_project']:
+            initialize_etl(config, log)
             with futures.ThreadPoolExecutor(max_workers=config['project_threads']) as executor:
                 for project in projects:
                     if project in config['skip_projects']:
@@ -145,27 +161,28 @@ def process_program(config, endpt_type, program_name, projects, log_dir):
                         future2project[executor.submit(process_project, config, endpt_type, project, log_dir)] = project
                     else:
                         log.info('\tnot processing project %s' % (project))
+     
+            future_keys = future2project.keys()
+            while future_keys:
+                future_done, future_keys = futures.wait(future_keys, return_when = futures.FIRST_COMPLETED)
+                for future in future_done:
+                    project = future2project.pop(future)
+                    if future.exception() is not None:
+                        log.exception('\t%s generated an exception--%s: %s' % (project, type(future.exception()).__name__, future.exception()))
+                    else:
+                        _, file2info = future.result()
+                        log.info('\tfinished project %s' % (project))
+            finalize_etl(config, log)
         else:
             log.warning('\n\t====================\n\tnot processing projects this run!\n\t====================')
-     
-        future_keys = future2project.keys()
-        while future_keys:
-            future_done, future_keys = futures.wait(future_keys, return_when = futures.FIRST_COMPLETED)
-            for future in future_done:
-                project = future2project.pop(future)
-                if future.exception() is not None:
-                    log.exception('\t%s generated an exception--%s: %s' % (project, type(future.exception()).__name__, future.exception()))
-                else:
-#                     result = future.result()
-                    log.info('\tfinished project %s' % (project))
     
         log.info('finished process_program(%s)' % (program_name))
     except:
         log.exception('problem processing program %s' % (program_name))
         raise
-    finally:
-        gcs_wrapper.close_connection()
-        close_log(log)
+#     finally:
+#         gcs_wrapper.close_connection()
+#         close_log(log)
 
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 

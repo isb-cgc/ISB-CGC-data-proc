@@ -152,3 +152,14 @@ def request_facets_results(url, facet_query, facet, log, page_size = 0, params =
         if response:
             response.close()
     return retval
+
+def instantiate_etl_class(config, data_type, log):
+    etl_class = None
+    if data_type in config['process_files']['datatype2bqscript']:
+        log.info('\t\tinstantiating etl class %s' % (config['process_files']['datatype2bqscript'][data_type]['class']))
+        etl_module_name = config['process_files']['datatype2bqscript'][data_type]['python_module']
+        module = import_module(etl_module_name)
+        etl_class_name = config['process_files']['datatype2bqscript'][data_type]['class']
+        Etl_class = getattr(module, etl_class_name)
+        etl_class = Etl_class(config)
+    return etl_class

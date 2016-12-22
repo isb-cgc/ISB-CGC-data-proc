@@ -103,6 +103,7 @@ class Etl(object):
     def process_paths(self, config, outputdir, data_type, paths, project, file2info, log):
         count = 0
         complete_df = None
+        log.info('\tprocessing %d paths for %s:%s' % (len(paths), data_type, project))
         for path in paths:
             count += 1
             fields = path.split('/')
@@ -116,6 +117,7 @@ class Etl(object):
                 complete_df = pd.concat([complete_df, file_df], ignore_index = True)
             if 0 == count % 128:
                 log.info('\t\tprocessed %s path: %s' % (count, path))
+        log.info('\tdone processing %d paths for %s:%s' % (len(paths), data_type, project))
         
         # clean-up dataframe
         if complete_df is not None:
@@ -134,17 +136,17 @@ class Etl(object):
             if complete_df is not None:
                 gcs = GcsConnector(config['cloud_projects']['open'], config['buckets']['open'])
                 keyname = config['buckets']['folders']['base_run_folder'] + 'etl/%s/%s/%s' % (project, data_type, paths[0].replace('/', '_'))
-                log.info('start convert and upload %s to the cloud' % (keyname))
-                gcs.convert_df_to_njson_and_upload(complete_df, keyname)
-                log.info('finished convert and upload %s to the cloud' % (keyname))
+                log.info('\t\tstart convert and upload %s to the cloud' % (keyname))
+                gcs.convert_df_to_njson_and_upload(complete_df, keyname, logparam = log)
+                log.info('\t\tfinished convert and upload %s to the cloud' % (keyname))
             else:
-                log.info('no upload for this batch of files')
+                log.info('\t\tno upload for this batch of files')
         except Exception as e:
             log.exception('problem finishing the etl: %s' % (e))
             raise
         log.info('\tfinished upload_batch_etl() for %s and %s' % (project, data_type))
     
-    def load(self, project_id, bq_datasets, bq_tables, schema_files, gcs_file_paths, write_dispositions, log):
+    def load(self, project_id, bq_datasets, bq_tables, schema_files, gcs_file_paths, write_dispositions, batch_count, log):
         """
         Load the bigquery table
         load_data_from_file accepts following params:
@@ -152,16 +154,17 @@ class Etl(object):
               source_format, write_disposition, poll_interval, num_retries
         """
         log.info('\tbegin load of %s data into bigquery' % (gcs_file_paths))
+        
         sep = ''
         for index in range(len(bq_datasets)):
             log.info("%s\t\tLoading %s table into BigQuery.." % (sep, bq_datasets[index]))
-            load_data_from_file.run(project_id, bq_datasets[index], bq_tables[index], schema_files[index], 
+            load_data_from_file.run(project_id, batch_count, bq_datasets[index], bq_tables[index], schema_files[index], 
                                 gcs_file_paths[index] + '/*', 'NEWLINE_DELIMITED_JSON', write_dispositions[index])
             sep = '\n\t\t"*"*30\n'
     
         log.info('done load %s of data into bigquery' % (gcs_file_paths))
 
-    def finish_etl(self, config, project, data_type, log):
+    def finish_etl(self, config, project, data_type, batch_count, log):
         log.info('\tstart finish_etl() for %s %s' % (project, data_type))
         try:
             bq_dataset = config['process_files']['datatype2bqscript'][data_type]['bq_dataset']
@@ -169,12 +172,18 @@ class Etl(object):
             schema_file = config['process_files']['datatype2bqscript'][data_type]['schema_file']
             gcs_file_path = 'gs://' + config['buckets']['open'] + '/' + config['buckets']['folders']['base_run_folder'] + 'etl/%s/%s' % (project, data_type)
             write_disposition = config['process_files']['datatype2bqscript'][data_type]['write_disposition']
-            self.load(config['cloud_projects']['open'], [bq_dataset], [bq_table], [schema_file], [gcs_file_path], [write_disposition], log)
+            self.load(config['cloud_projects']['open'], [bq_dataset], [bq_table], [schema_file], [gcs_file_path], [write_disposition], batch_count, log)
         except Exception as e:
             log.exception('problem finishing the etl: %s' % (e))
             raise
         log.info('\tfinished finish_etl() for %s %s' % (project, data_type))
 
+    def initialize(self, config, log): 
+        pass
+    
+    def finalize(self, config, file2info, log): 
+        pass
+    
 if __name__ == '__main__':
     config = {
         'project_id': 'isb-cgc',
