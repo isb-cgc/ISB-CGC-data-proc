@@ -151,8 +151,8 @@ class Methylation(etl.Etl):
             print ("Credentials have been revoked or expired, please re-run"
                "the application to re-authorize")
     
-    def finish_etl(self, config, project, data_type, log):
-        super(Methylation, self).finish_etl(config, project, data_type, log)
+    def finish_etl(self, config, project, data_type, batch_count, log):
+        super(Methylation, self).finish_etl(config, project, data_type, batch_count, log)
         # now create the tables per chromosome
         log.info('start splitting methylation data by chromosome')
         project_id = config['cloud_projects']['open']
