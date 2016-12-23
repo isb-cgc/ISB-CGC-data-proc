@@ -175,23 +175,21 @@ class GcsConnector(object):
 
         log.info('\t\t\tstart conversion of %s' % (destination_blobname))
         file_to_upload = StringIO()
-        modcount = len(df) / 10
-        count = 0
 
-        for _, rec in df.iterrows():
-            if 0 == count % modcount:
-                log.info('\t\t\t\tconverted %s rows' % (count))
-            count += 1
-            file_to_upload.write(rec.convert_objects(convert_numeric=False).to_json() + "\n")
-        file_to_upload.seek(0)
-        log.info('\t\t\tcompleted conversion.  converted %s total rows for %s' % (count, destination_blobname))
-
+        try:
+            log.info('\t\t\t\tconverting dataframe as a whole')
+            df_json = df.convert_objects(convert_numeric=False).to_json(orient = 'records', lines = True) + '\n'
+            log.info('\t\t\t\tconverted dataframe as a whole')
+        except:
+            log.exception('failed to convert dataframe!')
+            raise
+        
         upload_blob = storage.blob.Blob(destination_blobname, bucket=self.bucket)
         retry = 0
         log.info('\t\t\tstart upload of %s' % (destination_blobname))
         while True:
             try:
-                upload_blob.upload_from_string(file_to_upload.getvalue())
+                upload_blob.upload_from_string(df_json)
                 break
             except Exception as e:
                 if 3 == retry:
