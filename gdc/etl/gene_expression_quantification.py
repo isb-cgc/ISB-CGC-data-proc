@@ -135,8 +135,8 @@ class Gene_expression_quantification(etl.Etl):
     
         log.info('\tcomplete data frame(%d):\n%s\n%s' % (len(complete_df), complete_df.head(3), complete_df.tail(3)))
         return complete_df
-    
-    def finish_etl(self, config, project, data_type, log):
+
+    def finish_etl(self, config, project, data_type, batch_count, log):
         log.info('\tstart finish_etl() for gene expression quantification')
         try:
             bq_dataset = config['process_files']['datatype2bqscript']['Gene Expression Quantification']['bq_dataset']
@@ -144,7 +144,7 @@ class Gene_expression_quantification(etl.Etl):
             schema_file = config['process_files']['datatype2bqscript']['Gene Expression Quantification']['schema_file']
             gcs_file_path = 'gs://' + config['buckets']['open'] + '/' + config['buckets']['folders']['base_run_folder'] + 'etl/%s/%s' % (project, data_type)
             write_disposition = config['process_files']['datatype2bqscript']['Gene Expression Quantification']['write_disposition']
-            self.load(config['cloud_projects']['open'], [bq_dataset], [bq_table], [schema_file], [gcs_file_path], [write_disposition], log)
+            self.load(config['cloud_projects']['open'], [bq_dataset], [bq_table], [schema_file], [gcs_file_path], [write_disposition], batch_count, log)
         except Exception as e:
             log.exception('problem finishing the etl: %s' % (e))
             raise
