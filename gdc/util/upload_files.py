@@ -538,6 +538,7 @@ if __name__ == '__main__':
                     "only_matrix": False,
                     "file_compressed": False,
                     "matrix_subdir": "isoform_matrix_files/",
+                    "persist_subdir": "isoform_matrix_persist/",
                     "bq_dataset": "test",
                     "bq_table": "TCGA_miRNAIsoformQuantification_local_test",
                     "schema_file": "gdc/schemas/mirnaiso.json",
@@ -664,6 +665,6 @@ if __name__ == '__main__':
                 upload_files(config, 'current', file_ids, project, data_type, log)
             except:
                 log.exception('failed with lines per @ %d' % (download_files_per))
-        instantiate_etl_class(config, data_type, log).finalize(config, file_ids, log)
+        instantiate_etl_class(config, data_type, log).finalize(config, log)
     finally:
         module.close_connection()

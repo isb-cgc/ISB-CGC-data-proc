@@ -47,7 +47,7 @@ class Isoform_expression_quantification(etl.Etl):
         program_name
         sample_type_code
         file_name
-        file_id
+        file_gdc_id
         aliquot_barcode
         case_barcode
         case_gdc_id

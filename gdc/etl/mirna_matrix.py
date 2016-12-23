@@ -17,6 +17,7 @@ limitations under the License.
 
 @author: michael
 '''
+from cPickle import dump, load, HIGHEST_PROTOCOL
 from datetime import date
 import json
 import logging
@@ -35,7 +36,7 @@ from bigquery_etl.transform.tools import cleanup_dataframe
 
 from gdc.etl.isoform_expression_quantification import Isoform_expression_quantification
 
-from util import create_log
+from util import create_log, flatten_map
 
 lock = Lock()
 
@@ -52,7 +53,7 @@ class miRNA_matrix(Isoform_expression_quantification):
         invoking the main routine will currently do the entire matrix creation 
         '''
 
-    def melt_matrix(self, matrix_file, Platform, studies_map, config, log):
+    def melt_matrix(self, matrix_file, platform, studies_map, config, log):
         """
         # melt matrix
         """
@@ -81,7 +82,7 @@ class miRNA_matrix(Isoform_expression_quantification):
                 ParticipantBarcode = "-".join(aliquot.split("-")[0:3])
                 SampleTypeLetterCode = config["sample_code2letter"][aliquot.split("-")[3][0:2]]
                 Study = studies_map[aliquot].upper()
-                buf.write("\t".join(map(str,(ParticipantBarcode, SampleBarcode, aliquot, SampleTypeLetterCode,  Study, Platform, i.split(".")[0], i.split(".")[1],  m))) + '\n')
+                buf.write("\t".join(map(str,(ParticipantBarcode, SampleBarcode, aliquot, SampleTypeLetterCode,  Study, platform, i.split(".")[0], i.split(".")[1],  m))) + '\n')
         log.info('\t\tprocessed %s total lines' % (count))
                 
         file_name = matrix_file.split('/')[-1]
@@ -90,7 +91,7 @@ class miRNA_matrix(Isoform_expression_quantification):
         df = convert_file_to_dataframe(buf)
         df = cleanup_dataframe(df)
         gcs = GcsConnector(config['project_id'], config['buckets']['open'])
-        gcs.convert_df_to_njson_and_upload(df, config['mirna_isoform_matrix'][Platform]['output_dir'] + file_name)
+        gcs.convert_df_to_njson_and_upload(df, config['mirna_isoform_matrix'][platform]['output_dir'] + file_name)
         log.info('\t\tcompleted save to GCS')
         log.info('\tfinished melt matrix')
     
@@ -111,6 +112,25 @@ class miRNA_matrix(Isoform_expression_quantification):
                     if path.exists(common_dir + full_name):
                         raise ValueError('file already exists: %s' % (full_name))
                     copy(input_dir + content + '/' + file_name, common_dir + full_name)
+        
+        # first time this is called, safe off the file2info, transformed into aliquot2info, for use in finalize
+        mapfile_name = project + "_aliquotinfo.txt"
+        mapfile_path = config['download_base_output_dir'] + config['process_files']['datatype2bqscript']['Isoform Expression Quantification']['persist_subdir'] + mapfile_name
+        if not path.exists(mapfile_name):
+            # create the aliquot centric map
+            aliquot2info = {}
+            for value in file2info.values():
+                flattened = flatten_map(value, config['process_files']['data_table_mapping'])[0]
+                info = aliquot2info.setdefault(flattened['aliquot_barcode'], {})
+                info['project_short_name'] = flattened['project_short_name']
+                info['program_name'] = flattened['program_name']
+                info['sample_type_code'] = flattened['sample_type_code']
+                info['file_name'] = flattened['file_name']
+                info['file_gdc_id'] = flattened['file_gdc_id']
+                info['case_gdc_id'] = flattened['case_gdc_id']
+                info['sample_gdc_id'] = flattened['sample_gdc_id']
+                info['aliquot_gdc_id'] = flattened['aliquot_gdc_id']
+            dump(aliquot2info, mapfile_path, protocol = HIGHEST_PROTOCOL)
     
     def finish_etl(self, config, project, data_type, batch_count, log):
         if not config['process_files']['datatype2bqscript']['Isoform Expression Quantification']['only_matrix']:
@@ -118,6 +138,7 @@ class miRNA_matrix(Isoform_expression_quantification):
             
     def initialize(self, config, log): 
         common_dir = config['download_base_output_dir'] + config['process_files']['datatype2bqscript']['Isoform Expression Quantification']['matrix_subdir']
+        mapfile_dir = config['download_base_output_dir'] + config['process_files']['datatype2bqscript']['Isoform Expression Quantification']['persist_subdir']
         with lock:
             if not path.exists(common_dir):
                 makedirs(common_dir)
@@ -126,7 +147,14 @@ class miRNA_matrix(Isoform_expression_quantification):
                 for file_name in files:
                     remove(common_dir + file_name)
     
-    def finalize(self, config, file2info, log): 
+            if not path.exists(mapfile_dir):
+                makedirs(mapfile_dir)
+            else:
+                files = listdir(mapfile_dir)
+                for file_name in files:
+                    remove(mapfile_dir + file_name)
+    
+    def finalize(self, config, log): 
         log.info('\tstart creating isoform matrix')
         
         log.info('\t\trunning expression_matrix_mimat.pl')
@@ -145,9 +173,9 @@ def main(config_filename):
         log_dir = str(date.today()).replace('-', '_') + '_gdc_upload_run/'
         log_name = create_log(log_dir, 'gdc_upload')
         log = logging.getLogger(log_name)
-        log.info('begin creating miRNA isoform matrix')
-
-        log.info('finished creating miRNA isoform matrix')
+        log.info('begin melting miRNA isoform matrix')
+        test_file = './tcga_etl_pipeline/mirna_isoform_matrix/hiseq/expn_matrix_mimat_norm_IlluminaHiSeq_miRNASeq_small.txt'
+        log.info('finished melting miRNA isoform matrix')
     except:
         raise
 

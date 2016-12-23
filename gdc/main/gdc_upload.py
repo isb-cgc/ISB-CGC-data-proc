@@ -26,8 +26,6 @@ from datetime import date, datetime
 import json
 import logging
 from multiprocessing import Semaphore
-import platform
-import sys
 
 from gdc.util.gdc_util import instantiate_etl_class
 from gdc.util.gdc_util import request_facets_results
@@ -143,10 +141,10 @@ def process_program(config, endpt_type, program_name, projects, log_dir):
         log = logging.getLogger(log_name)
         log.info('begin process_program(%s)' % (program_name))
 
-#         if config['upload_open'] or config['upload_controlled'] or config['upload_etl_files']:
+        if config['upload_open'] or config['upload_controlled'] or config['upload_etl_files']:
             # open the GCS wrapper here so it can be used by all the projects/platforms to save files
-#             gcs_wrapper = import_module(config['gcs_wrapper'])
-#             gcs_wrapper.open_connection(config, log)
+            gcs_wrapper = import_module(config['gcs_wrapper'])
+            gcs_wrapper.open_connection(config, log)
 
         future2project = {}
         if config['process_project']:
@@ -170,7 +168,7 @@ def process_program(config, endpt_type, program_name, projects, log_dir):
                     if future.exception() is not None:
                         log.exception('\t%s generated an exception--%s: %s' % (project, type(future.exception()).__name__, future.exception()))
                     else:
-                        _, file2info = future.result()
+                        future.result()
                         log.info('\tfinished project %s' % (project))
             finalize_etl(config, log)
         else:
@@ -180,9 +178,9 @@ def process_program(config, endpt_type, program_name, projects, log_dir):
     except:
         log.exception('problem processing program %s' % (program_name))
         raise
-#     finally:
-#         gcs_wrapper.close_connection()
-#         close_log(log)
+    finally:
+        gcs_wrapper.close_connection()
+        close_log(log)
 
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
