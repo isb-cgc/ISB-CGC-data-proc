@@ -181,7 +181,7 @@ class Etl(object):
     def initialize(self, config, log): 
         pass
     
-    def finalize(self, config, file2info, log): 
+    def finalize(self, config, log): 
         pass
     
 if __name__ == '__main__':
