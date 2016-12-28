@@ -84,31 +84,3 @@ def process_data_type(config, endpt_type, project_id, data_type, log_dir, log_na
         raise
     finally:
         close_log(log)
-
-if __name__ == '__main__':
-    with open(argv[1]) as configFile:
-        config = json.load(configFile)
-    
-    config.update(
-        {
-            'output_file': 'gdc_download_%s_%s.tar.gz',
-            'lines_per': 0,
-            'upload_folder': 'gdc/test_gdc_upload/',
-            'upload_run_folder': 'gdc/test_gdc_upload_run/',
-            'data_types_legacy2use_project': {}
-        }
-    )
-    log_dir = str(date.today()).replace('-', '_') + '_gdc_upload_run/'
-    log_name = create_log(log_dir, 'gdc_upload')
-    log = logging.getLogger(log_name)
-    from util import import_module
-    gcs_wrapper = import_module(config['gcs_wrapper'])
-    gcs_wrapper.open_connection(config, log)
-    data_type = 'Gene Expression Quantification'
-#     data_type = 'Aligned Reads'
-    for lines_per in [50]:
-        config['lines_per'] = lines_per
-        try:
-            process_data_type(config, 'current', 'TCGA-UCS', data_type, log_dir, 'TCGA-UCS_' + data_type.replace(' ', ''))
-        except:
-            log.exception('process data type failed')
