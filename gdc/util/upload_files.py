@@ -18,9 +18,7 @@ limitations under the License.
 @author: michael
 '''
 from collections import OrderedDict
-from datetime import date
 import json
-import logging
 from os import listdir, makedirs, path, remove
 import requests
 from shutil import rmtree
@@ -28,7 +26,7 @@ import tarfile
 import time
 
 from gdc_util import instantiate_etl_class
-from util import create_log, delete_dir_contents, delete_objects, flatten_map, import_module, upload_file
+from util import delete_dir_contents, delete_objects, flatten_map, upload_file
 
 def write_response(config, response, start, end, outputdir, log):
     try:

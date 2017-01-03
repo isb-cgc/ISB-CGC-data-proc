@@ -89,7 +89,8 @@ class Methylation(etl.Etl):
     
         try:
             query_request = bigquery_service.jobs()
-            # maybe there is a nice way to format this one?
+            # using standard SQL to avoid an 'exceeded resources' error caused using legacy sql.  if that error starts to appear with 
+            # standard sql, using an in-clause for the annotation table would likely work, but be slower.
             query = """
                 SELECT data.sample_barcode AS sample_barcode, data.probe_id AS probe_id, data.beta_value AS beta_value, data.project_short_name AS project_short_name, data.program_name AS program_name, 
                     data.sample_type_code AS sample_type_code, data.file_name AS file_name, data.file_gdc_id as file_gdc_id, data.aliquot_barcode as aliquot_barcode, data.case_barcode as case_barcode, 
@@ -97,23 +98,24 @@ class Methylation(etl.Etl):
                 FROM 
                     ( 
                       SELECT CpG_probe_id 
-                      FROM [platform_reference.GDC_hg38_methylation_annotation] 
-                      WHERE ( chromosome == "chr{0}")
+                      FROM platform_reference.GDC_hg38_methylation_annotation
+                      WHERE ( chromosome = "chr{0}")
                     ) AS ids 
-                JOIN EACH 
+                JOIN 
                     (
                       SELECT * 
-                      FROM [{1}.{2}] 
+                      FROM {1}.{2} 
                     ) AS data 
-                ON ids.CpG_probe_id == data.probe_id""".format(chromosome, dataset_id, table_name)
+                ON ids.CpG_probe_id = data.probe_id""".format(chromosome, dataset_id, table_name)
     
             log.info('importing chromosome %s\n%s' % (chromosome, query))
-    #        query_data = {'query': query}
+
             query_data = {
                   'configuration': {
                   'query': {
                     'query': query,
                     'useQueryCache': False,
+                    'useLegacySql': False,
                     'destinationTable': {
                         'projectId': project_id,
                         'datasetId': dataset_id,
@@ -153,15 +155,16 @@ class Methylation(etl.Etl):
     
     def finish_etl(self, config, project, data_type, batch_count, log):
         super(Methylation, self).finish_etl(config, project, data_type, batch_count, log)
+        
+    def finalize(self, config, log): 
         # now create the tables per chromosome
         log.info('start splitting methylation data by chromosome')
         project_id = config['cloud_projects']['open']
-        dataset_id = config['process_files']['datatype2bqscript'][data_type]['bq_dataset']
-        table_name = config['process_files']['datatype2bqscript'][data_type]['bq_table']
+        dataset_id = config['process_files']['datatype2bqscript']['Methylation Beta Value']['bq_dataset']
+        table_name = config['process_files']['datatype2bqscript']['Methylation Beta Value']['bq_table']
         chromosomes = map(str,range(1,23)) + ['X', 'Y']
     #    chromosomes = map(lambda orig_string: 'chr' + orig_string, chr_nums)
         for chromosome in chromosomes:
             self.split_table_by_chr(chromosome, project_id, dataset_id, table_name, log)
         log.info('done splitting methylation data by chromosome')
-        
 

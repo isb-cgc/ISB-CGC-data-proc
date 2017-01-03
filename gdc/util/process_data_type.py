@@ -69,7 +69,7 @@ def process_data_type(config, endpt_type, project_id, data_type, log_dir, log_na
         if log_name:
             log_name = create_log(log_dir, log_name)
         else:
-            log_name = create_log(log_dir, project_id + '_' + data_type.replace(' ', ''))
+            log_name = create_log(log_dir, project_id + '_' + data_type.replace(' ', '') + '.txt')
         log = logging.getLogger(log_name)
 
         log.info('begin process_data_type %s for %s' % (data_type, project_id))

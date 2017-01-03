@@ -133,7 +133,7 @@ def __check_contents(data_path, project_id, batch_count):
         for _ in bucket_iter:
             cur_count += 1
         if 40 == check_count:
-            raise ValueError('waited 40 seconds for all the etl files to be present.  expected %d, found %d' % (batch_count, cur_count))
+            raise ValueError('waited 40 tries for all the etl files to be present.  expected %d, found %d' % (batch_count, cur_count))
         check_count += 1
 
 def run(project_id, batch_count, dataset_id, table_name, schema_file, data_path,

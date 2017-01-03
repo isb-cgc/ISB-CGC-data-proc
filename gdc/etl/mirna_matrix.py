@@ -53,48 +53,6 @@ class miRNA_matrix(Isoform_expression_quantification):
         invoking the main routine will currently do the entire matrix creation 
         '''
 
-    def melt_matrix(self, matrix_file, platform, studies_map, config, log):
-        """
-        # melt matrix
-        """
-        log.info('\tbegin melt matrix: \'%s\'' % (matrix_file))
-        # begin parsing the data
-        data_df2 = pd.read_csv(matrix_file, delimiter='\t', header=0)
-        data_df2 = data_df2.set_index(["Gene"])
-        
-        # create a StingIO object with this info
-        # call utils.convert_file_to_dataframe(buffer, sep=",")
-        # call tools.cleanup_dataframe()
-        # gcs.convert_df_to_njson_and_upload()
-        log.info('\t\tstart processing saved matrix.  size: %s' % (len(data_df2)))
-        mod = int(len(data_df2) / 20)
-        count = 0
-        buf = StringIO()
-        buf.write("case_barcode	sample_barcode	aliquot_barcode	sample_type_letter_code	project_short_name	platform	mirna_id	mirna_accession	normalized_count\n")
-        for i,j in data_df2.T.iteritems():
-            if 0 == count % mod:
-                log.info('\t\t\tprocessed %s lines' % (count))
-            count += 1
-            for k,m in j.iteritems():
-                aliquot =  k.strip(".mirbase20")
-                aliquot =  aliquot.strip(".hg19")
-                SampleBarcode = "-".join(aliquot.split("-")[0:4])
-                ParticipantBarcode = "-".join(aliquot.split("-")[0:3])
-                SampleTypeLetterCode = config["sample_code2letter"][aliquot.split("-")[3][0:2]]
-                Study = studies_map[aliquot].upper()
-                buf.write("\t".join(map(str,(ParticipantBarcode, SampleBarcode, aliquot, SampleTypeLetterCode,  Study, platform, i.split(".")[0], i.split(".")[1],  m))) + '\n')
-        log.info('\t\tprocessed %s total lines' % (count))
-                
-        file_name = matrix_file.split('/')[-1]
-        log.info('\t\tsave %s to GCS' % file_name)
-        buf.seek(0)
-        df = convert_file_to_dataframe(buf)
-        df = cleanup_dataframe(df)
-        gcs = GcsConnector(config['project_id'], config['buckets']['open'])
-        gcs.convert_df_to_njson_and_upload(df, config['mirna_isoform_matrix'][platform]['output_dir'] + file_name)
-        log.info('\t\tcompleted save to GCS')
-        log.info('\tfinished melt matrix')
-    
     def upload_batch_etl(self, config, outputdir, paths, file2info, project, data_type, log):
         if not config['process_files']['datatype2bqscript']['Isoform Expression Quantification']['only_matrix']:
             super(miRNA_matrix, self).upload_batch_etl(config, outputdir, paths, file2info, project, data_type, log)
@@ -103,6 +61,7 @@ class miRNA_matrix(Isoform_expression_quantification):
         input_dir = config['download_base_output_dir'] + '%s/%s/' % (project, data_type)
         common_dir = config['download_base_output_dir'] + config['process_files']['datatype2bqscript']['Isoform Expression Quantification']['matrix_subdir']
 
+        log.info('\tcopy files for %s:%s for mirna isoform matrix' % (data_type, project))
         contents = listdir(input_dir)
         for content in contents:
             if path.isdir(input_dir + content):
@@ -112,25 +71,31 @@ class miRNA_matrix(Isoform_expression_quantification):
                     if path.exists(common_dir + full_name):
                         raise ValueError('file already exists: %s' % (full_name))
                     copy(input_dir + content + '/' + file_name, common_dir + full_name)
+        log.info('\tcopied files for %s: %s for mirna isoform matrix' % (data_type, project))
         
         # first time this is called, safe off the file2info, transformed into aliquot2info, for use in finalize
         mapfile_name = project + "_aliquotinfo.txt"
-        mapfile_path = config['download_base_output_dir'] + config['process_files']['datatype2bqscript']['Isoform Expression Quantification']['persist_subdir'] + mapfile_name
-        if not path.exists(mapfile_name):
+        mapfile_path = config['download_base_output_dir'] + config['process_files']['datatype2bqscript']['Isoform Expression Quantification']['matrix_persist_subdir'] + mapfile_name
+        if not path.exists(mapfile_path):
+            log.info('\tcreate metadata file for %s:%s for mirna isoform matrix' % (data_type, project))
             # create the aliquot centric map
             aliquot2info = {}
             for value in file2info.values():
                 flattened = flatten_map(value, config['process_files']['data_table_mapping'])[0]
                 info = aliquot2info.setdefault(flattened['aliquot_barcode'], {})
                 info['project_short_name'] = flattened['project_short_name']
-                info['program_name'] = flattened['program_name']
-                info['sample_type_code'] = flattened['sample_type_code']
+                program_name = flattened['program_name']
+                info['program_name'] = program_name
+                sample_type_code = flattened['aliquot_barcode'][config['sample_code_position'][program_name]['start']:config['sample_code_position'][program_name]['end']]
+                info['sample_type_code'] = sample_type_code
                 info['file_name'] = flattened['file_name']
                 info['file_gdc_id'] = flattened['file_gdc_id']
                 info['case_gdc_id'] = flattened['case_gdc_id']
                 info['sample_gdc_id'] = flattened['sample_gdc_id']
                 info['aliquot_gdc_id'] = flattened['aliquot_gdc_id']
-            dump(aliquot2info, mapfile_path, protocol = HIGHEST_PROTOCOL)
+            with open(mapfile_path, 'wb') as mapfile:
+                dump(aliquot2info, mapfile, protocol = HIGHEST_PROTOCOL)
+            log.info('\tsaved metadata file for %s:%s for mirna isoform matrix' % (data_type, project))
     
     def finish_etl(self, config, project, data_type, batch_count, log):
         if not config['process_files']['datatype2bqscript']['Isoform Expression Quantification']['only_matrix']:
@@ -154,15 +119,95 @@ class miRNA_matrix(Isoform_expression_quantification):
                 for file_name in files:
                     remove(mapfile_dir + file_name)
     
+    def get_aliquot_info(self):
+        mapfile_path = self.config['download_base_output_dir'] + self.config['process_files']['datatype2bqscript']['Isoform Expression Quantification']['persist_subdir']
+        mapfiles = listdir(mapfile_path)
+        master_aliquot2info = {}
+        for mapfile in mapfiles:
+            with open(mapfile_path + mapfile, 'rb') as pickle:
+                curmap = load(pickle)
+            master_aliquot2info.update(curmap)
+
+    def melt_matrix(self, matrix_file, platform, aliquot2info, config, log):
+        """
+        # melt matrix
+        """
+        log.info('\t\t\tbegin melt matrix: \'%s\'' % (matrix_file))
+        # begin parsing the data
+        data_df2 = pd.read_csv(matrix_file, delimiter='\t', header=0)
+        data_df2 = data_df2.set_index(["Gene"])
+        
+        # create a StingIO object with this info
+        # call utils.convert_file_to_dataframe(buffer, sep=",")
+        # call tools.cleanup_dataframe()
+        # gcs.convert_df_to_njson_and_upload()
+        log.info('\t\t\t\tstart processing saved matrix.  size: %s' % (len(data_df2)))
+        mod = int(len(data_df2) / 20)
+        count = 0
+        total_count = 0
+        buf = StringIO()
+        buf.write("sample_barcode	mirna_id	mirna_accession	normalized_count	platform	project_short_name	program_name	sample_type_code" +
+                  "	file_name	file_gdc_id	aliquot_barcode	case_barcode	case_gdc_id	sample_gdc_id	aliquot_gdc_id\n")
+        for i,j in data_df2.T.iteritems():
+            for k,m in j.iteritems():
+                aliquot =  k.strip(".mirbase20")
+                aliquot =  aliquot.strip(".hg19")
+                SampleBarcode = "-".join(aliquot.split("-")[0:4])
+                ParticipantBarcode = "-".join(aliquot.split("-")[0:3])
+                SampleTypeCode = aliquot.split("-")[3][0:2]
+                info = aliquot2info[aliquot]
+                line = "\t".join(map(str,(SampleBarcode, i.split(".")[0], i.split(".")[1],  m, platform, info['project_short_name'], info['program_name'], SampleTypeCode, 
+                    info['file_name'], info['file_gdc_id'], aliquot, ParticipantBarcode, info['case_gdc_id'], info['sample_gdc_id'], info['aliquot_gdc_id']))) + '\n'
+                buf.write(line)
+                total_count += 1
+            if 0 == count % mod:
+                log.info('\t\t\t\t\tprocessed %s lines:\n%s' % (count, line))
+            count += 1
+        log.info('\t\t\t\tprocessed %s total lines created %s records' % (count, total_count))
+                
+        file_name = matrix_file.split('/')[-1]
+        log.info('\t\t\t\tsave %s to GCS' % file_name)
+        buf.seek(0)
+        df = convert_file_to_dataframe(buf)
+        df = cleanup_dataframe(df, log)
+        gcs = GcsConnector(config['cloud_projects']['open'], config['buckets']['open'])
+        gcs.convert_df_to_njson_and_upload(df, config['process_files']['datatype2bqscript']['Isoform Expression Quantification']['gcs_output_path'] + file_name, logparam=log)
+        log.info('\t\t\t\tcompleted save to GCS')
+        log.info('\t\t\tfinished melt matrix')
+    
+
+    def load_isoform_matrix(self, config, write_disposition, log):
+        bq_dataset = config['process_files']['datatype2bqscript']['Isoform Expression Quantification']['bq_dataset']
+        bq_table = config['process_files']['datatype2bqscript']['Isoform Expression Quantification']['matrix_bq_table']
+        schema_file = config['process_files']['datatype2bqscript']['Isoform Expression Quantification']['matrix_schema_file']
+        bucket_name = config['buckets']['open']
+        object_path = config['process_files']['datatype2bqscript']['Isoform Expression Quantification']['gcs_output_path']
+        gcs_file_path = 'gs://' + bucket_name + '/' + object_path[:-1]
+        self.load(config['cloud_projects']['open'], [bq_dataset], [bq_table], [schema_file], [gcs_file_path], [write_disposition], 1, log)
+
     def finalize(self, config, log): 
         log.info('\tstart creating isoform matrix')
         
         log.info('\t\trunning expression_matrix_mimat.pl')
+        # TODO: split this into HiSeq and GA platforms when metadata is available at the gdc
+        matrix_script = config['download_base_output_dir'] + config['process_files']['datatype2bqscript']['Isoform Expression Quantification']['matrix_script']
+        matrix_adf = config['download_base_output_dir'] + config['process_files']['datatype2bqscript']['Isoform Expression Quantification']['matrix_adf']
+        matrix_output_dir = config['download_base_output_dir'] + config['process_files']['datatype2bqscript']['Isoform Expression Quantification']['matrix_output_dir']
         common_dir = config['download_base_output_dir'] + config['process_files']['datatype2bqscript']['Isoform Expression Quantification']['matrix_subdir']
-        check_call(['./tcga_etl_pipeline/mirna_isoform_matrix/expression_matrix_mimat.pl', '-m', './tcga_etl_pipeline/mirna_isoform_matrix/tcga_mirna_bcgsc_hg19.adf', 
-                    '-o', './tcga_etl_pipeline/mirna_isoform_matrix/hiseq', '-p', common_dir, '-n' 'IlluminaHiSeq_miRNASeq])'])
+        check_call([matrix_script, '-m', matrix_adf, '-o', matrix_output_dir, '-p', common_dir, '-n' 'IlluminaHiSeq_miRNASeq'])
         log.info('\t\tcompleted expression_matrix_mimat.pl')
-
+        
+        log.info('\t\trunning melt isoform matrix')
+        matrix_filename = config['download_base_output_dir'] + config['process_files']['datatype2bqscript']['Isoform Expression Quantification']['matrix_filename'] % ('IlluminaHiSeq')
+        aliquot2info = self.get_aliquot_info()
+        self.melt_matrix(self, matrix_output_dir + '/' + matrix_filename, 'IlluminaHiSeq', aliquot2info, config, log)
+        log.info('\t\tcompleted melt isoform matrix')
+        
+        log.info('\t\trunning load isoform matrix into bigquery')
+        write_disposition = 'WRITE_EMPTY'
+        self.load_isoform_matrix(config, write_disposition, log)
+        log.info('\t\tcompleted load isoform matrix into bigquery')
+        
         log.info('\tfinished creating isoform matrix')
         
 def main(config_filename):
