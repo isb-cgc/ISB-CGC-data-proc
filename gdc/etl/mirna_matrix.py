@@ -56,7 +56,9 @@ class miRNA_matrix(Isoform_expression_quantification):
     def upload_batch_etl(self, config, outputdir, paths, file2info, project, data_type, log):
         if not config['process_files']['datatype2bqscript']['Isoform Expression Quantification']['only_matrix']:
             super(miRNA_matrix, self).upload_batch_etl(config, outputdir, paths, file2info, project, data_type, log)
-            
+        else:
+            log.info('not calling upload_batch_etl() for %s:%s' % (project, data_type))
+        
         # copy files to common location cross all projects, flattening the directory names into the file names
         input_dir = config['download_base_output_dir'] + '%s/%s/' % (project, data_type)
         common_dir = config['download_base_output_dir'] + config['process_files']['datatype2bqscript']['Isoform Expression Quantification']['matrix_subdir']
@@ -100,10 +102,12 @@ class miRNA_matrix(Isoform_expression_quantification):
     def finish_etl(self, config, project, data_type, batch_count, log):
         if not config['process_files']['datatype2bqscript']['Isoform Expression Quantification']['only_matrix']:
             super(miRNA_matrix, self).finish_etl(config, project, data_type, batch_count, log)
+        else:
+            log.info('not calling finish_etl() for %s:%s' % (project, data_type))
             
     def initialize(self, config, log): 
         common_dir = config['download_base_output_dir'] + config['process_files']['datatype2bqscript']['Isoform Expression Quantification']['matrix_subdir']
-        mapfile_dir = config['download_base_output_dir'] + config['process_files']['datatype2bqscript']['Isoform Expression Quantification']['persist_subdir']
+        mapfile_dir = config['download_base_output_dir'] + config['process_files']['datatype2bqscript']['Isoform Expression Quantification']['matrix_persist_subdir']
         with lock:
             if not path.exists(common_dir):
                 makedirs(common_dir)
@@ -190,8 +194,8 @@ class miRNA_matrix(Isoform_expression_quantification):
         
         log.info('\t\trunning expression_matrix_mimat.pl')
         # TODO: split this into HiSeq and GA platforms when metadata is available at the gdc
-        matrix_script = config['download_base_output_dir'] + config['process_files']['datatype2bqscript']['Isoform Expression Quantification']['matrix_script']
-        matrix_adf = config['download_base_output_dir'] + config['process_files']['datatype2bqscript']['Isoform Expression Quantification']['matrix_adf']
+        matrix_script = config['process_files']['datatype2bqscript']['Isoform Expression Quantification']['matrix_script']
+        matrix_adf = config['process_files']['datatype2bqscript']['Isoform Expression Quantification']['matrix_adf']
         matrix_output_dir = config['download_base_output_dir'] + config['process_files']['datatype2bqscript']['Isoform Expression Quantification']['matrix_output_dir']
         common_dir = config['download_base_output_dir'] + config['process_files']['datatype2bqscript']['Isoform Expression Quantification']['matrix_subdir']
         check_call([matrix_script, '-m', matrix_adf, '-o', matrix_output_dir, '-p', common_dir, '-n' 'IlluminaHiSeq_miRNASeq'])
