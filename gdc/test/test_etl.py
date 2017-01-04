@@ -15,7 +15,8 @@ class GDCETLTest(GDCTestSetup):
         super(GDCETLTest, self).setUp()
         
     def test_etl_finalize(self):
-        Methylation(self.config).finalize(self.config, self.log)
+#         Methylation(self.config).finalize(self.config, self.log)
+        miRNA_matrix(self.config).finalize(self.config, self.log)
         
     def test_etl_melt(self):
         mapfile_path = self.config['download_base_output_dir'] + self.config['process_files']['datatype2bqscript']['Isoform Expression Quantification']['matrix_persist_subdir']
