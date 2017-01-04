@@ -183,7 +183,7 @@ sub trim_id {
 }
 
 sub findinputfiles {
-    if ($File::Find::name =~ /.isoform.quantification.txt$/) {
+    if ($File::Find::name =~ /_isoforms.quantification.txt$/) {
         push(@mirnafiles, $File::Find::name);
         print STDERR "\t$File::Find::name\n";
     }
