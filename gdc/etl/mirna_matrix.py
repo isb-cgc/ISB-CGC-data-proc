@@ -167,16 +167,19 @@ class miRNA_matrix(Isoform_expression_quantification):
                 total_count += 1
             if 0 == count % mod:
                 log.info('\t\t\t\t\tprocessed %s lines:\n%s' % (count, line))
+                file_name = matrix_file.split('/')[-1] + '_' + count
+                log.info('\t\t\t\tsave %s to GCS' % file_name)
+                buf.seek(0)
+                df = convert_file_to_dataframe(buf)
+                df = cleanup_dataframe(df, log)
+                gcs = GcsConnector(config['cloud_projects']['open'], config['buckets']['open'])
+                gcs.convert_df_to_njson_and_upload(df, config['process_files']['datatype2bqscript']['Isoform Expression Quantification']['gcs_output_path'] + file_name, logparam=log)
+                buf = StringIO()
+                buf.write("sample_barcode	mirna_id	mirna_accession	normalized_count	platform	project_short_name	program_name	sample_type_code" +
+                          "	file_name	file_gdc_id	aliquot_barcode	case_barcode	case_gdc_id	sample_gdc_id	aliquot_gdc_id\n")
             count += 1
         log.info('\t\t\t\tprocessed %s total lines created %s records' % (count, total_count))
                 
-        file_name = matrix_file.split('/')[-1]
-        log.info('\t\t\t\tsave %s to GCS' % file_name)
-        buf.seek(0)
-        df = convert_file_to_dataframe(buf)
-        df = cleanup_dataframe(df, log)
-        gcs = GcsConnector(config['cloud_projects']['open'], config['buckets']['open'])
-        gcs.convert_df_to_njson_and_upload(df, config['process_files']['datatype2bqscript']['Isoform Expression Quantification']['gcs_output_path'] + file_name, logparam=log)
         log.info('\t\t\t\tcompleted save to GCS')
         log.info('\t\t\tfinished melt matrix')
     
