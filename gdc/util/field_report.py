@@ -133,7 +133,7 @@ def create_field_report(configfilename):
                     output.write('\t\tfound %s fields\n' % (len(fields)))
                     for field in fields:
                         try:
-                            progress = False if len(fields) < 50 else True if 0 == count else 0 == count % mod_count
+                            progress = False if len(fields) < 71 else True if 0 == count else 0 == count % mod_count
                             get_values_for_field(endpoint, field, field2values, output, url_template, progress, log)
                         except:
                             log.exception('problem for field %s' % (field))
