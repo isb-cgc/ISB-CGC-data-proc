@@ -167,7 +167,7 @@ class miRNA_matrix(Isoform_expression_quantification):
                 total_count += 1
             if 0 == count % mod:
                 log.info('\t\t\t\t\tprocessed %s lines:\n%s' % (count, line))
-                file_name = matrix_file.split('/')[-1] + '_' + count
+                file_name = '%s_%s' % (matrix_file.split('/')[-1], count)
                 log.info('\t\t\t\tsave %s to GCS' % file_name)
                 buf.seek(0)
                 df = convert_file_to_dataframe(buf)
@@ -182,16 +182,18 @@ class miRNA_matrix(Isoform_expression_quantification):
                 
         log.info('\t\t\t\tcompleted save to GCS')
         log.info('\t\t\tfinished melt matrix')
+        # TODO: return count of files uploaded
     
 
     def load_isoform_matrix(self, config, write_disposition, log):
+        # TODO: add batch_count parameter
         bq_dataset = config['process_files']['datatype2bqscript']['Isoform Expression Quantification']['bq_dataset']
         bq_table = config['process_files']['datatype2bqscript']['Isoform Expression Quantification']['matrix_bq_table']
         schema_file = config['process_files']['datatype2bqscript']['Isoform Expression Quantification']['matrix_schema_file']
         bucket_name = config['buckets']['open']
         object_path = config['process_files']['datatype2bqscript']['Isoform Expression Quantification']['gcs_output_path']
         gcs_file_path = 'gs://' + bucket_name + '/' + object_path[:-1]
-        self.load(config['cloud_projects']['open'], [bq_dataset], [bq_table], [schema_file], [gcs_file_path], [write_disposition], 1, log)
+        self.load(config['cloud_projects']['open'], [bq_dataset], [bq_table], [schema_file], [gcs_file_path], [write_disposition], 21, log)
 
     def finalize(self, config, log): 
         log.info('\tstart creating isoform matrix')
