@@ -25,8 +25,14 @@ def process_projects(config, endpt_type, program, log_dir):
         log.info('begin process_projects for %s' % (program))
         project2info = get_map_rows(config, endpt_type, 'project', get_filter(program), log)
         program2info = {program: project2info[project2info.keys()[0]]}
-        save2db(config, endpt_type, 'metadata_gdc_program', program2info, config['process_projects']['program_table_mapping'], log)
-        save2db(config, endpt_type, 'metadata_gdc_project', project2info, config['process_projects']['project_table_mapping'], log)
+        if config['process_program']:
+            save2db(config, endpt_type, 'metadata_gdc_program', program2info, config['process_projects']['program_table_mapping'], log)
+        else:
+            log.warning('\n\t====================\n\tnot saving to db for programs this run!\n\t====================')
+        if config['process_project']:
+            save2db(config, endpt_type, 'metadata_gdc_project', project2info, config['process_projects']['project_table_mapping'], log)
+        else:
+            log.warning('\n\t====================\n\tnot saving to db for projects this run!\n\t====================')
         log.info('finished process_projects for %s' % (program))
         return project2info
     except:

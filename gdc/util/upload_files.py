@@ -119,6 +119,8 @@ def process_files(config, endpt_type, file2info, outputdir, start, end, project,
                 key_name = basefolder + (keypath_template % tuple(key_path_components))
                 log.info('\t\tuploading %s' % (key_name))
                 upload_file(config, outputdir + path, config['buckets']['open'], key_name, log)
+        else:
+            log.info('\t\t\tnot uploading files for %s:%s' % (project, data_type))
             
         if config['upload_etl_files'] and data_type in config['process_files']['datatype2bqscript'] and etl_class is not None:
             etl_class.upload_batch_etl(config, outputdir, paths, file2info, project, data_type, log)

@@ -60,7 +60,7 @@ class ISBCGC_database_helper(object):
         db = None
         cursor = None
         try:
-            if not config['cloudsql']['update_schema']:
+            if not config['update_schema']:
                 return
             if not config['process_bio']:
                 log.warning('process_bio must be true for initialization to proceed')
@@ -80,7 +80,7 @@ class ISBCGC_database_helper(object):
     
     @classmethod
     def setup_tables(cls, config, log):
-        if config['cloudsql']['update_schema']:
+        if config['update_schema']:
             cls.drop_tables(config, log)
         cls.process_tables(config, cls._create_schema, log)
     

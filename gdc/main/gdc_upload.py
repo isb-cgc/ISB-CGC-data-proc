@@ -71,6 +71,7 @@ def process_project(config, endpt_type, project, log_dir):
         else:
             log.warning('\n\t====================\n\tnot processing cases this run for %s!\n\t====================' % (project))
         
+        file2info = {}
         if config['process_data_type']:
             with futures.ThreadPoolExecutor(max_workers=20) as executor:
                 log.info('\tprocess data_types for %s' % (project))
@@ -123,14 +124,16 @@ def process_project(config, endpt_type, project, log_dir):
 
 def initialize_etl(config, log):
     for data_type in config['process_files']['datatype2bqscript'].keys():
-        instantiate_etl_class(config, data_type, log).initialize(config, log)
+        if (len(config['data_type_restrict']) == 0 or data_type in config['data_type_restrict']):
+            instantiate_etl_class(config, data_type, log).initialize(config, log)
 
 
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 def finalize_etl(config, log):
     for data_type in config['process_files']['datatype2bqscript'].keys():
-        instantiate_etl_class(config, data_type, log).finalize(config, log)
+        if (len(config['data_type_restrict']) == 0 or data_type in config['data_type_restrict']):
+            instantiate_etl_class(config, data_type, log).finalize(config, log)
 
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
@@ -147,32 +150,29 @@ def process_program(config, endpt_type, program_name, projects, log_dir):
             gcs_wrapper.open_connection(config, log)
 
         future2project = {}
-        if config['process_project']:
-            initialize_etl(config, log)
-            with futures.ThreadPoolExecutor(max_workers=config['project_threads']) as executor:
-                for project in projects:
-                    if project in config['skip_projects']:
-                        log.info('\tskipping project %s' % (project))
-                        continue
-                    if 0 == len(config['project_name_restrict']) or project in config['project_name_restrict']:
-                        log.info('\tprocessing project %s' % (project))
-                        future2project[executor.submit(process_project, config, endpt_type, project, log_dir)] = project
-                    else:
-                        log.info('\tnot processing project %s' % (project))
-     
-            future_keys = future2project.keys()
-            while future_keys:
-                future_done, future_keys = futures.wait(future_keys, return_when = futures.FIRST_COMPLETED)
-                for future in future_done:
-                    project = future2project.pop(future)
-                    if future.exception() is not None:
-                        log.exception('\t%s generated an exception--%s: %s' % (project, type(future.exception()).__name__, future.exception()))
-                    else:
-                        future.result()
-                        log.info('\tfinished project %s' % (project))
-            finalize_etl(config, log)
-        else:
-            log.warning('\n\t====================\n\tnot processing projects this run!\n\t====================')
+        initialize_etl(config, log)
+        with futures.ThreadPoolExecutor(max_workers=config['project_threads']) as executor:
+            for project in projects:
+                if project in config['skip_projects']:
+                    log.info('\tskipping project %s' % (project))
+                    continue
+                if 0 == len(config['project_name_restrict']) or project in config['project_name_restrict']:
+                    log.info('\tprocessing project %s' % (project))
+                    future2project[executor.submit(process_project, config, endpt_type, project, log_dir)] = project
+                else:
+                    log.info('\tnot processing project %s' % (project))
+ 
+        future_keys = future2project.keys()
+        while future_keys:
+            future_done, future_keys = futures.wait(future_keys, return_when = futures.FIRST_COMPLETED)
+            for future in future_done:
+                project = future2project.pop(future)
+                if future.exception() is not None:
+                    log.exception('\t%s generated an exception--%s: %s' % (project, type(future.exception()).__name__, future.exception()))
+                else:
+                    future.result()
+                    log.info('\tfinished project %s' % (project))
+        finalize_etl(config, log)
     
         log.info('finished process_program(%s)' % (program_name))
     except:
@@ -224,9 +224,86 @@ def initializeDB(config, log):
     
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-def get_run_info(config):
-    return
-    first_input = raw_input('input something:')
+def process_run_param_option(config, adjust, option, msg, paramtype):
+    if 'int' == paramtype:
+        try:
+            config[option] = int(adjust)
+            return True
+        except:
+            print 'not an integer, retry'
+            return False
+    elif adjust in ['f', 'q']:
+        return True
+    elif 't' == adjust:
+        config[option] = True
+        return True
+    else:
+        print 'unknown choice, retry' 
+        return False
+    
+## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+def process_run_param_options(config, adjust, options, msg, paramtype):
+    if 't' == adjust:
+        for option in options:
+            done = False
+            print '%s is set to %s' % (option.replace('_', ' '), config[option])
+            while not done:
+                adjust = raw_input(msg % (option.replace('_', ' ')))
+                done = process_run_param_option(config, adjust[0], option, msg, paramtype)
+                if 'q' == adjust[0]:
+                    return True 
+    elif 'f' == adjust:
+        print 'not adjusting'
+    else:
+        print 'unrecoginized option, retry'
+        return False
+    return True
+    
+## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+def set_run_info(config):
+    options = []
+    msg = ''
+    paramtype = 'str'
+    done = False
+    while not done:
+        adjust = raw_input('adjust run (t or f):')
+        done = process_run_param_options(config, adjust[0], options, msg, paramtype)
+    if 'f' == adjust[0]:
+        return
+
+    options = ['project_threads']
+    msg = 'adjust %s (an integer):'
+    paramtype = 'int'
+    done = False
+    while not done:
+        adjust = raw_input('\nadjust threads (t or f):')
+        done = process_run_param_options(config, adjust[0], options, msg, paramtype)
+
+    options = config['process_option_list']
+    msg = 'adjust %s (t or f or q):'
+    paramtype = 'str'
+    done = False
+    while not done:
+        adjust = raw_input('\nadjust processing (t or f):')
+        done = process_run_param_options(config, adjust[0], options, msg, paramtype)
+
+    options = config['upload_option_list']
+    msg = '%s (t or f or q):'
+    paramtype = 'str'
+    done = False
+    while not done:
+        adjust = raw_input('\nadjust uploading (t or f):')
+        done = process_run_param_options(config, adjust[0], options, msg, paramtype)
+
+    options = config['db_option_list']
+    msg = 'adjust %s (t or f or q):'
+    paramtype = 'str'
+    done = False
+    while not done:
+        adjust = raw_input('\nadjust db options (t or f):')
+        done = process_run_param_options(config, adjust[0], options, msg, paramtype)
 
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
@@ -243,7 +320,7 @@ def uploadGDC():
         log = logging.getLogger(log_name)
         
         log.info('getting run input')
-        get_run_info(config)
+        set_run_info(config)
         log.info('finished getting run input')
 
         log.info('begin uploadGDC()')
@@ -256,10 +333,7 @@ def uploadGDC():
                 process_annotations(config, endpt_type, log_dir)
             else:
                 log.warning('\n\t====================\n\tnot processing annotations this run!\n\t====================')
-            if config['process_program']:
-                process_programs(config, endpt_type, log_dir, log)
-            else:
-                log.warning('\n\t====================\n\tnot processing programs this run!\n\t====================')
+            process_programs(config, endpt_type, log_dir, log)
     except:
         raise
     log.info('finished uploadGDC()')
