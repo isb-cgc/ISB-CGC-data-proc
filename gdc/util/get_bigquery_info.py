@@ -144,9 +144,9 @@ def list_table_info(dataset_name, project='isb-cgc'):
         print('\n')
 
 if __name__ == '__main__':
-#     datasets = ['TCGA_hg19_data_v0', 'TCGA_hg38_data_v0', 'TARGET_hg19_data_v0', 'TARGET_hg38_data_v0', 'CCLE_hg19_data_v0', 'CCLE_hg38_data_v0', ]
-#     for dataset in datasets:
-#         list_table_info(dataset)
+    datasets = ['CCLE_bioclin_v0', 'CCLE_hg19_data_v0', 'CCLE_hg38_data_v0', 'TARGET_bioclin_v0', 'TARGET_hg38_data_v0', 'TCGA_bioclin_v0', 'TCGA_hg19_data_v0', 'TCGA_hg38_data_v0']
+    for dataset in datasets:
+        list_table_info(dataset)
         
     # get methylation counts
-    get_methylation_counts()
+#     get_methylation_counts()
