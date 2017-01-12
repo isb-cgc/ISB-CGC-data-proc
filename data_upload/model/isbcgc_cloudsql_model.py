@@ -62,7 +62,7 @@ class ISBCGC_database_helper(object):
         try:
             if not config['update_schema']:
                 return
-            if not config['process_bio']:
+            if not config['process_cases']:
                 log.warning('process_bio must be true for initialization to proceed')
                 return
             db = cls.getDBConnection(config, log)

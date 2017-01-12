@@ -160,6 +160,10 @@ def request(config, endpt_type, url, file2info, outputdir, project, data_type, l
 
 def upload_files(config, endpt_type, file2info, project, data_type, log):
     try:
+        if not (config['upload_files'] or config['upload_etl_files']):
+            log.info('\n\t====================\n\tnot downloading files this run!\n\t====================')
+            return
+
         log.info('starting upload of gdc files')
         outputdir = config['download_base_output_dir'] + '%s/%s/' % (project, data_type)
         if not path.isdir(outputdir):

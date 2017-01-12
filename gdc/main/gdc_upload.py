@@ -123,17 +123,19 @@ def process_project(config, endpt_type, project, log_dir):
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 def initialize_etl(config, log):
-    for data_type in config['process_files']['datatype2bqscript'].keys():
-        if (len(config['data_type_restrict']) == 0 or data_type in config['data_type_restrict']):
-            instantiate_etl_class(config, data_type, log).initialize(config, log)
+    if config['upload_etl_files']:
+        for data_type in config['process_files']['datatype2bqscript'].keys():
+            if (len(config['data_type_restrict']) == 0 or data_type in config['data_type_restrict']):
+                instantiate_etl_class(config, data_type, log).initialize(config, log)
 
 
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 def finalize_etl(config, log):
-    for data_type in config['process_files']['datatype2bqscript'].keys():
-        if (len(config['data_type_restrict']) == 0 or data_type in config['data_type_restrict']):
-            instantiate_etl_class(config, data_type, log).finalize(config, log)
+    if config['upload_etl_files']:
+        for data_type in config['process_files']['datatype2bqscript'].keys():
+            if (len(config['data_type_restrict']) == 0 or data_type in config['data_type_restrict']):
+                instantiate_etl_class(config, data_type, log).finalize(config, log)
 
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
@@ -289,7 +291,7 @@ def set_run_info(config):
         adjust = raw_input('\nadjust processing (t or f):')
         done = process_run_param_options(config, adjust[0], options, msg, paramtype)
 
-    options = config['upload_option_list']
+    options = config['process_upload_list']
     msg = '%s (t or f or q):'
     paramtype = 'str'
     done = False
