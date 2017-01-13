@@ -25,7 +25,6 @@ from concurrent import futures
 from datetime import date, datetime
 import json
 import logging
-from multiprocessing import Semaphore
 
 from gdc.util.gdc_util import instantiate_etl_class
 from gdc.util.gdc_util import request_facets_results
@@ -37,8 +36,6 @@ from gdc.util.process_data_type import process_data_type
 from util import close_log, create_log, import_module
 
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-
-semaphore = Semaphore(20)
 
 projects_fields = set()
 cases_fields = []
@@ -73,15 +70,14 @@ def process_project(config, endpt_type, project, log_dir):
         
         file2info = {}
         if config['process_data_type']:
-            with futures.ThreadPoolExecutor(max_workers=20) as executor:
+            with futures.ThreadPoolExecutor(max_workers=config['project_threads']) as executor:
                 log.info('\tprocess data_types for %s' % (project))
                 future2data_type = {}
                 data_types = request_facets_results(config['files_endpt']['%s endpt' % (endpt_type)], config['facets_query'], 'data_type', log)
                 for data_type in data_types:
                     if (len(config['data_type_restrict']) == 0 or data_type in config['data_type_restrict']):
-                        with semaphore:
-                            log.info('\t\tprocess data_type \'%s\' for %s' % (data_type, project))
-                            future2data_type[executor.submit(process_data_type, config, endpt_type, project, data_type, log_dir)] = data_type
+                        log.info('\t\tprocess data_type \'%s\' for %s' % (data_type, project))
+                        future2data_type[executor.submit(process_data_type, config, endpt_type, project, data_type, log_dir)] = data_type
                     else:
                         log.info('\t\tnot processing data_type %s for %s' % (data_type, project))
              
@@ -99,10 +95,9 @@ def process_project(config, endpt_type, project, log_dir):
                                 if retry_ct > 3:
                                     raise ValueError('%s failed multiple times--%s:%s' % (data_type, type(future.exception()).__name__, future.exception()))
                                 data_type2retry[data_type] = retry_ct + 1
-                                with semaphore:
-                                    log.warning('\tWARNING: resubmitting %s--%s:%s.  try %s' % (data_type, type(future.exception()).__name__, future.exception(), retry_ct))
-                                    new_future = executor.submit(process_data_type, config, endpt_type, project, data_type, log_dir, project + '_' + data_type.replace(' ', '') + '_%d' % (retry_ct))
-                                    future2data_type[new_future] = data_type
+                                log.warning('\tWARNING: resubmitting %s--%s:%s.  try %s' % (data_type, type(future.exception()).__name__, future.exception(), retry_ct))
+                                new_future = executor.submit(process_data_type, config, endpt_type, project, data_type, log_dir, project + '_' + data_type.replace(' ', '') + '_%d' % (retry_ct))
+                                future2data_type[new_future] = data_type
                             else:
                                 log.info('\t\tfinished process data_type \'%s\' for %s' % (data_type, project))
                                 file2info = future.result()
@@ -146,14 +141,9 @@ def process_program(config, endpt_type, program_name, projects, log_dir):
         log = logging.getLogger(log_name)
         log.info('begin process_program(%s)' % (program_name))
 
-        if config['upload_open'] or config['upload_controlled'] or config['upload_etl_files']:
-            # open the GCS wrapper here so it can be used by all the projects/platforms to save files
-            gcs_wrapper = import_module(config['gcs_wrapper'])
-            gcs_wrapper.open_connection(config, log)
-
         future2project = {}
         initialize_etl(config, log)
-        with futures.ThreadPoolExecutor(max_workers=config['project_threads']) as executor:
+        with futures.ThreadPoolExecutor(max_workers=config['program_threads']) as executor:
             for project in projects:
                 if project in config['skip_projects']:
                     log.info('\tskipping project %s' % (project))
@@ -181,7 +171,6 @@ def process_program(config, endpt_type, program_name, projects, log_dir):
         log.exception('problem processing program %s' % (program_name))
         raise
     finally:
-        gcs_wrapper.close_connection()
         close_log(log)
 
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -207,16 +196,26 @@ def get_programs(config, endpt_type, projects_endpt, log):
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 def process_programs(config, endpt_type, log_dir, log):
-    log.info('begin process_programs()')
-    programs = get_programs(config, endpt_type, log_dir, log)
-    for program_name in programs:
-        if 0 == len(config['program_name_restrict']) or program_name in config['program_name_restrict']:
-            log.info('\tstart program %s' % (program_name))
-            projects = get_program_info(config, endpt_type, config['projects_endpt']['%s endpt' % (endpt_type)] + config['projects_endpt']['query'], program_name, log_dir, log)
-            process_program(config, endpt_type, program_name, projects, log_dir)
-            log.info('\tfinished program %s' % (program_name))
-            
-    log.info('finished process_programs()')
+    try:
+        log.info('begin process_programs()')
+        gcs_wrapper = None
+        if config['upload_open'] or config['upload_controlled'] or config['upload_etl_files']:
+            # open the GCS wrapper here so it can be used by all the projects/platforms to save files
+            gcs_wrapper = import_module(config['gcs_wrapper'])
+            gcs_wrapper.open_connection(config, log)
+    
+        programs = get_programs(config, endpt_type, log_dir, log)
+        for program_name in programs:
+            if 0 == len(config['program_name_restrict']) or program_name in config['program_name_restrict']:
+                log.info('\tstart program %s' % (program_name))
+                projects = get_program_info(config, endpt_type, config['projects_endpt']['%s endpt' % (endpt_type)] + config['projects_endpt']['query'], program_name, log_dir, log)
+                process_program(config, endpt_type, program_name, projects, log_dir)
+                log.info('\tfinished program %s' % (program_name))
+                
+        log.info('finished process_programs()')
+    finally:
+        if gcs_wrapper:
+            gcs_wrapper.close_connection()
 
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
@@ -275,7 +274,7 @@ def set_run_info(config):
     if 'f' == adjust[0]:
         return
 
-    options = ['project_threads']
+    options = config['process_threads_list']
     msg = 'adjust %s (an integer):'
     paramtype = 'int'
     done = False
@@ -321,9 +320,12 @@ def uploadGDC():
         log_name = create_log(log_dir, 'top_processing')
         log = logging.getLogger(log_name)
         
-        log.info('getting run input')
-        set_run_info(config)
-        log.info('finished getting run input')
+        try:
+            log.info('getting run input')
+            set_run_info(config)
+            log.info('finished getting run input')
+        except:
+            log.exception('setting run information had a failure, continuing...')
 
         log.info('begin uploadGDC()')
         
