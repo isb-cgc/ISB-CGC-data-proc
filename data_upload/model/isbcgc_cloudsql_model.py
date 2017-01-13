@@ -239,7 +239,7 @@ class ISBCGC_database_helper(object):
         cls.column_insert(config, rows, table, field_names, log)
 
     @classmethod
-    def processOEError(self, cls, config, cursor, db, msg, log):
+    def processOEError(cls, config, cursor, db, msg, log):
         log.warning('\t\t\t%s' % (msg))
         time.sleep(1) # rollback any previous inserts
         cursor.execute("ROLLBACK")
@@ -248,7 +248,7 @@ class ISBCGC_database_helper(object):
         try:
             db.close() # make sure connection is closed
         except:
-            one = 1
+            pass
         db = cls.getDBConnection(config, log)
         cursor = db.cursor()
         cursor.execute("START TRANSACTION")
