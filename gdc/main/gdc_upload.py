@@ -198,12 +198,6 @@ def get_programs(config, endpt_type, projects_endpt, log):
 def process_programs(config, endpt_type, log_dir, log):
     try:
         log.info('begin process_programs()')
-        gcs_wrapper = None
-        if config['upload_open'] or config['upload_controlled'] or config['upload_etl_files']:
-            # open the GCS wrapper here so it can be used by all the projects/platforms to save files
-            gcs_wrapper = import_module(config['gcs_wrapper'])
-            gcs_wrapper.open_connection(config, log)
-    
         programs = get_programs(config, endpt_type, log_dir, log)
         for program_name in programs:
             if 0 == len(config['program_name_restrict']) or program_name in config['program_name_restrict']:
@@ -213,9 +207,6 @@ def process_programs(config, endpt_type, log_dir, log):
                 log.info('\tfinished program %s' % (program_name))
                 
         log.info('finished process_programs()')
-    finally:
-        if gcs_wrapper:
-            gcs_wrapper.close_connection()
 
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
@@ -331,6 +322,12 @@ def uploadGDC():
         
         initializeDB(config, log)
      
+        gcs_wrapper = None
+        if config['upload_files'] or config['upload_etl_files']:
+            # open the GCS wrapper here so it can be used by all the projects/platforms to save files
+            gcs_wrapper = import_module(config['gcs_wrapper'])
+            gcs_wrapper.open_connection(config, log)
+    
         for endpt_type in config['endpt_types']:
             log.info('processing %s endpoints' % (endpt_type))
             if config['process_annotation']:
@@ -340,6 +337,10 @@ def uploadGDC():
             process_programs(config, endpt_type, log_dir, log)
     except:
         raise
+    finally:
+        if gcs_wrapper:
+            gcs_wrapper.close_connection()
+
     log.info('finished uploadGDC()')
     print datetime.now(), 'finished uploadGDC()'
 
