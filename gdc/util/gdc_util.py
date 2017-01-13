@@ -98,18 +98,22 @@ def __get_filtered_map_rows(url, idname, filt, mapfilter, activity, log, size = 
         }
         msg = '\t\tproblem getting filtered map for %s' % (activity)
         response = None
-        try:
-            response = request(url, params, msg, log, timeout)
-            response.raise_for_status()
-                
+        retries = 4
+        while retries:
+            retries -= 1
             try:
-                rj = response.json()
-            except:
-                log.exception('problem with response, not json: %s' % (response.text))
-                raise
-        finally:
-            if response:
-                response.close
+                response = request(url, params, msg, log, timeout)
+                response.raise_for_status()
+                    
+                try:
+                    rj = response.json()
+                    break
+                except:
+                    log.exception('problem with response, not json: %s' % (response.text))
+                    raise
+            finally:
+                if response:
+                    response.close
         
         for index in range(len(rj['data']['hits'])):
             themap = rj['data']['hits'][index]
