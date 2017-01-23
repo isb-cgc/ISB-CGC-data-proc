@@ -11,6 +11,7 @@ http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
+
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
@@ -126,56 +127,67 @@ def associate_metadata2annotation(config, log):
         "select a.metadata_annotation_id, s.metadata_data_id" \
         "from metadata_annotation a join metadata_data s on" \
             "s.aliquotbarcode = a.itembarcode",
+
         "insert into metadata_annotation2data" \
             "(metadata_annotation_id, metadata_data_id)" \
         "select a.metadata_annotation_id, s.metadata_data_id" \
         "from metadata_annotation a join metadata_data s on" \
             "left(s.aliquotbarcode, 15) = a.itembarcode",
+
         "insert into metadata_annotation2data" \
             "(metadata_annotation_id, metadata_data_id)" \
         "select a.metadata_annotation_id, s.metadata_data_id" \
         "from metadata_annotation a join metadata_data s on" \
             "left(s.aliquotbarcode, 19) = a.itembarcode",
+
         "insert into metadata_annotation2data" \
             "(metadata_annotation_id, metadata_data_id)" \
         "select a.metadata_annotation_id, s.metadata_data_id" \
         "from metadata_annotation a join metadata_data s on" \
             "left(s.aliquotbarcode, 20) = a.itembarcode",
+
         "insert into metadata_annotation2data" \
             "(metadata_annotation_id, metadata_data_id)" \
         "select a.metadata_annotation_id, s.metadata_data_id" \
         "from metadata_annotation a join metadata_data s on" \
             "left(s.aliquotbarcode, 23) = a.itembarcode",
+
         "insert into metadata_annotation2data" \
             "(metadata_annotation_id, metadata_data_id)" \
         "select a.metadata_annotation_id, s.metadata_data_id" \
         "from metadata_annotation a join metadata_data s on" \
             "left(s.aliquotbarcode, 24) = a.itembarcode",
+
         "insert into metadata_annotation2data" \
             "(metadata_annotation_id, metadata_data_id)" \
         "select a.metadata_annotation_id, s.metadata_data_id" \
         "from metadata_annotation a join metadata_data s on" \
             "left(s.aliquotbarcode, 27) = a.itembarcode",
+
         "insert into metadata_annotation2data" \
             "(metadata_annotation_id, metadata_data_id)" \
         "select a.metadata_annotation_id, s.metadata_data_id" \
         "from metadata_annotation a join metadata_data s on" \
             "s.samplebarcode = a.itembarcode",
+
         "insert into metadata_annotation2data" \
             "(metadata_annotation_id, metadata_data_id)" \
         "select a.metadata_annotation_id, s.metadata_data_id" \
         "from metadata_annotation a join metadata_data s on" \
             "s.participantbarcode = a.itembarcode",
+
         "insert into metadata_annotation2clinical " \
             "(metadata_annotation_id, metadata_clinical_id) " \
         "select a.metadata_annotation_id, s.metadata_clinical_id " \
         "from metadata_annotation a join metadata_clinical s on " \
             "s.participantbarcode = a.itembarcode ",
+
         "insert into metadata_annotation2biospecimen "  \
             "(metadata_annotation_id, metadata_biospecimen_id) " \
         "select a.metadata_annotation_id, s.metadata_biospecimen_id " \
         "from metadata_annotation a join metadata_biospecimen s on " \
             "0 < instr(s.samplebarcode, a.itembarcode) ",
+
         "insert into metadata_annotation2samples " \
             "(metadata_annotation_id, metadata_samples_id) " \
         "select a.metadata_annotation_id, s.metadata_samples_id " \
