@@ -17,10 +17,7 @@ limitations under the License.
 
 @author: michael
 '''
-from datetime import date
-import json
 import logging
-from sys import argv
 
 from gdc.util.gdc_util import get_map_rows, save2db
 from util import close_log, create_log

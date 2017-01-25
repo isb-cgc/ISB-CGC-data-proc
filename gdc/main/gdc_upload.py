@@ -28,7 +28,7 @@ import logging
 
 from gdc.util.gdc_util import instantiate_etl_class
 from gdc.util.gdc_util import request_facets_results
-from gdc.util.process_annotations import process_annotations
+from gdc.util.process_annotations import associate_metadata2annotation, process_annotations
 from gdc.util.process_projects import process_projects_for_programs, process_projects
 from gdc.util.process_cases import process_cases
 from gdc.util.process_data_type import process_data_type
@@ -52,7 +52,7 @@ def parseargs():
 
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-def process_project(config, endpt_type, project, log_dir):
+def process_project(config, endpt_type, program_name, project, log_dir):
     try:
         log_dir += project + '/'
         log_name = create_log(log_dir, project)
@@ -63,7 +63,7 @@ def process_project(config, endpt_type, project, log_dir):
         case2info = {}
         if config['process_case']:
             log.info('\tprocess cases for %s' % (project))
-            case2info = process_cases(config, endpt_type, project, log_dir)
+            case2info = process_cases(config, endpt_type, program_name, project, log_dir)
             log.info('\tcompleted process cases for %s' % (project))
         else:
             log.warning('\n\t====================\n\tnot processing cases this run for %s!\n\t====================' % (project))
@@ -150,7 +150,7 @@ def process_program(config, endpt_type, program_name, projects, log_dir):
                     continue
                 if 0 == len(config['project_name_restrict']) or project in config['project_name_restrict']:
                     log.info('\tprocessing project %s' % (project))
-                    future2project[executor.submit(process_project, config, endpt_type, project, log_dir)] = project
+                    future2project[executor.submit(process_project, config, endpt_type, program_name, project, log_dir)] = project
                 else:
                     log.info('\tnot processing project %s' % (project))
  
@@ -207,6 +207,9 @@ def process_programs(config, endpt_type, log_dir, log):
                 log.info('\tfinished program %s' % (program_name))
                 
         log.info('finished process_programs()')
+    except:
+        log.exception('problem processing programs')
+        raise
 
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
@@ -302,6 +305,7 @@ def set_run_info(config):
 def uploadGDC():
     print datetime.now(), 'begin uploadGDC()'
 
+    gcs_wrapper = None
     try:
         args = parseargs()
         with open(args.config) as configFile:
@@ -322,7 +326,6 @@ def uploadGDC():
         
         initializeDB(config, log)
      
-        gcs_wrapper = None
         if config['upload_files'] or config['upload_etl_files']:
             # open the GCS wrapper here so it can be used by all the projects/platforms to save files
             gcs_wrapper = import_module(config['gcs_wrapper'])
@@ -335,6 +338,8 @@ def uploadGDC():
             else:
                 log.warning('\n\t====================\n\tnot processing annotations this run!\n\t====================')
             process_programs(config, endpt_type, log_dir, log)
+            if config['process_annotation']:
+                associate_metadata2annotation(config, log)
     except:
         raise
     finally:

@@ -55,7 +55,7 @@ def log_exception(log, msg):
         print msg
         traceback.print_exc()
 
-def getURLData(url, name, log):
+def getURLData(url, name, log, text=True):
     # see preston's archive_parse script for alternative way to fetch
     try:
         log_info(log, '\tstart get %s' % (name))
@@ -63,7 +63,10 @@ def getURLData(url, name, log):
         log_info(log, '\tfinish get %s' % (name))
     
         log_info(log, '\tstart read %s' % (name))
-        data = response.text
+        if text:
+            data = response.text
+        else:
+            data = response.content
         log_info(log, '\tfinish read %s' % (name))
         if 200 > len(data):
             # unusually small so log more info
@@ -394,7 +397,7 @@ def __recurse_flatten_map(origmap, thefilter):
     else:
         listmaps += [initmap]
         
-    # for every map on the list, a new row needs to be created in the returned list
+    # for every map on the list, each row needs to be merged in the returned list
     if 'map_list' in thefilter:
         retlist = []
         for value in thefilter['map_list']:

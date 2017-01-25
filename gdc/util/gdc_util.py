@@ -21,6 +21,8 @@ import json
 import requests
 import time
 
+from bq_wrapper import fetch_paged_results, query_bq_table
+from isbcgc_cloudsql_model import ISBCGC_database_helper
 from util import filter_map, flatten_map, import_module, print_list_synopsis
 
 def request(url, params, msg, log, timeout):
@@ -55,6 +57,13 @@ def __addrow(endpt_type, fieldnames, row2map):
             row += [endpt_type]
         elif 'species' == fieldname:
             row += ['Homo sapiens']
+        elif 'preservation_method' == fieldname:
+            if 'is_ffpe' in fieldnames:
+                row += ['FFPE' if row2map['is_ffpe'] else 'frozen']
+            else:
+                row += [None]
+        elif 'project_disease_type' == fieldname:
+            row += [row2map['project_short_name'].split('-')[-1]]
         elif fieldname in row2map:
             if [row2map[fieldname]] is not None:
                 row += [row2map[fieldname]]
@@ -76,14 +85,33 @@ def __insert_rows(config, endpt_type, tablename, values, mapfilter, log):
     for nextmap in maps:
         rows += __addrow(endpt_type, fieldnames, nextmap)
     if config['update_cloudsql']:
+#     def select(cls, config, stmt, log, params = [], verbose = True):
+        wherelist = []
+        for fieldname in fieldnames:
+            wherelist += ['%s = %%s' % (fieldname)]
+        stmt = 'select %s from %s where %s' % (fieldnames[0], tablename, ' and '.join(wherelist))
+        count = 0
+        for index in range(8):
+            if len(rows) == index:
+                break
+            result = module.ISBCGC_database_helper.select(config, stmt, log, rows[index])
+            count += 1 if len(result) > 0 else 0
+        if count == min(len(rows), 8):
+            log.warning('\n\t====================\n\tfirst %d records already saved for %s, skipping\n\t====================' % (count, tablename))
+            return
+        elif 0 < count:
+            raise ValueError('only some of the first %d records were saved for %s' % (count, tablename))
         module.ISBCGC_database_helper.column_insert(config, rows, tablename, fieldnames, log)
     else:
         log.warning('\n\t====================\n\tnot saving to cloudsql to %s this run!\n\t====================' % (tablename))
 
 def save2db(config, endpt_type, table, endpt2info, table_mapping, log):
-    log.info('\tbegin save rows to db for %s' % table)
-    __insert_rows(config, endpt_type, table, endpt2info.values(), table_mapping, log)
-    log.info('\tfinished save rows to db for %s' % table)
+    if 0 == len(endpt2info.values()):
+        log.warning('\n\t====================\n\tno rows to save for %s!\n\t====================' % (table))
+    else:
+        log.info('\tbegin save rows to db for %s' % table)
+        __insert_rows(config, endpt_type, table, endpt2info.values(), table_mapping, log)
+        log.info('\tfinished save rows to db for %s' % table)
 
 def __get_filtered_map_rows(url, idname, filt, mapfilter, activity, log, size = 100, timeout = None):
     count = 0
@@ -129,14 +157,18 @@ def __get_filtered_map_rows(url, idname, filt, mapfilter, activity, log, size = 
 
     return id2map
 
-def get_map_rows(config, endpt_type, endpt, filt, log):
+def get_map_rows(config, endpt_type, endpt, program_name, filt, log):
     log.info('\tbegin select %s %ss' % (endpt_type, endpt))
     endpt_url = config['%ss_endpt' % (endpt)]['%s endpt' % (endpt_type)]
     query = config['%ss_endpt' % (endpt)]['query']
     url = endpt_url + query
-    mapfilter = config['process_%ss' % (endpt)]['filter_result']
     
-    endpt2info = __get_filtered_map_rows(url, '%s_id' % (endpt), filt, mapfilter, endpt, log, config['process_%ss' % (endpt)]['fetch_count'], config['map_requests_timeout'])
+    if program_name:
+        mapfilter = config[program_name]['process_%ss' % (endpt)]['filter_result']
+        endpt2info = __get_filtered_map_rows(url, '%s_id' % (endpt), filt, mapfilter, endpt, log, config[program_name]['process_%ss' % (endpt)]['fetch_count'], config['map_requests_timeout'])
+    else:
+        mapfilter = config['process_%ss' % (endpt)]['filter_result']
+        endpt2info = __get_filtered_map_rows(url, '%s_id' % (endpt), filt, mapfilter, endpt, log, config['process_%ss' % (endpt)]['fetch_count'], config['map_requests_timeout'])
     
     log.info('\tfinished select %s.  processed %s %ss' % (endpt, len(endpt2info), endpt))
     return endpt2info
@@ -156,6 +188,20 @@ def request_facets_results(url, facet_query, facet, log, page_size = 0, params =
         if response:
             response.close()
     return retval
+
+def update_cloudsql_from_bigquery(config, postproc_config, project_name, cloudsql_table, log):
+    update_stmt = 'update %s\nset \n\t%s\nwhere %s = %%s' % (cloudsql_table, '\n\t'.join('%s = %%s,' % (postproc_config['postproc_columns'][key]) for key in postproc_config['postproc_columns'].keys())[:-1], postproc_config['postproc_key_column'])
+    query_results = query_bq_table(postproc_config['postproc_query'] % (', '.join(postproc_config['postproc_columns'].keys()), project_name), False, postproc_config['postproc_project'], log)
+    page_token = None
+    log.info('\t\tupdate_stmt\n%s' % (update_stmt))
+    while True:
+        total_rows, rows, page_token = fetch_paged_results(query_results, postproc_config['postproc_fetch_count'], project_name, page_token, log)
+        print 'total rows: %s' % (total_rows)
+        print '\t%s\n\t\t...\n\t%s' % (str(rows[0]), str(rows[-1]))
+        if config['update_cloudsql']:
+            ISBCGC_database_helper.update(config, update_stmt, log, rows, True)
+        if not page_token:
+            return
 
 def instantiate_etl_class(config, data_type, log):
     etl_class = None

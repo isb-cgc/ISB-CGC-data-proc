@@ -3,7 +3,7 @@ Created on Jun 28, 2016
 
 Copyright 2016, Institute for Systems Biology.
 
-Licensed under the Apache License, Version 2.0 (the "License");
+Licensed under the Apache License, Version 2.0 (the "License ");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
@@ -20,7 +20,104 @@ limitations under the License.
 import logging
 
 from gdc.util.gdc_util import get_map_rows, save2db
+from gdc.model.isbcgc_cloudsql_gdc_model import ISBCGC_database_helper
 from util import close_log, create_log
+
+def associate_metadata2annotation(config, log):
+    # now save the associations
+    for program_name in config['program_names_for_annotation']:
+        associate_statements = [
+            "insert into %s_metadata_annotation2data " \
+                "(metadata_annotation_id, metadata_data_id) " \
+            "select a.metadata_annotation_id, s.metadata_data_id " \
+            "from TCGA_metadata_annotation a join TCGA_metadata_data s on " \
+                "s.aliquot_barcode = a.entity_barcode " \
+            "where status = 'Approved'",
+    
+            "insert into %s_metadata_annotation2data " \
+                "(metadata_annotation_id, metadata_data_id) " \
+            "select a.metadata_annotation_id, s.metadata_data_id " \
+            "from TCGA_metadata_annotation a join TCGA_metadata_data s on " \
+                "left(s.aliquot_barcode, 15) = a.entity_barcode " \
+            "where status = 'Approved'",
+    
+    
+            "insert into %s_metadata_annotation2data " \
+                "(metadata_annotation_id, metadata_data_id) " \
+            "select a.metadata_annotation_id, s.metadata_data_id " \
+            "from TCGA_metadata_annotation a join TCGA_metadata_data s on " \
+                "left(s.aliquot_barcode, 19) = a.entity_barcode " \
+            "where status = 'Approved'",
+    
+            "insert into %s_metadata_annotation2data " \
+                "(metadata_annotation_id, metadata_data_id) " \
+            "select a.metadata_annotation_id, s.metadata_data_id " \
+            "from TCGA_metadata_annotation a join TCGA_metadata_data s on " \
+                "left(s.aliquot_barcode, 20) = a.entity_barcode " \
+            "where status = 'Approved'",
+    
+            "insert into %s_metadata_annotation2data " \
+                "(metadata_annotation_id, metadata_data_id) " \
+            "select a.metadata_annotation_id, s.metadata_data_id " \
+            "from TCGA_metadata_annotation a join TCGA_metadata_data s on " \
+                "left(s.aliquot_barcode, 23) = a.entity_barcode " \
+            "where status = 'Approved'",
+    
+            "insert into %s_metadata_annotation2data " \
+                "(metadata_annotation_id, metadata_data_id) " \
+            "select a.metadata_annotation_id, s.metadata_data_id " \
+            "from TCGA_metadata_annotation a join TCGA_metadata_data s on " \
+                "left(s.aliquot_barcode, 24) = a.entity_barcode " \
+            "where status = 'Approved'",
+    
+            "insert into %s_metadata_annotation2data " \
+                "(metadata_annotation_id, metadata_data_id) " \
+            "select a.metadata_annotation_id, s.metadata_data_id " \
+            "from TCGA_metadata_annotation a join TCGA_metadata_data s on " \
+                "left(s.aliquot_barcode, 27) = a.entity_barcode " \
+            "where status = 'Approved'",
+    
+            "insert into %s_metadata_annotation2data " \
+                "(metadata_annotation_id, metadata_data_id) " \
+            "select a.metadata_annotation_id, s.metadata_data_id " \
+            "from TCGA_metadata_annotation a join TCGA_metadata_data s on " \
+                "s.sample_barcode = a.entity_barcode " \
+            "where status = 'Approved'",
+    
+            "insert into %s_metadata_annotation2data " \
+                "(metadata_annotation_id, metadata_data_id) " \
+            "select a.metadata_annotation_id, s.metadata_data_id " \
+            "from TCGA_metadata_annotation a join TCGA_metadata_data s on " \
+                "s.case_barcode = a.entity_barcode " \
+            "where status = 'Approved'",
+    
+            "insert into %s_metadata_annotation2clinical " \
+                "(metadata_annotation_id, metadata_clinical_id) " \
+            "select a.metadata_annotation_id, s.metadata_clinical_id " \
+            "from TCGA_metadata_annotation a join TCGA_metadata_clinical s on " \
+                "s.case_barcode = a.entity_barcode " \
+            "where status = 'Approved'",
+    
+            "insert into %s_metadata_annotation2biospecimen "  \
+                "(metadata_annotation_id, metadata_biospecimen_id) " \
+            "select a.metadata_annotation_id, s.metadata_biospecimen_id " \
+            "from TCGA_metadata_annotation a join TCGA_metadata_biospecimen s on " \
+                "0 < instr(s.sample_barcode, a.entity_barcode) " \
+            "where status = 'Approved'",
+    
+            "insert into %s_metadata_annotation2samples " \
+                "(metadata_annotation_id, metadata_samples_id) " \
+            "select a.metadata_annotation_id, s.metadata_samples_id " \
+            "from TCGA_metadata_annotation a join TCGA_metadata_samples s on " \
+                "0 < instr(s.sample_barcode, a.entity_barcode) " \
+            "where status = 'Approved'"
+        ]
+        
+        for statement in associate_statements:
+            try:
+                ISBCGC_database_helper.update(config, statement % (program_name), log, [[]], True)
+            except:
+                log.exception('problem executing:\n\t%s' % (statement % (program_name)))
 
 def get_filter():
     return {}
@@ -30,10 +127,11 @@ def process_annotations(config, endpt_type, log_dir):
         log_name = create_log(log_dir, '%s_annotations' % (endpt_type))
         log = logging.getLogger(log_name)
 
-        log.info('begin process_annotations')
-        annotation2info = get_map_rows(config, endpt_type, 'annotation', get_filter(), log)
-        save2db(config, endpt_type, 'metadata_gdc_annotation', annotation2info, config['process_annotations']['annotation_table_mapping'], log)
-        log.info('finished process_annotations')
+        for program_name in config['program_names_for_annotation']:
+            log.info('begin process_annotations for %s' % (program_name))
+            annotation2info = get_map_rows(config, endpt_type, 'annotation', program_name, get_filter(), log)
+            save2db(config, endpt_type, '%s_metadata_annotation' % program_name, annotation2info, config['%s' % (program_name)]['process_annotations']['annotation_table_mapping'], log)
+            log.info('finished process_annotations %s' % (program_name))
 
         return annotation2info
     except:

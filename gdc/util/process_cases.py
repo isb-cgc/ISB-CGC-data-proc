@@ -21,7 +21,7 @@ import json
 import logging
 
 from gdc.util.gdc_util import get_map_rows, save2db
-from util import close_log, create_log
+from util import close_log, create_log, import_module
 
 def get_omf_map_rows(config, project_name, log):
     filt = { 
@@ -51,16 +51,34 @@ def get_filter(project_name):
                      'value': [project_name]
               } 
            }
+
+def remove_null_samples(case2info, log):
+    sampleless = set()
+    for case, info in case2info.iteritems():
+        if 'samples' not in info:
+            log.info('\tfound %s had no samples' % case)
+            sampleless.add(case)
+            
+    for case in sampleless:
+        case2info.pop(case)
     
-def process_cases(config, endpt_type, project_name, log_dir):
+def process_cases(config, endpt_type, program_name, project_name, log_dir):
     try:
         log_name = create_log(log_dir, project_name + '_cases')
         log = logging.getLogger(log_name)
 
         log.info('begin process_cases(%s)' % (project_name))
-        case2info = get_map_rows(config, endpt_type, 'case', get_filter(project_name), log)
-        save2db(config, endpt_type, 'metadata_gdc_clinical', case2info, config['process_cases']['clinical_table_mapping'], log)
-        save2db(config, endpt_type, 'metadata_gdc_biospecimen', case2info, config['process_cases']['sample_table_mapping'], log)
+        case2info = get_map_rows(config, endpt_type, 'case', program_name, get_filter(project_name), log)
+        save2db(config, endpt_type, '%s_metadata_clinical' % (program_name), case2info, config[program_name]['process_cases']['clinical_table_mapping'], log)
+        
+        remove_null_samples(case2info, log)
+        save2db(config, endpt_type, '%s_metadata_biospecimen' % (program_name), case2info, config[program_name]['process_cases']['sample_table_mapping'], log)
+
+        # fill uin the rest of the metadata depending on the program
+        if 0 < len(case2info.values()):
+            postproc_module = import_module(config[program_name]['process_cases']['postproc_case']['postproc_module'])
+            postproc_module.postprocess(config, project_name, log)
+        
         log.info('finished process_cases(%s)' % (project_name))
 
 #         log.info('begin process_cases(%s) for omf files' % (project_name))
