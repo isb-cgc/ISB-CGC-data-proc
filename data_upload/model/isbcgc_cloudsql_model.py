@@ -29,6 +29,12 @@ class ISBCGC_database_helper(object):
     """
 
     @classmethod
+    def log_warnings(cls, cursor, log):
+        for msg in cursor.messages:
+            if msg[0] == MySQLdb.Warning:
+                log.error('\t\tfound warning:\n\t\t\t%s' % (msg[1]))
+
+    @classmethod
     def getDBConnection(cls, config, log):
         try:
             ssl_dir = config['cloudsql']['ssl_dir']
@@ -204,6 +210,7 @@ class ISBCGC_database_helper(object):
                 count += 1
                 try:
                     cursor.execute(stmt, paramset)
+                    cls.log_warnings(cursor, log)
                 except MySQLdb.OperationalError as oe:
                     log.warning('checking operation error: %s' % (oe))
                     if oe.errno == 1205:
@@ -276,6 +283,7 @@ class ISBCGC_database_helper(object):
                     log.info('\t\t\tinsert rows %s to %s' % (start, start + index))
                     try:
                         cursor.executemany(insert_stmt, inserts)
+                        cls.log_warnings(cursor, log)
                     except MySQLdb.OperationalError as oe:
                         try:
                             if oe.errno == 2006 and 3 > tries:
