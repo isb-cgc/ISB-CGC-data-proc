@@ -17,18 +17,18 @@ limitations under the License.
 
 @author: michael
 '''
+from gdc.case_postprocessing import ccle_case_postprocessing
+from gdc.case_postprocessing import target_case_postprocessing
 from gdc.test.test_setup import GDCTestSetup
-from gdc.util.process_data_type import process_data_type
 
-class GDCProcessDataTypeTest(GDCTestSetup):
+class GDCETLTest(GDCTestSetup):
     def setUp(self):
-        super(GDCProcessDataTypeTest, self).setUp()
-        self.config.update(
-            {
-                "upload_files": True,
-                "upload_etl_files": True
-            }
-        )
+        super(GDCETLTest, self).setUp()
+        
+    def test_target_postprocess(self):
+        target_case_postprocessing.postprocess(self.config, 'TARGET-OS', self.log)
+        
+    def test_ccle_postprocess(self):
+        ccle_case_postprocessing.postprocess(self.config, 'CCLE-BLCA', self.log)
+        
 
-    def test_process_data_type(self):
-        process_data_type(self.config, 'current', 'TCGA-LAML', 'Methylation Beta Value', '.', log_name = None)
