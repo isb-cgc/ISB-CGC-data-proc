@@ -62,9 +62,6 @@ class ISBCGC_database_helper(object):
         try:
             if not config['update_schema']:
                 return
-            if not config['process_cases']:
-                log.warning('process_bio must be true for initialization to proceed')
-                return
             db = cls.getDBConnection(config, log)
             cursor = db.cursor()
             process_function(cursor, config, cls.metadata_tables, log)
@@ -121,7 +118,7 @@ class ISBCGC_database_helper(object):
                     count += 1
             if 'foreign_keys' in table:
                 for index in range(len(table['foreign_keys'])):
-                    columnDefinitions += foreign_key_template % ('fk_' + table['table_name'] + '_' + table['foreign_keys'][index][1], 
+                    columnDefinitions += foreign_key_template % (('fk_' + table['foreign_keys'][index][1] + '_' + table['table_name'])[:64], 
                                                 table['foreign_keys'][index][0], table['foreign_keys'][index][1], table['foreign_keys'][index][2])
             columnDefinitions = columnDefinitions[:-3]
             table_statement = create_table_template % (config['cloudsql']['db'], table['table_name'], columnDefinitions)
@@ -243,8 +240,7 @@ class ISBCGC_database_helper(object):
         log.warning('\t\t\t%s' % (msg))
         time.sleep(1) # rollback any previous inserts
         cursor.execute("ROLLBACK")
-    # and setup to retry
-        retrying = True
+
         try:
             db.close() # make sure connection is closed
         except:
