@@ -122,6 +122,13 @@ def associate_metadata2annotation(config, log):
 def get_filter():
     return {}
 
+def add_barcodes(annotation2info):
+    for info in annotation2info.itervalues():
+        if 28 == len(info['entity_submitter_id']):
+            info['aliquot_barcode'] = info['entity_submitter_id']
+        if 15 < len(info['entity_submitter_id']):
+            info['sample_barcode'] = info['entity_submitter_id'][:16]
+
 def process_annotations(config, endpt_type, log_dir):
     try:
         log_name = create_log(log_dir, '%s_annotations' % (endpt_type))
@@ -130,6 +137,7 @@ def process_annotations(config, endpt_type, log_dir):
         for program_name in config['program_names_for_annotation']:
             log.info('begin process_annotations for %s' % (program_name))
             annotation2info = get_map_rows(config, endpt_type, 'annotation', program_name, get_filter(), log)
+            add_barcodes(annotation2info)
             save2db(config, endpt_type, '%s_metadata_annotation' % program_name, annotation2info, config['%s' % (program_name)]['process_annotations']['annotation_table_mapping'], log)
             log.info('finished process_annotations %s' % (program_name))
 
