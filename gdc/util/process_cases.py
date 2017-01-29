@@ -77,7 +77,7 @@ def process_cases(config, endpt_type, program_name, project_name, log_dir):
         # fill uin the rest of the metadata depending on the program
         if 0 < len(case2info.values()):
             postproc_module = import_module(config[program_name]['process_cases']['postproc_case']['postproc_module'])
-            postproc_module.postprocess(config, project_name, log)
+            postproc_module.postprocess(config, project_name, endpt_type, log)
         
         log.info('finished process_cases(%s)' % (project_name))
 

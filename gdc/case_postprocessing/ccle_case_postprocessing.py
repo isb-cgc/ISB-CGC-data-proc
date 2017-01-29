@@ -20,13 +20,23 @@ limitations under the License.
 @author: michael
 '''
 from gdc.util.gdc_util import update_cloudsql_from_bigquery
+from isbcgc_cloudsql_model import ISBCGC_database_helper
 
-def postprocess(config, project_name, log):
+def postprocess(config, project_name, endpt_type, log):
     try:
         log.info('\tstart postprocess for %s' % (project_name))
+        # fill in the attributes from the BigQuery tables 
+        log.info('\t\tfrom bigquery, fill in the attribute columns for %s' % (project_name))
         postproc_config = config['CCLE']['process_cases']['postproc_case']
         cloudsql_table = postproc_config['postproc_cloudsql_table']
         update_cloudsql_from_bigquery(config, postproc_config, project_name, cloudsql_table, log)
+        
+        log.info('\tstart populating samples for %s' % (project_name))
+        stmts = config['CCLE']['populate_samples']['stmts']
+        for stmt in stmts:
+            ISBCGC_database_helper.update(config, stmt % (project_name, endpt_type), log, [[]])
+        log.info('\tdone populating samples for %s' % (project_name))
+
         log.info('\tdone postprocess for %s' % (project_name))
     except:
         log.exception('problem postprocessing %s' % (project_name))
