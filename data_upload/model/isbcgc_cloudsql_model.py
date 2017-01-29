@@ -287,13 +287,13 @@ class ISBCGC_database_helper(object):
                     except MySQLdb.OperationalError as oe:
                         try:
                             if oe.errno == 2006 and 3 > tries:
-                                cursor, db = cls.processOEError(config, cursor, db, 'update had operation error 2006, lost connection for %s, sleeping' % (insert_stmt), log)
+                                cursor, db = cls.processOEError(config, cursor, db, 'update had operation error 2006(%s), lost connection for %s, sleeping' % (oe, insert_stmt), log)
                             else:
                                 log.exception('\t\t\tupdate had multiple operation errors 2006 for %s' % (insert_stmt))
                                 raise oe
                         except AttributeError:
                             if 3 > tries:
-                                cursor, db = cls.processOEError(config, cursor, db, 'update had operation error, lost connection for %s, sleeping' % (insert_stmt), log)
+                                cursor, db = cls.processOEError(config, cursor, db, 'update had operation error(%s), lost connection for %s, sleeping' % (oe, insert_stmt), log)
                             else:
                                 log.exception('\t\t\tupdate had multiple operation errors for %s' % (insert_stmt))
                                 raise oe

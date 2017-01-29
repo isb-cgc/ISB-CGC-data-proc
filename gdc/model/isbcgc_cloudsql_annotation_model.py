@@ -44,6 +44,8 @@ class ISBCGC_database_helper(ISBCGC_database_helper):
             ['program_name', 'VARCHAR(40)', 'NULL'],
             ['case_gdc_id', 'VARCHAR(36)', 'NOT NULL'],
             ['case_barcode', 'VARCHAR(30)', 'NOT NULL'],
+            ['sample_barcode', 'VARCHAR(35)', 'NOT NULL'],
+            ['aliquot_barcode', 'VARCHAR(40)', 'NOT NULL'],
             ['date_created', 'DATETIME', 'NULL'],
             ['date_edited', 'DATETIME', 'NOT NULL'],
             ['annotation_submitter_id', 'VARCHAR(10)', 'NULL'],

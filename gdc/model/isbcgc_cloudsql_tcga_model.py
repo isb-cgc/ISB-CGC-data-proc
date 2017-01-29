@@ -71,7 +71,7 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
             ['anatomic_neoplasm_subdivision', 'VARCHAR(63)', 'NULL'],
             ['batch_number', 'INT', 'NULL'],
             ['bcr', 'VARCHAR(63)', 'NULL'],
-            ['bmi', 'FLOAT(3,1)', 'NULL'],
+            ['bmi', 'FLOAT(4,1)', 'NULL'],
             ['clinical_M', 'VARCHAR(12)', 'NULL'],
             ['clinical_N', 'VARCHAR(12)', 'NULL'],
             ['clinical_stage', 'VARCHAR(12)', 'NULL'],
@@ -124,13 +124,13 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
             ['residual_tumor', 'VARCHAR(5)', 'NULL'],
             ['stopped_smoking_year', 'INT', 'NULL'],
             ['tobacco_smoking_history', 'VARCHAR(50)', 'NULL'],
-            ['TSSCode', 'VARCHAR(2)', 'NULL'],
+            ['tss_code', 'VARCHAR(2)', 'NULL'],
             ['tumor_tissue_site', 'VARCHAR(100)', 'NULL'],
             ['tumor_type', 'VARCHAR(30)', 'NULL'],
             ['venous_invasion', 'VARCHAR(8)', 'NULL'],
             ['vital_status', 'VARCHAR(8)', 'NULL'],
             ['weight', 'INT', 'NULL'],
-            ['year_of_initial_pathologic_diagnosis', 'INT', 'NULL'],
+            ['year_of_diagnosis', 'INT', 'NULL'],
             ['year_of_tobacco_smoking_onset', 'INT', 'NULL']
         ],
 #         'natural_key_cols': [
@@ -198,7 +198,7 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
             ['tumor_type'],
             ['vital_status'],
             ['weight'],
-            ['year_of_initial_pathologic_diagnosis'],
+            ['year_of_diagnosis'],
             ['year_of_tobacco_smoking_onset']
         ]
     }
@@ -214,7 +214,7 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
             ['program_name', 'VARCHAR(30)', 'NOT NULL'],
             ['project_short_name', 'VARCHAR(30)', 'NOT NULL'],
             ['project_disease_type', 'VARCHAR(30)', 'NOT NULL'],
-            ['pathology_report_uuid', 'VARCHAR(36)', 'NOT NULL'],
+            ['pathology_report_uuid', 'VARCHAR(36)', 'NULL'],
             ['sample_type', 'VARCHAR(2)', 'NOT NULL'],
             ['avg_percent_lymphocyte_infiltration', 'FLOAT', 'NULL'],
             ['avg_percent_monocyte_infiltration', 'FLOAT', 'NULL'],
@@ -246,9 +246,7 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
             ['min_percent_tumor_cells', 'FLOAT', 'NULL'],
             ['min_percent_tumor_nuclei', 'FLOAT', 'NULL'],
             ['num_portions', 'INT', 'NULL'],
-            ['num_slides', 'INT', 'NULL'],
-            ['tissue_anatomic_site', 'VARCHAR(55)', 'NULL'],
-            ['tissue_anatomic_site_description', 'VARCHAR(45)', 'NULL']
+            ['num_slides', 'INT', 'NULL']
         ],
 #         'natural_key_cols': [
 #             'sample_barcode'
@@ -291,8 +289,7 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
             ['min_percent_tumor_cells'],
             ['min_percent_tumor_nuclei'],
             ['num_portions'],
-            ['num_slides'],
-            ['tissue_anatomic_site']
+            ['num_slides']
         ],
 #         'foreign_key': [
 #             'case_barcode',
@@ -404,7 +401,7 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
             ['person_neoplasm_cancer_status', 'VARCHAR(15)', 'NULL'],
             ['race', 'VARCHAR(50)', 'NULL'],
             ['ethnicity', 'VARCHAR(30)', 'NULL'],
-            ['bmi', 'FLOAT(3,1)', 'NULL'],
+            ['bmi', 'FLOAT(4,1)', 'NULL'],
             ['tobacco_smoking_history', 'VARCHAR(50)', 'NULL'],
             ['menopause_status', 'VARCHAR(120)', 'NULL'],
             ['hpv_status', 'VARCHAR(20)', 'NULL'],
