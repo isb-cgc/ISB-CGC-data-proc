@@ -316,9 +316,10 @@ def uploadGDC():
         log = logging.getLogger(log_name)
         
         try:
-            log.info('getting run input')
-            set_run_info(config)
-            log.info('finished getting run input')
+            if config['process_adjustments']:
+                log.info('getting run input')
+                set_run_info(config)
+                log.info('finished getting run input')
         except:
             log.exception('setting run information had a failure, continuing...')
 
