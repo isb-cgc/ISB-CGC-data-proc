@@ -58,12 +58,12 @@ def __addrow(endpt_type, fieldnames, row2map):
         elif 'species' == fieldname:
             row += ['Homo sapiens']
         elif 'preservation_method' == fieldname:
-            if 'is_ffpe' in fieldnames:
+            if 'is_ffpe' in row2map:
                 row += ['FFPE' if row2map['is_ffpe'] else 'frozen']
             else:
                 row += [None]
         elif 'project_disease_type' == fieldname:
-            row += [row2map['project_short_name'].split('-')[-1]]
+            row += ['-'.join(row2map['project_short_name'].split('-')[1:])]
         elif fieldname in row2map:
             if [row2map[fieldname]] is not None:
                 row += [row2map[fieldname]]
@@ -193,11 +193,10 @@ def update_cloudsql_from_bigquery(config, postproc_config, project_name, cloudsq
     update_stmt = 'update %s\nset \n\t%s\nwhere %s = %%s' % (cloudsql_table, '\n\t'.join('%s = %%s,' % (postproc_config['postproc_columns'][key]) for key in postproc_config['postproc_columns'].keys())[:-1], postproc_config['postproc_key_column'])
     query_results = query_bq_table(postproc_config['postproc_query'] % (', '.join(postproc_config['postproc_columns'].keys()), project_name), False, postproc_config['postproc_project'], log)
     page_token = None
-    log.info('\t\tupdate_stmt\n%s' % (update_stmt))
+    log.info('\t\t\tupdate_stmt\n%s' % (update_stmt))
     while True:
         total_rows, rows, page_token = fetch_paged_results(query_results, postproc_config['postproc_fetch_count'], project_name, page_token, log)
-        print 'total rows: %s' % (total_rows)
-        print '\t%s\n\t\t...\n\t%s' % (str(rows[0]), str(rows[-1]))
+        log.info('\t\t\ttotal rows: %s\n\t%s\n\t\t...\n\t%s' % (total_rows, str(rows[0]), str(rows[-1])))
         if config['update_cloudsql']:
             ISBCGC_database_helper.update(config, update_stmt, log, rows, True)
         if not page_token:
@@ -206,7 +205,7 @@ def update_cloudsql_from_bigquery(config, postproc_config, project_name, cloudsq
 def instantiate_etl_class(config, data_type, log):
     etl_class = None
     if data_type in config['process_files']['datatype2bqscript']:
-        log.info('\t\tinstantiating etl class %s' % (config['process_files']['datatype2bqscript'][data_type]['class']))
+        log.info('\t\t\tinstantiating etl class %s' % (config['process_files']['datatype2bqscript'][data_type]['class']))
         etl_module_name = config['process_files']['datatype2bqscript'][data_type]['python_module']
         module = import_module(etl_module_name)
         etl_class_name = config['process_files']['datatype2bqscript'][data_type]['class']
