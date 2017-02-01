@@ -77,7 +77,7 @@ def process_project(config, endpt_type, program_name, project, log_dir):
                 for data_type in data_types:
                     if (len(config['data_type_restrict']) == 0 or data_type in config['data_type_restrict']):
                         log.info('\t\tprocess data_type \'%s\' for %s' % (data_type, project))
-                        future2data_type[executor.submit(process_data_type, config, endpt_type, project, data_type, log_dir)] = data_type
+                        future2data_type[executor.submit(process_data_type, config, endpt_type, program_name, project, data_type, log_dir)] = data_type
                     else:
                         log.info('\t\tnot processing data_type %s for %s' % (data_type, project))
              
@@ -96,7 +96,7 @@ def process_project(config, endpt_type, program_name, project, log_dir):
                                     raise ValueError('%s failed multiple times--%s:%s' % (data_type, type(future.exception()).__name__, future.exception()))
                                 data_type2retry[data_type] = retry_ct + 1
                                 log.warning('\tWARNING: resubmitting %s--%s:%s.  try %s' % (data_type, type(future.exception()).__name__, future.exception(), retry_ct))
-                                new_future = executor.submit(process_data_type, config, endpt_type, project, data_type, log_dir, project + '_' + data_type.replace(' ', '') + '_%d' % (retry_ct))
+                                new_future = executor.submit(process_data_type, config, endpt_type, program_name, project, data_type, log_dir, project + '_' + data_type.replace(' ', '') + '_%d' % (retry_ct))
                                 future2data_type[new_future] = data_type
                             else:
                                 log.info('\t\tfinished process data_type \'%s\' for %s' % (data_type, project))
@@ -341,6 +341,10 @@ def uploadGDC():
             process_programs(config, endpt_type, log_dir, log)
             if config['process_annotation']:
                 associate_metadata2annotation(config, log)
+        if config['process_case']:
+            for program_name in config['program_names']:
+                postproc_module = import_module(config[program_name]['process_cases']['postproc_case']['postproc_module'])
+                postproc_module.process_metadata_attrs(config, log)
     except:
         raise
     finally:
