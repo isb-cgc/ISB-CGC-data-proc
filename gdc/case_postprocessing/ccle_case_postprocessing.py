@@ -20,7 +20,8 @@ limitations under the License.
 @author: michael
 '''
 from gdc.util.gdc_util import update_cloudsql_from_bigquery
-from isbcgc_cloudsql_model import ISBCGC_database_helper
+from gdc.model.isbcgc_cloudsql_ccle_model import ISBCGC_database_helper
+from util import order4insert
 
 def postprocess(config, project_name, endpt_type, log):
     try:
@@ -36,6 +37,12 @@ def postprocess(config, project_name, endpt_type, log):
         for stmt in stmts:
             ISBCGC_database_helper.update(config, stmt % (project_name, endpt_type), log, [[]])
         log.info('\tdone populating samples for %s' % (project_name))
+
+        log.info('\tstart populating attrs for %s' % (project_name))
+        attrrows = config['CCLE']['populate_samples']['attr_rows']
+        dbrows = order4insert(config['CCLE']['populate_samples']['attr_order'], ISBCGC_database_helper.field_names('CCLE_metadata_attrs'), attrrows)
+        ISBCGC_database_helper.column_insert(config, dbrows, 'CCLE_metadata_attrs', ISBCGC_database_helper.field_names('CCLE_metadata_attrs'), log)
+        log.info('\tdone populating attrs for %s' % (project_name))
 
         log.info('\tdone postprocess for %s' % (project_name))
     except:
