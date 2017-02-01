@@ -297,9 +297,24 @@ class ISBCGC_database_helper(object):
                             else:
                                 log.exception('\t\t\tupdate had multiple operation errors for %s' % (insert_stmt))
                                 raise oe
+                    except MySQLdb.DataError as de:
+                        try:
+                            if de.errno == 1406 and 3 > tries:
+                                errorrow = int(str(de).split(' '))
+                                cursor, db = cls.processOEError(config, cursor, db, 'update had data error 1406(%s), data too long for column: %s-' % (de, insert_stmt, inserts[errorrow]), log)
+#DataError: (1406, "Data too long for column 'file_name' at row 1")
+                            else:
+                                log.exception('\t\t\tupdate had multiple data errors 1406 for, data too long for column: %s' % (insert_stmt))
+                                raise
+                        except AttributeError:
+                            if 3 > tries:
+                                cursor, db = cls.processOEError(config, cursor, db, 'update had data error(%s), lost connection for %s, sleeping' % (de, insert_stmt), log)
+                            else:
+                                log.exception('\t\t\tupdate had multiple data errors for %s' % (insert_stmt))
+                                raise de
                     except Exception as e:
                         log.exception('problem with update for:\n%s\n\t%s\n%s' % (insert_stmt, e, inserts[:20]))
-                        raise e
+                        raise
                     inserts = []
                 # successfully looped through so stop trying
                 break
