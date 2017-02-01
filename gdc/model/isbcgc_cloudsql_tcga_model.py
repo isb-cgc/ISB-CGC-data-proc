@@ -298,92 +298,6 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
 #         ]
     }
     
-    TCGA_metadata_data = {
-        'table_name': 'TCGA_metadata_data',
-        'primary_key_name': 'metadata_data_id',
-        'columns': [
-            ['file_gdc_id', 'VARCHAR(36)', 'NOT NULL'],
-            ['case_gdc_id', 'VARCHAR(36)', 'NOT NULL'],
-            ['case_barcode', 'VARCHAR(35)', 'NOT NULL'],
-            ['sample_gdc_id', 'VARCHAR(45)', 'NOT NULL'],
-            ['sample_barcode', 'VARCHAR(45)', 'NOT NULL'],
-            ['sample_type_code', 'VARCHAR(2)', 'NOT NULL'],
-            ['aliquot_barcode', 'VARCHAR(45)', 'NOT NULL'],
-            ['aliquot_gdc_id', 'VARCHAR(36)', 'NOT NULL'],
-            ['project_short_name', 'VARCHAR(40)', 'NOT NULL'],
-            ['project_disease_type', 'VARCHAR(30)', 'NOT NULL'],
-            ['program_name', 'VARCHAR(40)', 'NOT NULL'],
-            ['data_type', 'VARCHAR(35)', 'NOT NULL'],
-            ['data_category', 'VARCHAR(30)', 'NOT NULL'],
-            ['experimental_strategy', 'VARCHAR(50)', 'NULL'],
-            ['type', 'VARCHAR(40)', 'NULL'],
-            ['file_submitter_id', 'VARCHAR(36)', 'NOT NULL'],
-            ['file_name', 'VARCHAR(200)', 'NOT NULL'],
-            ['file_size', 'BIGINT', 'NOT NULL'],
-            ['file_state', 'VARCHAR(30)', 'NULL'],
-            ['data_format', 'VARCHAR(10)', 'NOT NULL'],
-            ['md5sum', 'VARCHAR(33)', 'NULL'],
-            ['access', 'VARCHAR(10)', 'NOT NULL'],
-            ['acl', 'VARCHAR(25)', 'NULL'],
-            ['state', 'VARCHAR(20)', 'NULL'],
-            ['platform', 'VARCHAR(50)', 'NULL'],
-            ['datafile_namekey', 'VARCHAR(33)', 'NULL'],
-            ['datafile_uploaded', 'VARCHAR(5)', 'NOT NULL'],
-            ['created_datetime', 'DATETIME', 'NULL'],
-            ['updated_datetime', 'DATETIME', 'NULL'],
-            ['endpoint_type', 'VARCHAR(8)', 'NULL'],
-            ['analysis_analysis_id', 'VARCHAR(36)', 'NULL'],
-            ['analysis_workflow_link', 'VARCHAR(60)', 'NULL'],
-            ['analysis_workflow_type', 'VARCHAR(60)', 'NULL'],
-            ['center_code', 'VARCHAR(8)', 'NULL'],
-            ['center_name', 'VARCHAR(50)', 'NULL'],
-            ['center_type', 'VARCHAR(8)', 'NULL'],
-            ['species', 'VARCHAR(30)', 'NULL'],
-            ['archive_file_name', 'VARCHAR(60)', 'NULL'],
-            ['archive_gdc_id', 'VARCHAR(36)', 'NULL'],
-            ['archive_submitter_id', 'VARCHAR(50)', 'NULL'],
-            ['archive_revision', 'INT', 'NULL'],
-            ['archive_state', 'VARCHAR(8)', 'NULL'],
-# this should probably be a foreign key back to the index file record
-            ['index_file_id', 'VARCHAR(36)', 'NULL'],
-            ['index_file_name', 'VARCHAR(50)', 'NULL'],
-            ['index_file_size', 'BIGINT', 'NULL'],
-        ],
-#         'natural_key_cols': [
-#             'aliquot_barcode',
-#             'DatafileName'
-#         ],
-        'indices_defs': [
-            ['file_gdc_id'],
-            ['case_gdc_id'],
-            ['case_barcode'],
-            ['sample_gdc_id'],
-            ['sample_barcode'],
-            ['sample_type_code'],
-            ['aliquot_barcode'],
-            ['aliquot_gdc_id'],
-            ['project_short_name'],
-            ['project_disease_type'],
-            ['program_name'],
-            ['data_type'],
-            ['data_category'],
-            ['experimental_strategy'],
-            ['type'],
-            ['data_format'],
-            ['state'],
-            ['platform'],
-            ['datafile_uploaded'],
-            ['endpoint_type'],
-            ['analysis_workflow_link'],
-            ['analysis_workflow_type']
-        ],
-#         'foreign_key': [
-#             'sample_barcode',
-#             'metadata_biospecimen',
-#             'sample_barcode'
-#         ]
-    }
-
     TCGA_metadata_samples = {
         'table_name': 'TCGA_metadata_samples',
         'primary_key_name': 'metadata_samples_id',  # todo: define this?
@@ -448,13 +362,110 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
 #         ]
     }
     
+    TCGA_metadata_attrs = {
+        'table_name': 'TCGA_metadata_attrs',
+        'primary_key_name': 'metadata_attrs_id',  # todo: define this?
+
+        'columns': [
+            ['attribute', 'VARCHAR(70)', 'NOT NULL'],
+            ['code', 'VARCHAR(1)', 'NOT NULL'],
+            ['spec', 'VARCHAR(4)', 'NOT NULL']
+        ],
+        'indices_defs': [
+            ['attribute'],
+            ['code'],
+            ['spec']
+        ]
+    }
+
+    TCGA_metadata_data = {
+        'table_name': 'TCGA_metadata_data',
+        'primary_key_name': 'metadata_data_id',
+        'columns': [
+            ['file_gdc_id', 'VARCHAR(36)', 'NOT NULL'],
+            ['case_gdc_id', 'VARCHAR(36)', 'NOT NULL'],
+            ['case_barcode', 'VARCHAR(35)', 'NOT NULL'],
+            ['sample_gdc_id', 'VARCHAR(45)', 'NOT NULL'],
+            ['sample_barcode', 'VARCHAR(45)', 'NOT NULL'],
+            ['sample_type', 'VARCHAR(2)', 'NOT NULL'],
+            ['aliquot_barcode', 'VARCHAR(45)', 'NOT NULL'],
+            ['aliquot_gdc_id', 'VARCHAR(36)', 'NOT NULL'],
+            ['project_short_name', 'VARCHAR(40)', 'NOT NULL'],
+            ['project_disease_type', 'VARCHAR(30)', 'NOT NULL'],
+            ['program_name', 'VARCHAR(40)', 'NOT NULL'],
+            ['data_type', 'VARCHAR(35)', 'NOT NULL'],
+            ['data_category', 'VARCHAR(30)', 'NOT NULL'],
+            ['experimental_strategy', 'VARCHAR(50)', 'NULL'],
+            ['type', 'VARCHAR(40)', 'NULL'],
+            ['file_name', 'VARCHAR(120)', 'NOT NULL'],
+            ['file_size', 'BIGINT', 'NOT NULL'],
+            ['file_state', 'VARCHAR(30)', 'NULL'],
+            ['file_name_key', 'VARCHAR(250)', 'NULL'],
+            ['file_uploaded', 'VARCHAR(5)', 'NOT NULL'],
+            ['data_format', 'VARCHAR(10)', 'NOT NULL'],
+            ['md5sum', 'VARCHAR(33)', 'NULL'],
+            ['access', 'VARCHAR(10)', 'NOT NULL'],
+            ['acl', 'VARCHAR(25)', 'NULL'],
+            ['platform', 'VARCHAR(50)', 'NULL'],
+            ['endpoint_type', 'VARCHAR(8)', 'NULL'],
+            ['analysis_gdc_id', 'VARCHAR(36)', 'NULL'],
+            ['analysis_workflow_link', 'VARCHAR(60)', 'NULL'],
+            ['analysis_workflow_type', 'VARCHAR(60)', 'NULL'],
+            ['center_code', 'VARCHAR(8)', 'NULL'],
+            ['center_name', 'VARCHAR(50)', 'NULL'],
+            ['center_type', 'VARCHAR(8)', 'NULL'],
+            ['species', 'VARCHAR(30)', 'NULL'],
+            ['archive_file_name', 'VARCHAR(80)', 'NULL'],
+            ['archive_gdc_id', 'VARCHAR(36)', 'NULL'],
+            ['archive_submitter_id', 'VARCHAR(80)', 'NULL'],
+            ['archive_revision', 'INT', 'NULL'],
+# this should probably be a foreign key back to the index file record
+            ['index_file_id', 'VARCHAR(36)', 'NULL'],
+            ['index_file_name', 'VARCHAR(80)', 'NULL'],
+            ['index_file_size', 'BIGINT', 'NULL'],
+        ],
+#         'natural_key_cols': [
+#             'aliquot_barcode',
+#             'DatafileName'
+#         ],
+        'indices_defs': [
+            ['file_gdc_id'],
+            ['case_gdc_id'],
+            ['case_barcode'],
+            ['sample_gdc_id'],
+            ['sample_barcode'],
+            ['sample_type'],
+            ['aliquot_barcode'],
+            ['aliquot_gdc_id'],
+            ['project_short_name'],
+            ['project_disease_type'],
+            ['program_name'],
+            ['data_type'],
+            ['data_category'],
+            ['experimental_strategy'],
+            ['type'],
+            ['data_format'],
+            ['platform'],
+            ['file_uploaded'],
+            ['endpoint_type'],
+            ['analysis_workflow_link'],
+            ['analysis_workflow_type']
+        ],
+#         'foreign_key': [
+#             'sample_barcode',
+#             'metadata_biospecimen',
+#             'sample_barcode'
+#         ]
+    }
+
     metadata_tables = OrderedDict(
         [
             ('TCGA_metadata_project', TCGA_metadata_project),
             ('TCGA_metadata_clinical', TCGA_metadata_clinical),
             ('TCGA_metadata_biospecimen', TCGA_metadata_biospecimen),
             ('TCGA_metadata_samples', TCGA_metadata_samples),
-            ('TCGA_metadata_data', TCGA_metadata_data)
+            ('TCGA_metadata_data', TCGA_metadata_data),
+            ('TCGA_metadata_attrs', TCGA_metadata_attrs)
         ]
     )
 
