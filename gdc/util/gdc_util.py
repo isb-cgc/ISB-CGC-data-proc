@@ -50,20 +50,46 @@ def request(url, params, msg, log, timeout):
     
     return response
 
-def __addrow(endpt_type, fieldnames, row2map):
+def __addrow(endpt_type, fieldnames, row2map, log):
     row = []
+    
     for fieldname in fieldnames:
         if 'endpoint_type' == fieldname:
             row += [endpt_type]
         elif 'species' == fieldname:
             row += ['Homo sapiens']
+        elif 'file_uploaded' == fieldname:
+            row += ['false']
         elif 'preservation_method' == fieldname:
             if 'is_ffpe' in row2map:
                 row += ['FFPE' if row2map['is_ffpe'] else 'frozen']
             else:
                 row += [None]
         elif 'project_disease_type' == fieldname:
-            row += ['-'.join(row2map['project_short_name'].split('-')[1:])]
+            if 'project_short_name' in row2map:
+                row += ['-'.join(row2map['project_short_name'].split('-')[1:])]
+            else:
+                if 'case_gdc_id' in row2map:
+                    log.warning('problem setting project_disease_type for %s' % row2map['case_gdc_id'])
+                else:
+                    log.warning('problem setting project_disease_type for %s' % row2map['file_gdc_id'])
+                row += [None]
+        elif 'aliquot_gdc_id' == fieldname:
+            if 'aliquot_gdc_id' in row2map:
+                row += [row2map['aliquot_gdc_id']]
+            else:
+                if 'portion_barcode' in row2map:
+                    row += [row2map['portion_gdc_id']]
+                else:
+                    row += [None]
+        elif 'aliquot_barcode' == fieldname:
+            if 'aliquot_barcode' in row2map:
+                row += [row2map['aliquot_barcode']]
+            else:
+                if 'portion_barcode' in row2map:
+                    row += [row2map['portion_barcode']]
+                else:
+                    row += [None]
         elif fieldname in row2map:
             if [row2map[fieldname]] is not None:
                 row += [row2map[fieldname]]
@@ -83,7 +109,7 @@ def __insert_rows(config, endpt_type, tablename, values, mapfilter, log):
     fieldnames = module.ISBCGC_database_helper.field_names(tablename)
     rows = []
     for nextmap in maps:
-        rows += __addrow(endpt_type, fieldnames, nextmap)
+        rows += __addrow(endpt_type, fieldnames, nextmap, log)
     if config['update_cloudsql']:
 #     def select(cls, config, stmt, log, params = [], verbose = True):
         wherelist = []
