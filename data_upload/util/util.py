@@ -374,9 +374,24 @@ def __recurse_flatten_map(origmap, thefilter):
                     initmap[fields[1]] = string
                 else:
                     raise ValueError('unknown operation specification: %s %s' % (origmap[value], thefilter['value'][value]))
+
+    # there is an issue if there are more than one key on the map lists.  under the currently defined filters, this only happens with
+    # files where both cases and index_files are both on the map_list.  cases can legitimately be multi-valued, so index_files will be 
+    # reduced to its first member on the map list
+    if 'map_list' in thefilter:
+        if 'cases' in thefilter['map_list'] and 'index_files' in thefilter['map_list'] and 'index_files' in origmap:
+            # adjust the filter
+            maps = thefilter.setdefault('map', {})
+            index_files = thefilter['map_list'].pop('index_files')
+            maps['index_files'] = index_files
+                        # adjust the json
+            if len(origmap['index_files']) > 1:
+                print 'found more than one index_files for ' % origmap['file_gdc_id']
+            origmap['index_files'] = origmap['index_files'][0]
+            
     
     # TODO: map might have a list might have nested fields so might return multiple rows
-    maplists = []
+    # maplists = []
     if 'map' in thefilter:
         for value in thefilter['map']:
             if value in origmap:
@@ -384,11 +399,13 @@ def __recurse_flatten_map(origmap, thefilter):
                 initmap.update(__recurse_flatten_map(origmap[value], thefilter['map'][value])[0])
     
     # for every value on the list, a new row needs to be created in the returned list
+    # TODO: currently never gone into, not really quite right so will need to be fixed if ever needed
     listmaps = []
     if 'list' in thefilter:
         for value in thefilter['list']:
             newlabel += [thefilter['list'][value]]
             for value in origmap[value]:
+                # flatten the key/values from the nested map with the top level key/values
                 newmap = dict(initmap)
                 newmap.update([(newlabel, value)])
                 listmaps += [newmap]
@@ -415,6 +432,20 @@ def __recurse_flatten_map(origmap, thefilter):
 
 def flatten_map(origmap, thefilter):
     return __recurse_flatten_map(origmap, thefilter)
+
+def order4insert(curorder, dborder, rows):
+    if len(curorder) != len(dborder):
+        raise ValueError('lengths of lists must be the same: %s vs. %s' % (curorder, dborder))
+    mapping = {}
+    for curindex, cur in enumerate(curorder):
+        mapping[curindex] = dborder.index(cur)
+    dbrows = []
+    for row in rows:
+        dbrow = [None] * len(curorder)
+        dbrows += [dbrow]
+        for curindex, dbindex in mapping.iteritems():
+            dbrow[dbindex] = row[curindex]
+    return dbrows
 
 def delete_objects(config, bucket, path, log):
     global gcs_wrapper
