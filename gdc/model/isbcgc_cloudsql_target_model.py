@@ -213,21 +213,97 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
         ]
     }
 
-    TARGET_metadata_data = {
-        'table_name': 'TARGET_metadata_data',
+    TARGET_metadata_data_HG19 = {
+        'table_name': 'TARGET_metadata_data_HG19',
         'primary_key_name': 'metadata_data_id',
         'columns': [
-            ['file_gdc_id', 'VARCHAR(36)', 'NULL'],
-            ['case_gdc_id', 'VARCHAR(36)', 'NULL'],
-            ['case_barcode', 'VARCHAR(35)', 'NULL'],
+            ['file_gdc_id', 'VARCHAR(36)', 'NOT NULL'],
+            ['case_gdc_id', 'VARCHAR(36)', 'NOT NULL'],
+            ['case_barcode', 'VARCHAR(35)', 'NOT NULL'],
             ['sample_gdc_id', 'VARCHAR(45)', 'NULL'],
             ['sample_barcode', 'VARCHAR(45)', 'NULL'],
             ['sample_type', 'VARCHAR(2)', 'NULL'],
             ['aliquot_barcode', 'VARCHAR(45)', 'NULL'],
             ['aliquot_gdc_id', 'VARCHAR(36)', 'NULL'],
-            ['project_short_name', 'VARCHAR(40)', 'NULL'],
+            ['project_short_name', 'VARCHAR(40)', 'NOT NULL'],
             ['project_disease_type', 'VARCHAR(30)', 'NOT NULL'],
-            ['program_name', 'VARCHAR(40)', 'NULL'],
+            ['program_name', 'VARCHAR(40)', 'NOT NULL'],
+            ['data_type', 'VARCHAR(35)', 'NOT NULL'],
+            ['data_category', 'VARCHAR(30)', 'NOT NULL'],
+            ['experimental_strategy', 'VARCHAR(50)', 'NULL'],
+            ['type', 'VARCHAR(40)', 'NULL'],
+            ['file_name', 'VARCHAR(120)', 'NOT NULL'],
+            ['file_size', 'BIGINT', 'NOT NULL'],
+            ['file_state', 'VARCHAR(30)', 'NULL'],
+            ['data_format', 'VARCHAR(10)', 'NOT NULL'],
+            ['md5sum', 'VARCHAR(33)', 'NULL'],
+            ['access', 'VARCHAR(10)', 'NOT NULL'],
+            ['acl', 'VARCHAR(25)', 'NULL'],
+            ['platform', 'VARCHAR(50)', 'NULL'],
+            ['file_name_key', 'VARCHAR(250)', 'NULL'],
+            ['file_uploaded', 'VARCHAR(5)', 'NOT NULL'],
+            ['endpoint_type', 'VARCHAR(8)', 'NULL'],
+            ['analysis_gdc_id', 'VARCHAR(36)', 'NULL'],
+            ['analysis_workflow_link', 'VARCHAR(60)', 'NULL'],
+            ['analysis_workflow_type', 'VARCHAR(60)', 'NULL'],
+            ['center_code', 'VARCHAR(8)', 'NULL'],
+            ['center_name', 'VARCHAR(50)', 'NULL'],
+            ['center_type', 'VARCHAR(8)', 'NULL'],
+            ['species', 'VARCHAR(30)', 'NULL'],
+# this should probably be a foreign key back to the index file record
+            ['index_file_id', 'VARCHAR(36)', 'NULL'],
+            ['index_file_name', 'VARCHAR(80)', 'NULL'],
+            ['index_file_size', 'BIGINT', 'NULL'],
+        ],
+#         'natural_key_cols': [
+#             'aliquot_barcode',
+#             'DatafileName'
+#         ],
+        'indices_defs': [
+            ['file_gdc_id'],
+            ['case_gdc_id'],
+            ['case_barcode'],
+            ['sample_gdc_id'],
+            ['sample_barcode'],
+            ['sample_type'],
+            ['aliquot_barcode'],
+            ['aliquot_gdc_id'],
+            ['project_short_name'],
+            ['project_disease_type'],
+            ['program_name'],
+            ['data_type'],
+            ['data_category'],
+            ['experimental_strategy'],
+            ['type'],
+            ['data_format'],
+            ['platform'],
+            ['file_uploaded'],
+            ['endpoint_type'],
+            ['analysis_workflow_link'],
+            ['analysis_workflow_type']
+        ],
+#         'foreign_key': [
+#             'sample_barcode',
+#             'metadata_biospecimen',
+#             'sample_barcode'
+#         ]
+    }
+
+    TARGET_metadata_data_HG38 = {
+        'table_name': 'TARGET_metadata_data_HG38',
+        'primary_key_name': 'metadata_data_id',
+        'columns': [
+            ['file_gdc_id', 'VARCHAR(36)', 'NOT NULL'],
+            ['case_gdc_id', 'VARCHAR(36)', 'NOT NULL'],
+            ['case_barcode', 'VARCHAR(35)', 'NOT NULL'],
+            ['sample_gdc_id', 'VARCHAR(45)', 'NULL'],
+            ['sample_barcode', 'VARCHAR(45)', 'NULL'],
+            ['sample_type', 'VARCHAR(2)', 'NULL'],
+            ['aliquot_barcode', 'VARCHAR(45)', 'NULL'],
+            ['aliquot_gdc_id', 'VARCHAR(36)', 'NULL'],
+            ['project_short_name', 'VARCHAR(40)', 'NOT NULL'],
+            ['project_disease_type', 'VARCHAR(30)', 'NOT NULL'],
+            ['program_name', 'VARCHAR(40)', 'NOT NULL'],
             ['data_type', 'VARCHAR(35)', 'NOT NULL'],
             ['data_category', 'VARCHAR(30)', 'NOT NULL'],
             ['experimental_strategy', 'VARCHAR(50)', 'NULL'],
@@ -295,7 +371,8 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
             ('TARGET_metadata_clinical', TARGET_metadata_clinical),
             ('TARGET_metadata_biospecimen', TARGET_metadata_biospecimen),
             ('TARGET_metadata_samples', TARGET_metadata_samples),
-            ('TARGET_metadata_data', TARGET_metadata_data),
+            ('TARGET_metadata_data_HG19', TARGET_metadata_data_HG19),
+            ('TARGET_metadata_data_HG38', TARGET_metadata_data_HG38),
             ('TARGET_metadata_attrs', TARGET_metadata_attrs)
         ]
     )

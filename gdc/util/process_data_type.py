@@ -68,10 +68,10 @@ def process_data_type(config, endpt_type, program_name, project_id, data_type, l
         else:
             log_name = create_log(log_dir, project_id + '_' + data_type.replace(' ', ''))
         log = logging.getLogger(log_name)
-
+        
         log.info('begin process_data_type %s for %s' % (data_type, project_id))
         file2info = get_map_rows(config, endpt_type, 'file', program_name, get_filter(config, data_type, project_id), log)
-        save2db(config, endpt_type, '%s_metadata_data' % (program_name), file2info, config[program_name]['process_files']['data_table_mapping'], log)
+        save2db(config, endpt_type, '%s_metadata_data_%s' % (program_name, config['endpt2genomebuild'][endpt_type]), file2info, config[program_name]['process_files']['data_table_mapping'], log)
         upload_files(config, endpt_type, file2info, project_id, data_type, log)
         log.info('finished process_data_type %s for %s' % (data_type, project_id))
 

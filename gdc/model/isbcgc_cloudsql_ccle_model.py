@@ -176,21 +176,21 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
         ]
     }
 
-    CCLE_metadata_data = {
-        'table_name': 'CCLE_metadata_data',
+    CCLE_metadata_data_HG19 = {
+        'table_name': 'CCLE_metadata_data_HG19',
         'primary_key_name': 'metadata_data_id',
         'columns': [
-            ['file_gdc_id', 'VARCHAR(36)', 'NULL'],
-            ['case_gdc_id', 'VARCHAR(36)', 'NULL'],
-            ['case_barcode', 'VARCHAR(35)', 'NULL'],
+            ['file_gdc_id', 'VARCHAR(36)', 'NOT NULL'],
+            ['case_gdc_id', 'VARCHAR(36)', 'NOT NULL'],
+            ['case_barcode', 'VARCHAR(35)', 'NOT NULL'],
             ['sample_gdc_id', 'VARCHAR(45)', 'NULL'],
             ['sample_barcode', 'VARCHAR(45)', 'NULL'],
             ['sample_type', 'VARCHAR(2)', 'NULL'],
             ['aliquot_barcode', 'VARCHAR(45)', 'NULL'],
             ['aliquot_gdc_id', 'VARCHAR(36)', 'NULL'],
-            ['project_short_name', 'VARCHAR(40)', 'NULL'],
+            ['project_short_name', 'VARCHAR(40)', 'NOT NULL'],
             ['project_disease_type', 'VARCHAR(30)', 'NOT NULL'],
-            ['program_name', 'VARCHAR(40)', 'NULL'],
+            ['program_name', 'VARCHAR(40)', 'NOT NULL'],
             ['data_type', 'VARCHAR(35)', 'NOT NULL'],
             ['data_category', 'VARCHAR(30)', 'NOT NULL'],
             ['experimental_strategy', 'VARCHAR(50)', 'NULL'],
@@ -258,7 +258,7 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
             ('CCLE_metadata_clinical', CCLE_metadata_clinical),
             ('CCLE_metadata_biospecimen', CCLE_metadata_biospecimen),
             ('CCLE_metadata_samples', CCLE_metadata_samples),
-            ('CCLE_metadata_data', CCLE_metadata_data),
+            ('CCLE_metadata_data_HG19', CCLE_metadata_data_HG19),
             ('CCLE_metadata_attrs', CCLE_metadata_attrs)
         ]
     )
