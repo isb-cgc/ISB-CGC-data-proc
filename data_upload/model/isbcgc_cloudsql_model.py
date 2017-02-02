@@ -43,19 +43,26 @@ class ISBCGC_database_helper(object):
                 'cert': ssl_dir + 'client-cert.pem',
                 'key': ssl_dir + 'client-key.pem' 
             }
-            db = MySQLdb.connect(host=config['cloudsql']['host'], db=config['cloudsql']['db'], user=config['cloudsql']['user'], passwd=config['cloudsql']['passwd'], ssl = ssl)
+            if config['cloudsql']['use_proxy']:
+                db = MySQLdb.connect(host="127.0.0.1", db=config['cloudsql']['db'], user=config['cloudsql']['user'], passwd=config['cloudsql']['passwd'])
+            else:
+                db = MySQLdb.connect(host=config['cloudsql']['host'], db=config['cloudsql']['db'], user=config['cloudsql']['user'], passwd=config['cloudsql']['passwd'], ssl = ssl)
         except Exception as e:
             # if connection requests are made too close together over a period of time, the connection attempt might fail
-            count = 7
-            while count > 0:
-                count -= 1
-                time.sleep(count)
+            count = 0
+            sleep = 3
+            while count < 6:
+                count += 1
+                time.sleep(sleep + count)
                 log.warning('\n\n!!!!!!sleeping on error to reattempt db connection!!!!!!\n')
                 try:
-                    db = MySQLdb.connect(host=config['cloudsql']['host'], db=config['cloudsql']['db'], user=config['cloudsql']['user'], passwd=config['cloudsql']['passwd'], ssl = ssl)
+                    if config['cloudsql']['use_proxy']:
+                        db = MySQLdb.connect(host="127.0.0.1", db=config['cloudsql']['db'], user=config['cloudsql']['user'], passwd=config['cloudsql']['passwd'])
+                    else:
+                        db = MySQLdb.connect(host=config['cloudsql']['host'], db=config['cloudsql']['db'], user=config['cloudsql']['user'], passwd=config['cloudsql']['passwd'], ssl = ssl)
                     break
                 except Exception as e:
-                    if 1 == count:
+                    if 6 == count:
                         log.exception("failed to reconnect to database")
                         raise e
             
