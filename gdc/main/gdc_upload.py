@@ -302,6 +302,21 @@ def set_run_info(config):
 
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+def finalize(config, log):
+    if config['process_annotation']:
+        associate_metadata2annotation(config, log)
+
+    if config['process_case']:
+        for program_name in config['program_names']:
+            if 0 == len(config['program_name_restrict']) or program_name in config['program_name_restrict']:
+                postproc_module = import_module(config[program_name]['process_cases']['postproc_case']['postproc_module'])
+                postproc_module.process_metadata_attrs(config, log)
+    
+#     if config['process_data_type']:
+#         set_uploaded_path(config, log)
+
+## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
 def uploadGDC():
     print datetime.now(), 'begin uploadGDC()'
 
@@ -339,12 +354,7 @@ def uploadGDC():
             else:
                 log.warning('\n\t====================\n\tnot processing annotations this run!\n\t====================')
             process_programs(config, endpt_type, log_dir, log)
-            if config['process_annotation']:
-                associate_metadata2annotation(config, log)
-        if config['process_case']:
-            for program_name in config['program_names']:
-                postproc_module = import_module(config[program_name]['process_cases']['postproc_case']['postproc_module'])
-                postproc_module.process_metadata_attrs(config, log)
+        finalize(config, log)
     except:
         raise
     finally:
