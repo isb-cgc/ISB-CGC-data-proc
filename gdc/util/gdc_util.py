@@ -222,7 +222,11 @@ def update_cloudsql_from_bigquery(config, postproc_config, project_name, cloudsq
     log.info('\t\t\tupdate_stmt\n%s' % (update_stmt))
     while True:
         total_rows, rows, page_token = fetch_paged_results(query_results, postproc_config['postproc_fetch_count'], project_name, page_token, log)
-        log.info('\t\t\ttotal rows: %s\n\t%s\n\t\t...\n\t%s' % (total_rows, str(rows[0]), str(rows[-1])))
+        if 0 < total_rows:
+            log.info('\t\t\ttotal rows: %s\n\t%s\n\t\t...\n\t%s' % (total_rows, str(rows[0]), str(rows[-1])))
+        else:
+            log.info('\t\t\tno rows')
+            return
         if config['update_cloudsql']:
             ISBCGC_database_helper.update(config, update_stmt, log, rows, True)
         if not page_token:
