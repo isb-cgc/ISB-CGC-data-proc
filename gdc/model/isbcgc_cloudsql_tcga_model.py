@@ -397,7 +397,7 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
             ['data_category', 'VARCHAR(30)', 'NOT NULL'],
             ['experimental_strategy', 'VARCHAR(50)', 'NULL'],
             ['type', 'VARCHAR(40)', 'NULL'],
-            ['file_name', 'VARCHAR(120)', 'NOT NULL'],
+            ['file_name', 'VARCHAR(160)', 'NOT NULL'],
             ['file_size', 'BIGINT', 'NOT NULL'],
             ['file_state', 'VARCHAR(30)', 'NULL'],
             ['file_name_key', 'VARCHAR(250)', 'NULL'],
