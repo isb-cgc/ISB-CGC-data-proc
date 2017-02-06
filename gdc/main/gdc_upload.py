@@ -28,7 +28,7 @@ import logging
 
 from gdc.util.gdc_util import instantiate_etl_class
 from gdc.util.gdc_util import request_facets_results
-from gdc.util.process_annotations import associate_metadata2annotation, process_annotations
+from gdc.util.process_annotations import call_metadata2annotation, process_annotations
 from gdc.util.process_projects import process_projects_for_programs, process_projects
 from gdc.util.process_cases import process_cases
 from gdc.util.process_data_type import process_data_type
@@ -304,7 +304,7 @@ def set_run_info(config):
 
 def finalize(config, log):
     if config['process_annotation']:
-        associate_metadata2annotation(config, log)
+        call_metadata2annotation(config, log)
 
     if config['process_case']:
         for program_name in config['program_names']:

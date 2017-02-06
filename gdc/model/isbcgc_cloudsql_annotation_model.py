@@ -67,35 +67,6 @@ class ISBCGC_database_helper(ISBCGC_database_helper):
         ]
     }
     
-    """
-    these class manages the cloud sql metadata annotation associations upload
-    """
-    TCGA_metadata_annotation2samples = {
-        'table_name': 'TCGA_metadata_annotation2samples',
-
-        'columns': [
-            ['metadata_annotation_id', 'INTEGER', 'NOT NULL'],
-            ['metadata_samples_id', 'INTEGER', 'NOT NULL'],
-        ],
-
-        'indices_defs': [
-            ['metadata_annotation_id', 'metadata_samples_id'],
-        ],
-        
-        'foreign_keys': [
-            [
-                'metadata_annotation_id',
-                'TCGA_metadata_annotation',
-                'metadata_annotation_id'
-            ],
-            [
-                'metadata_samples_id',
-                'TCGA_metadata_samples',
-                'metadata_samples_id'
-            ]
-        ]
-    }
-
     TCGA_metadata_annotation2clinical = {
         'table_name': 'TCGA_metadata_annotation2clinical',
 
@@ -148,8 +119,34 @@ class ISBCGC_database_helper(ISBCGC_database_helper):
         ]
     }
 
-    TCGA_metadata_annotation2data = {
-        'table_name': 'TCGA_metadata_annotation2data',
+    TCGA_metadata_annotation2samples = {
+        'table_name': 'TCGA_metadata_annotation2samples',
+
+        'columns': [
+            ['metadata_annotation_id', 'INTEGER', 'NOT NULL'],
+            ['metadata_samples_id', 'INTEGER', 'NOT NULL'],
+        ],
+
+        'indices_defs': [
+            ['metadata_annotation_id', 'metadata_samples_id'],
+        ],
+        
+        'foreign_keys': [
+            [
+                'metadata_annotation_id',
+                'TCGA_metadata_annotation',
+                'metadata_annotation_id'
+            ],
+            [
+                'metadata_samples_id',
+                'TCGA_metadata_samples',
+                'metadata_samples_id'
+            ]
+        ]
+    }
+
+    TCGA_metadata_annotation2data_HG19 = {
+        'table_name': 'TCGA_metadata_annotation2data_HG19',
 
         'columns': [
             ['metadata_annotation_id', 'INTEGER', 'NOT NULL'],
@@ -168,7 +165,33 @@ class ISBCGC_database_helper(ISBCGC_database_helper):
             ],
             [
                 'metadata_data_id',
-                'TCGA_metadata_data',
+                'TCGA_metadata_data_HG19',
+                'metadata_data_id'
+            ]
+        ]
+    }
+
+    TCGA_metadata_annotation2data_HG38 = {
+        'table_name': 'TCGA_metadata_annotation2data_HG38',
+
+        'columns': [
+            ['metadata_annotation_id', 'INTEGER', 'NOT NULL'],
+            ['metadata_data_id', 'INTEGER', 'NOT NULL'],
+        ],
+
+        'indices_defs': [
+            ['metadata_annotation_id', 'metadata_data_id'],
+        ],
+        
+        'foreign_keys': [
+            [
+                'metadata_annotation_id',
+                'TCGA_metadata_annotation',
+                'metadata_annotation_id'
+            ],
+            [
+                'metadata_data_id',
+                'TCGA_metadata_data_HG38',
                 'metadata_data_id'
             ]
         ]
@@ -180,7 +203,8 @@ class ISBCGC_database_helper(ISBCGC_database_helper):
             ('TCGA_metadata_annotation2clinical', TCGA_metadata_annotation2clinical),
             ('TCGA_metadata_annotation2biospecimen', TCGA_metadata_annotation2biospecimen),
             ('TCGA_metadata_annotation2samples', TCGA_metadata_annotation2samples),
-            ('TCGA_metadata_annotation2data', TCGA_metadata_annotation2data)
+            ('TCGA_metadata_annotation2data_HG19', TCGA_metadata_annotation2data_HG19),
+            ('TCGA_metadata_annotation2data_HG38', TCGA_metadata_annotation2data_HG38)
         ]
     )
 

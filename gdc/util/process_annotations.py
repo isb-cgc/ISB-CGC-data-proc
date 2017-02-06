@@ -23,102 +23,115 @@ from gdc.util.gdc_util import get_map_rows, save2db
 from gdc.model.isbcgc_cloudsql_gdc_model import ISBCGC_database_helper
 from util import close_log, create_log
 
-def associate_metadata2annotation(config, log):
+def associate_metadata2annotation(config, program_name, build, log):
+    # now save the associations
+    data_associate_statements = [
+        "insert into %s_metadata_annotation2data_%s " \
+            "(metadata_annotation_id, metadata_data_id) " \
+        "select a.metadata_annotation_id, s.metadata_data_id " \
+        "from TCGA_metadata_annotation a join TCGA_metadata_data_%s s on " \
+            "s.aliquot_barcode = a.entity_barcode " \
+        "where status = 'Approved'",
+
+        "insert into %s_metadata_annotation2data_%s " \
+            "(metadata_annotation_id, metadata_data_id) " \
+        "select a.metadata_annotation_id, s.metadata_data_id " \
+        "from TCGA_metadata_annotation a join TCGA_metadata_data_%s s on " \
+            "left(s.aliquot_barcode, 15) = a.entity_barcode " \
+        "where status = 'Approved'",
+
+
+        "insert into %s_metadata_annotation2data_%s " \
+            "(metadata_annotation_id, metadata_data_id) " \
+        "select a.metadata_annotation_id, s.metadata_data_id " \
+        "from TCGA_metadata_annotation a join TCGA_metadata_data_%s s on " \
+            "left(s.aliquot_barcode, 19) = a.entity_barcode " \
+        "where status = 'Approved'",
+
+        "insert into %s_metadata_annotation2data_%s " \
+            "(metadata_annotation_id, metadata_data_id) " \
+        "select a.metadata_annotation_id, s.metadata_data_id " \
+        "from TCGA_metadata_annotation a join TCGA_metadata_data_%s s on " \
+            "left(s.aliquot_barcode, 20) = a.entity_barcode " \
+        "where status = 'Approved'",
+
+        "insert into %s_metadata_annotation2data_%s " \
+            "(metadata_annotation_id, metadata_data_id) " \
+        "select a.metadata_annotation_id, s.metadata_data_id " \
+        "from TCGA_metadata_annotation a join TCGA_metadata_data_%s s on " \
+            "left(s.aliquot_barcode, 23) = a.entity_barcode " \
+        "where status = 'Approved'",
+
+        "insert into %s_metadata_annotation2data_%s " \
+            "(metadata_annotation_id, metadata_data_id) " \
+        "select a.metadata_annotation_id, s.metadata_data_id " \
+        "from TCGA_metadata_annotation a join TCGA_metadata_data_%s s on " \
+            "left(s.aliquot_barcode, 24) = a.entity_barcode " \
+        "where status = 'Approved'",
+
+        "insert into %s_metadata_annotation2data_%s " \
+            "(metadata_annotation_id, metadata_data_id) " \
+        "select a.metadata_annotation_id, s.metadata_data_id " \
+        "from TCGA_metadata_annotation a join TCGA_metadata_data_%s s on " \
+            "left(s.aliquot_barcode, 27) = a.entity_barcode " \
+        "where status = 'Approved'",
+
+        "insert into %s_metadata_annotation2data_%s " \
+            "(metadata_annotation_id, metadata_data_id) " \
+        "select a.metadata_annotation_id, s.metadata_data_id " \
+        "from TCGA_metadata_annotation a join TCGA_metadata_data_%s s on " \
+            "s.sample_barcode = a.entity_barcode " \
+        "where status = 'Approved'",
+
+        "insert into %s_metadata_annotation2data_%s " \
+            "(metadata_annotation_id, metadata_data_id) " \
+        "select a.metadata_annotation_id, s.metadata_data_id " \
+        "from TCGA_metadata_annotation a join TCGA_metadata_data_%s s on " \
+            "s.case_barcode = a.entity_barcode " \
+        "where status = 'Approved'",
+    ]
+    
+    for statement in data_associate_statements:
+        try:
+            ISBCGC_database_helper.update(config, statement % (program_name, build, build), log, [[]], True)
+        except:
+            log.exception('problem executing:\n\t%s' % (statement % (program_name, build, build)))
+
+    bio_associate_statements = [
+        "insert into %s_metadata_annotation2clinical " \
+            "(metadata_annotation_id, metadata_clinical_id) " \
+        "select a.metadata_annotation_id, s.metadata_clinical_id " \
+        "from TCGA_metadata_annotation a join TCGA_metadata_clinical s on " \
+            "s.case_barcode = a.entity_barcode " \
+        "where status = 'Approved'",
+
+        "insert into %s_metadata_annotation2biospecimen "  \
+            "(metadata_annotation_id, metadata_biospecimen_id) " \
+        "select a.metadata_annotation_id, s.metadata_biospecimen_id " \
+        "from TCGA_metadata_annotation a join TCGA_metadata_biospecimen s on " \
+            "0 < instr(s.sample_barcode, a.entity_barcode) " \
+        "where status = 'Approved'",
+
+        "insert into %s_metadata_annotation2samples " \
+            "(metadata_annotation_id, metadata_samples_id) " \
+        "select a.metadata_annotation_id, s.metadata_samples_id " \
+        "from TCGA_metadata_annotation a join TCGA_metadata_samples s on " \
+            "0 < instr(s.sample_barcode, a.entity_barcode) " \
+        "where status = 'Approved'"
+    ]
+    
+    for statement in bio_associate_statements:
+        try:
+            ISBCGC_database_helper.update(config, statement % (program_name), log, [[]], True)
+        except:
+            log.exception('problem executing:\n\t%s' % (statement % (program_name)))
+
+def call_metadata2annotation(config, log):
     # now save the associations
     for program_name in config['program_names_for_annotation']:
-        associate_statements = [
-            "insert into %s_metadata_annotation2data " \
-                "(metadata_annotation_id, metadata_data_id) " \
-            "select a.metadata_annotation_id, s.metadata_data_id " \
-            "from TCGA_metadata_annotation a join TCGA_metadata_data s on " \
-                "s.aliquot_barcode = a.entity_barcode " \
-            "where status = 'Approved'",
+        for build in config['genomic_builds_for_annotation']:
+            associate_metadata2annotation(config, program_name, build, log)
     
-            "insert into %s_metadata_annotation2data " \
-                "(metadata_annotation_id, metadata_data_id) " \
-            "select a.metadata_annotation_id, s.metadata_data_id " \
-            "from TCGA_metadata_annotation a join TCGA_metadata_data s on " \
-                "left(s.aliquot_barcode, 15) = a.entity_barcode " \
-            "where status = 'Approved'",
-    
-    
-            "insert into %s_metadata_annotation2data " \
-                "(metadata_annotation_id, metadata_data_id) " \
-            "select a.metadata_annotation_id, s.metadata_data_id " \
-            "from TCGA_metadata_annotation a join TCGA_metadata_data s on " \
-                "left(s.aliquot_barcode, 19) = a.entity_barcode " \
-            "where status = 'Approved'",
-    
-            "insert into %s_metadata_annotation2data " \
-                "(metadata_annotation_id, metadata_data_id) " \
-            "select a.metadata_annotation_id, s.metadata_data_id " \
-            "from TCGA_metadata_annotation a join TCGA_metadata_data s on " \
-                "left(s.aliquot_barcode, 20) = a.entity_barcode " \
-            "where status = 'Approved'",
-    
-            "insert into %s_metadata_annotation2data " \
-                "(metadata_annotation_id, metadata_data_id) " \
-            "select a.metadata_annotation_id, s.metadata_data_id " \
-            "from TCGA_metadata_annotation a join TCGA_metadata_data s on " \
-                "left(s.aliquot_barcode, 23) = a.entity_barcode " \
-            "where status = 'Approved'",
-    
-            "insert into %s_metadata_annotation2data " \
-                "(metadata_annotation_id, metadata_data_id) " \
-            "select a.metadata_annotation_id, s.metadata_data_id " \
-            "from TCGA_metadata_annotation a join TCGA_metadata_data s on " \
-                "left(s.aliquot_barcode, 24) = a.entity_barcode " \
-            "where status = 'Approved'",
-    
-            "insert into %s_metadata_annotation2data " \
-                "(metadata_annotation_id, metadata_data_id) " \
-            "select a.metadata_annotation_id, s.metadata_data_id " \
-            "from TCGA_metadata_annotation a join TCGA_metadata_data s on " \
-                "left(s.aliquot_barcode, 27) = a.entity_barcode " \
-            "where status = 'Approved'",
-    
-            "insert into %s_metadata_annotation2data " \
-                "(metadata_annotation_id, metadata_data_id) " \
-            "select a.metadata_annotation_id, s.metadata_data_id " \
-            "from TCGA_metadata_annotation a join TCGA_metadata_data s on " \
-                "s.sample_barcode = a.entity_barcode " \
-            "where status = 'Approved'",
-    
-            "insert into %s_metadata_annotation2data " \
-                "(metadata_annotation_id, metadata_data_id) " \
-            "select a.metadata_annotation_id, s.metadata_data_id " \
-            "from TCGA_metadata_annotation a join TCGA_metadata_data s on " \
-                "s.case_barcode = a.entity_barcode " \
-            "where status = 'Approved'",
-    
-            "insert into %s_metadata_annotation2clinical " \
-                "(metadata_annotation_id, metadata_clinical_id) " \
-            "select a.metadata_annotation_id, s.metadata_clinical_id " \
-            "from TCGA_metadata_annotation a join TCGA_metadata_clinical s on " \
-                "s.case_barcode = a.entity_barcode " \
-            "where status = 'Approved'",
-    
-            "insert into %s_metadata_annotation2biospecimen "  \
-                "(metadata_annotation_id, metadata_biospecimen_id) " \
-            "select a.metadata_annotation_id, s.metadata_biospecimen_id " \
-            "from TCGA_metadata_annotation a join TCGA_metadata_biospecimen s on " \
-                "0 < instr(s.sample_barcode, a.entity_barcode) " \
-            "where status = 'Approved'",
-    
-            "insert into %s_metadata_annotation2samples " \
-                "(metadata_annotation_id, metadata_samples_id) " \
-            "select a.metadata_annotation_id, s.metadata_samples_id " \
-            "from TCGA_metadata_annotation a join TCGA_metadata_samples s on " \
-                "0 < instr(s.sample_barcode, a.entity_barcode) " \
-            "where status = 'Approved'"
-        ]
-        
-        for statement in associate_statements:
-            try:
-                ISBCGC_database_helper.update(config, statement % (program_name), log, [[]], True)
-            except:
-                log.exception('problem executing:\n\t%s' % (statement % (program_name)))
-
 def get_filter():
     return {}
 
