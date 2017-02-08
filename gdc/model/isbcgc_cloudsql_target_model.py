@@ -351,6 +351,8 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
             ['data_category'],
             ['experimental_strategy'],
             ['type'],
+            ['file_name_key'],
+            ['file_uploaded'],
             ['data_format'],
             ['platform'],
             ['file_uploaded'],
