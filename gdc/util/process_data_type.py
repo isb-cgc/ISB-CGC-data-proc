@@ -20,8 +20,9 @@ limitations under the License.
 import logging
 
 from gdc.util.gdc_util import get_map_rows, save2db, update_cloudsql_from_bigquery
-from util import close_log, create_log
+from isbcgc_cloudsql_model import ISBCGC_database_helper
 from upload_files import upload_files
+from util import close_log, create_log
 
 def get_filter(config, data_type, project_id):
     data_types_legacy2use_project = config['data_types_legacy2use_project']
@@ -82,16 +83,21 @@ def process_data_type(config, endpt_type, program_name, project_id, data_type, l
     finally:
         close_log(log)
 
+def set_file_uploaded(config, log):
+    log.info('\tbegin set_file_uploaded')
+    postproc_config = config['postprocess_keypath']
+    for cloudsql_table in postproc_config['postproc_cloudsql_tables']:
+        ISBCGC_database_helper.update(config, postproc_config['postproc_file_uploaded_update'] % (cloudsql_table), log, [[]])
+    log.info('\tfinished set_file_uploaded')
+    
+
 def set_uploaded_path(config, log):
-    log.info('begin set_uploaded_path')
+    log.info('\tbegin set_uploaded_path')
     postproc_config = config['postprocess_keypath']
     for cloudsql_table in postproc_config['postproc_cloudsql_tables']:
         update_cloudsql_from_bigquery(config, postproc_config, None, cloudsql_table, log)
-    log.info('finished set_uploaded_path')
-# LOAD DATA INFILE 'employee8.txt' 
-#  INTO TABLE employee 
-#  FIELDS TERMINATED BY ','
-#  (id, name, salary);
+    log.info('\tfinished set_uploaded_path')
+    set_file_uploaded(config, log)
     
 def populate_data_availibility(config, log):
     pass
