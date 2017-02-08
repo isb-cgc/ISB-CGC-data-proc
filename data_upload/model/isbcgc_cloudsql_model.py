@@ -210,25 +210,26 @@ class ISBCGC_database_helper(object):
             # now execute the updates
             cursor.execute("START TRANSACTION")
             count = 0
-            report = len(params) / 20
-            for paramset in params:
-                if 0 == report or 0 == count % report:
-                    log.info('\t\t\tupdated %s records' % (count))
-                count += 1
-                try:
-                    cursor.execute(stmt, paramset)
-                    cls.log_warnings(cursor, log)
-                except MySQLdb.OperationalError as oe:
-                    log.warning('checking operation error: %s' % (oe))
-                    if oe.errno == 1205:
-                        log.warning('\t\t\tupdate had operation error (%s:%s) on %s, sleeping' % (stmt, count, paramset))
-                        time.sleep(1)
-                        cursor.execute(stmt, paramset)
-                    else:
-                        log.exception('\t\t\tupdate had operation error (%s:%s) on %s' % (stmt, count, paramset))
-                except Exception as e:
-                    log.exception('problem with update(%s): \n\t\t\t%s\n\t\t\t%s' % (count, stmt, paramset))
-                    raise e
+            cursor.executemany(stmt, params)
+#             report = len(params) / 20
+#             for paramset in params:
+#                 if 0 == report or 0 == count % report:
+#                     log.info('\t\t\tupdated %s records' % (count))
+#                 count += 1
+#                 try:
+#                     cursor.execute(stmt, paramset)
+#                     cls.log_warnings(cursor, log)
+#                 except MySQLdb.OperationalError as oe:
+#                     log.warning('checking operation error: %s' % (oe))
+#                     if oe.errno == 1205:
+#                         log.warning('\t\t\tupdate had operation error (%s:%s) on %s, sleeping' % (stmt, count, paramset))
+#                         time.sleep(1)
+#                         cursor.execute(stmt, paramset)
+#                     else:
+#                         log.exception('\t\t\tupdate had operation error (%s:%s) on %s' % (stmt, count, paramset))
+#                 except Exception as e:
+#                     log.exception('problem with update(%s): \n\t\t\t%s\n\t\t\t%s' % (count, stmt, paramset))
+#                     raise e
             if verbose:
                 log.info('\t\tcompleted update.  updated %s:%s record', count, cursor.rowcount)
             cursor.execute("COMMIT")
