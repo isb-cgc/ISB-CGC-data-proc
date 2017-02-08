@@ -217,9 +217,13 @@ def request_facets_results(url, facet_query, facet, log, page_size = 0, params =
 
 def update_cloudsql_from_bigquery(config, postproc_config, project_name, cloudsql_table, log):
     update_stmt = 'update %s\nset \n\t%s\nwhere %s = %%s' % (cloudsql_table, '\n\t'.join('%s = %%s,' % (postproc_config['postproc_columns'][key]) for key in postproc_config['postproc_columns'].keys())[:-1], postproc_config['postproc_key_column'])
-    query_results = query_bq_table(postproc_config['postproc_query'] % (', '.join(postproc_config['postproc_columns'].keys()), project_name), False, postproc_config['postproc_project'], log)
+    if project_name:
+        query_results = query_bq_table(postproc_config['postproc_query'] % (', '.join(postproc_config['postproc_columns'].keys()), project_name), False, postproc_config['postproc_project'], log)
+    else:
+        query_results = query_bq_table(postproc_config['postproc_query'] % (', '.join(postproc_config['postproc_columns'].keys())), False, postproc_config['postproc_project'], log)
     page_token = None
     log.info('\t\t\tupdate_stmt\n%s' % (update_stmt))
+    update_count = 0
     while True:
         total_rows, rows, page_token = fetch_paged_results(query_results, postproc_config['postproc_fetch_count'], project_name, page_token, log)
         if 0 < total_rows:
@@ -229,7 +233,10 @@ def update_cloudsql_from_bigquery(config, postproc_config, project_name, cloudsq
             return
         if config['update_cloudsql']:
             ISBCGC_database_helper.update(config, update_stmt, log, rows, True)
+        update_count += len(rows)
+        log.info('\t\t\tupdated %s so far%s' % (update_count, ' for ' + project_name if project_name else ''))
         if not page_token:
+            log.info('\t\t\tupdated total of %s rows%s' % (update_count, ' for ' + project_name if project_name else ''))
             return
 
 def instantiate_etl_class(config, data_type, log):

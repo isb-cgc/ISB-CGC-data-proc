@@ -31,7 +31,7 @@ from gdc.util.gdc_util import request_facets_results
 from gdc.util.process_annotations import call_metadata2annotation, process_annotations
 from gdc.util.process_projects import process_projects_for_programs, process_projects
 from gdc.util.process_cases import process_cases
-from gdc.util.process_data_type import process_data_type
+from gdc.util.process_data_type import process_data_type, set_uploaded_path
 
 from util import close_log, create_log, import_module
 
@@ -312,8 +312,8 @@ def finalize(config, log):
                 postproc_module = import_module(config[program_name]['process_cases']['postproc_case']['postproc_module'])
                 postproc_module.process_metadata_attrs(config, log)
     
-#     if config['process_data_type']:
-#         set_uploaded_path(config, log)
+    if config['process_data_type']:
+        set_uploaded_path(config, log)
 
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 

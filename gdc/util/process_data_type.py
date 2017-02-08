@@ -19,7 +19,7 @@ limitations under the License.
 '''
 import logging
 
-from gdc.util.gdc_util import get_map_rows, save2db
+from gdc.util.gdc_util import get_map_rows, save2db, update_cloudsql_from_bigquery
 from util import close_log, create_log
 from upload_files import upload_files
 
@@ -81,3 +81,17 @@ def process_data_type(config, endpt_type, program_name, project_id, data_type, l
         raise
     finally:
         close_log(log)
+
+def set_uploaded_path(config, log):
+    log.info('begin set_uploaded_path')
+    postproc_config = config['postprocess_keypath']
+    for cloudsql_table in postproc_config['postproc_cloudsql_tables']:
+        update_cloudsql_from_bigquery(config, postproc_config, None, cloudsql_table, log)
+    log.info('finished set_uploaded_path')
+# LOAD DATA INFILE 'employee8.txt' 
+#  INTO TABLE employee 
+#  FIELDS TERMINATED BY ','
+#  (id, name, salary);
+    
+def populate_data_availibility(config, log):
+    pass

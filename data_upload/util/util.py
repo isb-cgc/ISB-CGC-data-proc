@@ -386,7 +386,7 @@ def __recurse_flatten_map(origmap, thefilter):
             maps['index_files'] = index_files
                         # adjust the json
             if len(origmap['index_files']) > 1:
-                print 'found more than one index_files for ' % origmap['file_gdc_id']
+                print 'found more than one index_files for ' % origmap['file_id']
             origmap['index_files'] = origmap['index_files'][0]
             
     

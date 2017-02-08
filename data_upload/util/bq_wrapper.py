@@ -31,10 +31,10 @@ def query_bq_table(query, use_legacy, project, log):
     return query_results
 
 def fetch_paged_results(query_results, fetch_count, project_name, page_token, log):
-    log.info('\t\trequesting %d rows for %s' % (fetch_count, project_name))
+    log.info('\t\trequesting %d rows %s' % (fetch_count, (' for ' + project_name) if project_name else ''))
     rows, total_rows, page_token = query_results.fetch_data(
         max_results=fetch_count, 
         page_token=page_token)
-    log.info('\t\tfetching %d rows for %s' % (total_rows, project_name))
+    log.info('\t\tfetched %d rows %s' % (len(rows), (' for ' + project_name) if project_name else ''))
     return total_rows, rows, page_token
 
