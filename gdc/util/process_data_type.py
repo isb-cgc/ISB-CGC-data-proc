@@ -106,6 +106,7 @@ def populate_data_availibility(config, log):
     column_order = postproc_config['column_order']
     column_list = ', '.join(postproc_config['select_columns'])
     insert_columns = [columns[column] for column in column_order] + [postproc_config['display_column_name'], postproc_config['deprecated_column_name']]
+    data_type_exclude = postproc_config['data_type_exclude']
     display_name_mappings = postproc_config['display_name_map']
     deprecations = postproc_config['deprecated']
     
@@ -120,6 +121,8 @@ def populate_data_availibility(config, log):
                 complete_rows = []
                 try:
                     for row in rows:
+                        if row[column_order.index('data_type')] in data_type_exclude:
+                            continue
                         complete_row = [None] * (len(columns) + 2)
                         display_name = []
                         for index, column in enumerate(column_order):
@@ -135,6 +138,7 @@ def populate_data_availibility(config, log):
                         complete_rows += [complete_row]
                 except:
                     log.exception('problem processing row:\n\trow: %s\n\tcolumn: %s' % (row, column))
+                    raise
                 ISBCGC_database_helper.column_insert(config, complete_rows, target_table, insert_columns, log)
                 
                 for row, complete_row in zip(rows, complete_rows):
