@@ -122,6 +122,8 @@ def populate_data_availibility(config, log):
                 try:
                     for row in rows:
                         if row[column_order.index('data_type')] in data_type_exclude:
+                            log.info('\t\tskipping %s for data availability' % (row[column_order.index('data_type')]))
+                            complete_rows += [None]
                             continue
                         complete_row = [None] * (len(columns) + 2)
                         display_name = []
@@ -139,9 +141,12 @@ def populate_data_availibility(config, log):
                 except:
                     log.exception('problem processing row:\n\trow: %s\n\tcolumn: %s' % (row, column))
                     raise
-                ISBCGC_database_helper.column_insert(config, complete_rows, target_table, insert_columns, log)
+                ISBCGC_database_helper.column_insert(config, [row for row in complete_rows if row is not None], target_table, insert_columns, log)
                 
                 for row, complete_row in zip(rows, complete_rows):
+                    if not complete_row:
+                        log.info('\t\tnot processing %s for data availability' % (row[column_order.index('data_type')]))
+                        continue
                     params = ['%s' % ('%s = \'%s\'' % (column, value) if value else column + ' is null') for column, value in zip(postproc_config['select_columns'], row[1:])]
                     stmt = 'select sample_barcode from %s where %s group by sample_barcode' % (source_table, ' and '.join(params))
                     log.info('')
@@ -157,7 +162,7 @@ def populate_data_availibility(config, log):
                         associations += [[ids[0][0], barcode[0]]]
                     field_names = ['metadata_data_type_availability_id', 'sample_barcode']
                     ISBCGC_database_helper.column_insert(config, associations, '%s_metadata_sample_data_availability' % (target_table.split('_')[0]), field_names, log)
-    
-            log.info('\t\tcompleted %s:\n\t\t\t%s\n\t\t\t\t...\n\t\t\t%s' % (target_table, complete_rows[0], complete_rows[-1]))
+            display_rows = [row for row in complete_rows if row is not None]
+            log.info('\t\tcompleted %s:\n\t\t\t%s\n\t\t\t\t...\n\t\t\t%s' % (target_table, display_rows[0], display_rows[-1]))
     
     log.info('\tfinished populate_data_availibility()')
