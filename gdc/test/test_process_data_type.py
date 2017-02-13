@@ -18,11 +18,11 @@ limitations under the License.
 @author: michael
 '''
 from gdc.test.test_setup import GDCTestSetup
-from gdc.util.process_data_type import set_uploaded_path
+from gdc.util.process_data_type import populate_data_availibility
 
 class GDCProcessDataTypeTest(GDCTestSetup):
     def setUp(self):
         super(GDCProcessDataTypeTest, self).setUp()
 
     def test_process_data_type(self):
-        set_uploaded_path(self.config, self.log)
+        populate_data_availibility(self.config, self.log)
