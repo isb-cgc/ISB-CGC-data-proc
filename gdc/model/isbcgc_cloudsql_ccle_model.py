@@ -254,6 +254,75 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
 #         ]
     }
 
+    CCLE_metadata_data_type_availability = {
+        'table_name': 'CCLE_metadata_data_type_availability',
+        'primary_key_name': 'metadata_data_type_availability_id',
+        'columns': [
+            ['genomic_build', 'VARCHAR(4)', 'NOT NULL'],
+            ['data_type', 'VARCHAR(35)', 'NOT NULL'],
+            ['experimental_strategy', 'VARCHAR(50)', 'NULL'],
+            ['platform', 'VARCHAR(50)', 'NULL'],
+            ['workflow_type', 'VARCHAR(60)', 'NULL'],
+            ['center', 'VARCHAR(8)', 'NULL'],
+            ['display_name', 'VARCHAR(200)', 'NOT NULL'],
+            ['deprecated', 'TINYINT', 'NOT NULL']
+        ],
+        'natural_key_cols': [
+            'data_type',
+            'experimental_strategy',
+            'platform',
+            'workflow_type',
+            'center'
+        ],
+        'indices_defs': [
+            ['genomic_build'],
+            ['data_type'],
+            ['experimental_strategy'],
+            ['platform'],
+            ['workflow_type'],
+            ['center'],
+            ['display_name'],
+            ['deprecated']
+        ]
+    }
+            
+    CCLE_metadata_sample_data_availability = {
+        'table_name': 'CCLE_metadata_sample_data_availability',
+
+        'columns': [
+            ['metadata_data_type_availability_id', 'INTEGER', 'NOT NULL'],
+            ['sample_barcode', 'VARCHAR(40)', 'NOT NULL'],
+        ],
+
+        'indices_defs': [
+            ['metadata_data_type_availability_id', 'sample_barcode'],
+            ['sample_barcode']
+        ],
+        
+        'foreign_keys': [
+            [
+                'metadata_data_type_availability_id',
+                'CCLE_metadata_data_type_availability',
+                'metadata_data_type_availability_id'
+            ],
+            [
+                'sample_barcode',
+                'CCLE_metadata_biospecimen',
+                'sample_barcode'
+            ],
+            [
+                'sample_barcode',
+                'CCLE_metadata_samples',
+                'sample_barcode'
+            ],
+            [
+                'sample_barcode',
+                'CCLE_metadata_data_HG19',
+                'sample_barcode'
+            ]
+        ]
+    }
+
     metadata_tables = OrderedDict(
         [
             ('CCLE_metadata_project', CCLE_metadata_project),
@@ -261,7 +330,9 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
             ('CCLE_metadata_biospecimen', CCLE_metadata_biospecimen),
             ('CCLE_metadata_samples', CCLE_metadata_samples),
             ('CCLE_metadata_data_HG19', CCLE_metadata_data_HG19),
-            ('CCLE_metadata_attrs', CCLE_metadata_attrs)
+            ('CCLE_metadata_attrs', CCLE_metadata_attrs),
+            ('CCLE_metadata_data_type_availability', CCLE_metadata_data_type_availability),
+            ('CCLE_metadata_sample_data_availability', CCLE_metadata_sample_data_availability)
         ]
     )
 

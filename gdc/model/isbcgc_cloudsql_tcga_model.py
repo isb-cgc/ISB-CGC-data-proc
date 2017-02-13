@@ -540,6 +540,70 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
 #         ]
     }
 
+    TCGA_metadata_data_type_availability = {
+        'table_name': 'TCGA_metadata_data_type_availability',
+        'primary_key_name': 'metadata_data_type_availability_id',
+        'columns': [
+            ['genomic_build', 'VARCHAR(4)', 'NOT NULL'],
+            ['data_type', 'VARCHAR(35)', 'NOT NULL'],
+            ['experimental_strategy', 'VARCHAR(50)', 'NULL'],
+            ['platform', 'VARCHAR(50)', 'NULL'],
+            ['workflow_type', 'VARCHAR(60)', 'NULL'],
+            ['center', 'VARCHAR(8)', 'NULL'],
+            ['display_name', 'VARCHAR(200)', 'NOT NULL'],
+            ['deprecated', 'TINYINT', 'NOT NULL']
+        ],
+        'natural_key_cols': [
+            'data_type',
+            'experimental_strategy',
+            'platform',
+            'workflow_type',
+            'center'
+        ],
+        'indices_defs': [
+            ['genomic_build'],
+            ['data_type'],
+            ['experimental_strategy'],
+            ['platform'],
+            ['workflow_type'],
+            ['center'],
+            ['display_name'],
+            ['deprecated']
+        ]
+    }
+            
+    TCGA_metadata_sample_data_availability = {
+        'table_name': 'TCGA_metadata_sample_data_availability',
+
+        'columns': [
+            ['metadata_data_type_availability_id', 'INTEGER', 'NOT NULL'],
+            ['sample_barcode', 'VARCHAR(40)', 'NOT NULL'],
+        ],
+
+        'indices_defs': [
+            ['metadata_data_type_availability_id', 'sample_barcode'],
+            ['sample_barcode']
+        ],
+        
+        'foreign_keys': [
+            [
+                'metadata_data_type_availability_id',
+                'TCGA_metadata_data_type_availability',
+                'metadata_data_type_availability_id'
+            ],
+            [
+                'sample_barcode',
+                'TCGA_metadata_biospecimen',
+                'sample_barcode'
+            ],
+            [
+                'sample_barcode',
+                'TCGA_metadata_samples',
+                'sample_barcode'
+            ]
+        ]
+    }
+
     metadata_tables = OrderedDict(
         [
             ('TCGA_metadata_project', TCGA_metadata_project),
@@ -548,7 +612,9 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
             ('TCGA_metadata_samples', TCGA_metadata_samples),
             ('TCGA_metadata_data_HG19', TCGA_metadata_data_HG19),
             ('TCGA_metadata_data_HG38', TCGA_metadata_data_HG38),
-            ('TCGA_metadata_attrs', TCGA_metadata_attrs)
+            ('TCGA_metadata_attrs', TCGA_metadata_attrs),
+            ('TCGA_metadata_data_type_availability', TCGA_metadata_data_type_availability),
+            ('TCGA_metadata_sample_data_availability', TCGA_metadata_sample_data_availability)
         ]
     )
 
