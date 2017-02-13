@@ -110,45 +110,50 @@ def populate_data_availibility(config, log):
     deprecations = postproc_config['deprecated']
     
     for target_table in postproc_config['target2source_query']:
-        rows = []
-        for source_table in postproc_config['target2source_query'][target_table]:
-            stmt = 'select %s from %s group by %s' % (column_list, source_table, column_list)
-            genome_build = source_table[-4:]
-            rows = map(lambda row: [genome_build] + list(row), ISBCGC_database_helper.select(config, stmt, log, params = []))
-            complete_rows = []
-            for row in rows:
-                complete_row = [None] * (len(columns) + 2)
-                display_name = []
-                for index, column in enumerate(column_order):
-                    value = row[index]
-                    if value:
-                        if column in display_name_mappings:
-                            display_name += [display_name_mappings[column][value]]
-                        else:
-                            display_name += [value]
-                        complete_row[index] = value
-                complete_row[-2] = ':'.join(display_name)
-                complete_row[-1] = 1
-                complete_rows += [complete_row]
-            ISBCGC_database_helper.column_insert(config, complete_rows, target_table, insert_columns, log)
-            
-            for row, complete_row in zip(rows, complete_rows):
-                params = ['%s' % ('%s = \'%s\'' % (column, value) if value else column + ' is null') for column, value in zip(postproc_config['select_columns'], row[1:])]
-                stmt = 'select sample_barcode from %s where %s group by sample_barcode' % (source_table, ' and '.join(params))
-                log.info('')
-                sample_barcodes = ISBCGC_database_helper.select(config, stmt, log, [])
+        program_name = target_table.split('_')[0]
+        if 0 == len(config['program_name_restrict']) or program_name in config['program_name_restrict']:
+            rows = []
+            for source_table in postproc_config['target2source_query'][target_table]:
+                stmt = 'select %s from %s group by %s' % (column_list, source_table, column_list)
+                genome_build = source_table[-4:]
+                rows = map(lambda row: [genome_build] + list(row), ISBCGC_database_helper.select(config, stmt, log, params = []))
+                complete_rows = []
+                try:
+                    for row in rows:
+                        complete_row = [None] * (len(columns) + 2)
+                        display_name = []
+                        for index, column in enumerate(column_order):
+                            value = row[index]
+                            if value:
+                                if column in display_name_mappings:
+                                    display_name += [display_name_mappings[column][value]]
+                                else:
+                                    display_name += [value]
+                                complete_row[index] = value
+                        complete_row[-2] = ':'.join(display_name)
+                        complete_row[-1] = 1
+                        complete_rows += [complete_row]
+                except:
+                    log.exception('problem processing row:\n\trow: %s\n\tcolumn: %s' % (row, column))
+                ISBCGC_database_helper.column_insert(config, complete_rows, target_table, insert_columns, log)
                 
-                params = ['%s' % ('%s = \'%s\'' % (column, value) if value else column + ' is null') for column, value in zip([columns[column] for column in column_order], row)]
-                stmt = 'select metadata_data_type_availability_id from %s where %s' % (target_table, ' and '.join(params))
-                log.info('')
-                ids = ISBCGC_database_helper.select(config, stmt, log, [])
-                
-                associations = []
-                for barcode in sample_barcodes:
-                    associations += [[ids[0][0], barcode[0]]]
-                field_names = ['metadata_data_type_availability_id', 'sample_barcode']
-                ISBCGC_database_helper.column_insert(config, associations, '%s_metadata_sample_data_availability' % (target_table.split('_')[0]), field_names, log)
-
-        log.info('\t\tcompleted %s:\n\t\t\t%s\n\t\t\t\t...\n\t\t\t%s' % (target_table, complete_rows[0], complete_rows[-1]))
+                for row, complete_row in zip(rows, complete_rows):
+                    params = ['%s' % ('%s = \'%s\'' % (column, value) if value else column + ' is null') for column, value in zip(postproc_config['select_columns'], row[1:])]
+                    stmt = 'select sample_barcode from %s where %s group by sample_barcode' % (source_table, ' and '.join(params))
+                    log.info('')
+                    sample_barcodes = ISBCGC_database_helper.select(config, stmt, log, [])
+                    
+                    params = ['%s' % ('%s = \'%s\'' % (column, value) if value else column + ' is null') for column, value in zip([columns[column] for column in column_order], row)]
+                    stmt = 'select metadata_data_type_availability_id from %s where %s' % (target_table, ' and '.join(params))
+                    log.info('')
+                    ids = ISBCGC_database_helper.select(config, stmt, log, [])
+                    
+                    associations = []
+                    for barcode in sample_barcodes:
+                        associations += [[ids[0][0], barcode[0]]]
+                    field_names = ['metadata_data_type_availability_id', 'sample_barcode']
+                    ISBCGC_database_helper.column_insert(config, associations, '%s_metadata_sample_data_availability' % (target_table.split('_')[0]), field_names, log)
+    
+            log.info('\t\tcompleted %s:\n\t\t\t%s\n\t\t\t\t...\n\t\t\t%s' % (target_table, complete_rows[0], complete_rows[-1]))
     
     log.info('\tfinished populate_data_availibility()')
