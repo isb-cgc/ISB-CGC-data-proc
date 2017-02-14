@@ -264,6 +264,7 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
             ['platform', 'VARCHAR(50)', 'NULL'],
             ['workflow_type', 'VARCHAR(60)', 'NULL'],
             ['center', 'VARCHAR(8)', 'NULL'],
+            ['data_format', 'VARCHAR(10)', 'NULL'],
             ['display_name', 'VARCHAR(200)', 'NOT NULL'],
             ['deprecated', 'TINYINT', 'NOT NULL']
         ],
@@ -272,7 +273,8 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
             'experimental_strategy',
             'platform',
             'workflow_type',
-            'center'
+            'center',
+            'data_format'
         ],
         'indices_defs': [
             ['genomic_build'],
@@ -281,6 +283,7 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
             ['platform'],
             ['workflow_type'],
             ['center'],
+            ['data_format'],
             ['display_name'],
             ['deprecated']
         ]
