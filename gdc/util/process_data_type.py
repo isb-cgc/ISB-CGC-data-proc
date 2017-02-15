@@ -62,6 +62,15 @@ def get_filter(config, data_type, project_id):
                } 
     return filt
 
+def filter_null_samples(config, file2info, project_id, data_type, log):
+    retval = {}
+    for fileid, info in file2info.iteritems():
+        if 'samples' in info['cases'][0] or data_type in config['postproc_data_availability']['data_type_exclude']:
+            retval[fileid] = info
+        else:
+            log.info('found null sample for %s:%s:%s' % (info['cases'][0]['case_id'], data_type, project_id))
+    return retval
+
 def process_data_type(config, endpt_type, program_name, project_id, data_type, log_dir, log_name = None):
     try:
         if log_name:
@@ -72,6 +81,7 @@ def process_data_type(config, endpt_type, program_name, project_id, data_type, l
         
         log.info('begin process_data_type %s for %s' % (data_type, project_id))
         file2info = get_map_rows(config, endpt_type, 'file', program_name, get_filter(config, data_type, project_id), log)
+        file2info = filter_null_samples(config, file2info, project_id, data_type, log)
         save2db(config, endpt_type, '%s_metadata_data_%s' % (program_name, config['endpt2genomebuild'][endpt_type]), file2info, config[program_name]['process_files']['data_table_mapping'], log)
         upload_files(config, endpt_type, file2info, project_id, data_type, log)
         log.info('finished process_data_type %s for %s' % (data_type, project_id))
