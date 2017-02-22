@@ -25,19 +25,15 @@
     },
     {
         "type": "INTEGER",
-        "name": "start"
+        "name": "start_pos"
     },
     {
         "type": "INTEGER",
-        "name": "end"
+        "name": "end_pos"
     },
     {
         "type": "STRING",
         "name": "strand"
-    },
-    {
-        "type": "STRING",
-        "name": "genomic_build"
     },
     {
         "type": "STRING",
@@ -58,10 +54,6 @@
     {
         "type": "STRING",
         "name": "sample_type_code"
-    },
-    {
-        "type": "STRING",
-        "name": "file_name"
     },
     {
         "type": "STRING",

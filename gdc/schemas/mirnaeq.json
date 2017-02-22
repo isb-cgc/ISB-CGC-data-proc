@@ -33,10 +33,6 @@
     },
     {
         "type": "STRING",
-        "name": "file_name"
-    },
-    {
-        "type": "STRING",
         "name": "file_gdc_id"
     },
     {
