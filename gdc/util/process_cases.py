@@ -74,7 +74,7 @@ def process_cases(config, endpt_type, program_name, project_name, log_dir):
         remove_null_samples(case2info, log)
         save2db(config, endpt_type, '%s_metadata_biospecimen' % (program_name), case2info, config[program_name]['process_cases']['sample_table_mapping'], log)
 
-        # fill uin the rest of the metadata depending on the program
+        # fill in the rest of the metadata depending on the program
         if 0 < len(case2info.values()):
             postproc_module = import_module(config[program_name]['process_cases']['postproc_case']['postproc_module'])
             postproc_module.postprocess(config, project_name, endpt_type, log)

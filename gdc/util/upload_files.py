@@ -78,7 +78,7 @@ def request_try(config, url, file_ids, start, end, outputdir, log):
     return 
 
 
-def process_files(config, endpt_type, file2info, outputdir, start, end, project, data_type, etl_class, log):
+def process_files(config, endpt_type, file2info, outputdir, start, end, program_name, project, data_type, etl_class, log):
     try:
         filepath = outputdir + config['download_output_file_template'] % (start, end - 1)
         with tarfile.open(filepath) as tf:
@@ -100,10 +100,10 @@ def process_files(config, endpt_type, file2info, outputdir, start, end, project,
             for path in paths:
                 basefolder = config['buckets']['folders']['base_file_folder']
                 
-                metadata = flatten_map(file2info[path], config['process_files']['data_table_mapping'])
-                keypath_template = config['process_files']['bucket_path_template']
+                metadata = flatten_map(file2info[path], config[program_name]['process_files']['data_table_mapping'])
+                keypath_template = config[program_name]['process_files']['bucket_path_template']
                 key_path_components = []
-                for part in config['process_files']['bucket_path']:
+                for part in config[program_name]['process_files']['bucket_path']:
                     fields = part.split(':')
                     if 1 == len(fields):
                         if 'endpoint_type' == part:
@@ -122,8 +122,8 @@ def process_files(config, endpt_type, file2info, outputdir, start, end, project,
         else:
             log.info('\t\t\tnot uploading files for %s:%s' % (project, data_type))
             
-        if config['upload_etl_files'] and data_type in config['process_files']['datatype2bqscript'] and etl_class is not None:
-            etl_class.upload_batch_etl(config, outputdir, paths, file2info, project, data_type, log)
+        if config['upload_etl_files'] and data_type in config[program_name]['process_files']['datatype2bqscript'] and etl_class is not None:
+            etl_class.upload_batch_etl(config, outputdir, paths, file2info, endpt_type, program_name, project, data_type, log)
         else:
             log.warning('\t\tnot processing files for ETL for project %s and datatype %s%s' % (project, data_type, ' because there is no script specified' if config['upload_etl_files'] else ''))
     except:
@@ -133,32 +133,32 @@ def process_files(config, endpt_type, file2info, outputdir, start, end, project,
         if 'delete_dir_contents' not in config or config['delete_dir_contents']:
             delete_dir_contents(outputdir)
 
-def request(config, endpt_type, url, file2info, outputdir, project, data_type, log):
+def request(config, endpt_type, url, file2info, outputdir, program_name, project, data_type, log):
     log.info('\tstarting requests fetch of gdc files')
     log.info('first set of sorted files of %d:\n\t' % (len(file2info)) + '\n\t'.join(sorted([(info['file_id'] + '/' + info['file_name']) for info in file2info.values()], key = lambda t:t.split('/')[1])[:20]))
     ordered2info = OrderedDict(sorted([(info['file_id'] + '/' + info['file_name'], info) for info in file2info.values()], key = lambda t:t[1]['file_name']))
     download_files_per = min(config['download_files_per'], len(file2info))
     start = 0
     end = download_files_per
-    etl_class = instantiate_etl_class(config, data_type, log)
+    etl_class = instantiate_etl_class(config, program_name, data_type, log)
     
     batch_count = 0
     while start < len(file2info):
         log.info('\t\tfetching range %d:%d' % (start, end))
         request_try(config, url, ordered2info.keys(), start, end, outputdir, log)
-        process_files(config, endpt_type, ordered2info, outputdir, start, end, project, data_type, etl_class, log)
+        process_files(config, endpt_type, ordered2info, outputdir, start, end, program_name, project, data_type, etl_class, log)
         start = end
         end += download_files_per
         batch_count += 1
         
-    if config['upload_etl_files'] and data_type in config['process_files']['datatype2bqscript'] and etl_class is not None:
-        etl_class.finish_etl(config, project, data_type, batch_count, log)
+    if config['upload_etl_files'] and data_type in config[program_name]['process_files']['datatype2bqscript'] and etl_class is not None:
+        etl_class.finish_etl(config, endpt_type, program_name, project, data_type, batch_count, log)
     else:
         log.warning('\t\tnot finishing for ETL for project %s and datatype %s%s' % (project, data_type, ' because there is no script specified' if config['upload_etl_files'] else ''))
 
     log.info('\tfinished fetch of gdc files')
 
-def upload_files(config, endpt_type, file2info, project, data_type, log):
+def upload_files(config, endpt_type, file2info, program_name, project, data_type, log):
     try:
         if not (config['upload_files'] or config['upload_etl_files']):
             log.info('\n\t====================\n\tnot downloading files this run!\n\t====================')
@@ -178,7 +178,7 @@ def upload_files(config, endpt_type, file2info, project, data_type, log):
 
         url = config['data_endpt']['%s endpt' % (endpt_type)]
         start = time.clock()
-        request(config, endpt_type, url, file2info, outputdir, project, data_type, log)
+        request(config, endpt_type, url, file2info, outputdir, program_name, project, data_type, log)
         log.info('finished upload of gdc files in %s minutes' % ((time.clock() - start) / 60))
     except:
         # clean-up

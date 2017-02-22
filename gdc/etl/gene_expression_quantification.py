@@ -33,10 +33,10 @@ class Gene_expression_quantification(etl.Etl):
         '''
         
         
-    def add_metadata(self, data_df, info, project, config):
+    def add_metadata(self, data_df, info, program_name, project, config):
         """Add metadata info to the dataframe
         """
-        metadata_list = flatten_map(info, config['process_files']['data_table_mapping'])
+        metadata_list = flatten_map(info, config[program_name]['process_files']['data_table_mapping'])
         metadata = metadata_list[0]
         for next_metadata in metadata_list[1:]:
             metadata.update(next_metadata)
@@ -62,7 +62,7 @@ class Gene_expression_quantification(etl.Etl):
         return data_df
     
     
-    def process_per_sample_files(self, config, outputdir, associated_paths, types, info, project, log):
+    def process_per_sample_files(self, config, outputdir, associated_paths, types, info, program_name, project, log):
         dfs = [None] * 3
         curindex = 0
         for associated_path in associated_paths:
@@ -70,7 +70,7 @@ class Gene_expression_quantification(etl.Etl):
             log.info('\t\tcalling convert_file_to_dataframe() for %s' % (associated_path))
             dfs[curindex] = convert_file_to_dataframe(gzip.open(outputdir + associated_path), header=None)
             dfs[curindex].columns = ['Ensembl_versioned_gene_ID', types[curindex]]
-            self.add_metadata(dfs[curindex], info, project, config)
+            self.add_metadata(dfs[curindex], info, program_name, project, config)
             if 'HTSeq - Counts' == types[curindex]:
                 dfs[curindex] = dfs[curindex].drop(dfs[curindex].index[[60483, 60484, 60485, 60486, 60487]])
             log.info('\t\tdone calling convert_file_to_dataframe() for %s' % (associated_path))
@@ -96,10 +96,10 @@ class Gene_expression_quantification(etl.Etl):
         log.info('merge workflow(%d):\n%s\n\t...\n%s' % (len(merge_df), merge_df.head(3), merge_df.tail(3)))
         return merge_df
     
-    def process_paths(self, config, outputdir, data_type, paths, project, file2info, log):
+    def process_paths(self, config, outputdir, data_type, paths, program_name, project, file2info, log):
         if 0 != len(paths) % 3:
             raise RuntimeError('need to process the three RNA files per sample together.  adjust the configuration option \'download_files_per\' accordingly')
-        types = config['process_files']['datatype2bqscript']['Gene Expression Quantification']['analysis_types']
+        types = config[program_name]['process_files']['datatype2bqscript']['Gene Expression Quantification']['analysis_types']
         idents = set()
         count = 0
         associated_paths = [None] * 3
@@ -116,7 +116,7 @@ class Gene_expression_quantification(etl.Etl):
             associated_paths[type_index] = path
             count += 1
             if 0 == count % 3:
-                merge_df = self.process_per_sample_files(config, outputdir, associated_paths, types, info, project, log)
+                merge_df = self.process_per_sample_files(config, outputdir, associated_paths, types, info, program_name, project, log)
                 if complete_df is None:
                     complete_df = merge_df
                 else:
@@ -136,14 +136,15 @@ class Gene_expression_quantification(etl.Etl):
         log.info('\tcomplete data frame(%d):\n%s\n%s' % (len(complete_df), complete_df.head(3), complete_df.tail(3)))
         return complete_df
 
-    def finish_etl(self, config, project, data_type, batch_count, log):
+    def finish_etl(self, config, endpt_type, program_name, project, data_type, batch_count, log):
         log.info('\tstart finish_etl() for gene expression quantification')
         try:
-            bq_dataset = config['process_files']['datatype2bqscript']['Gene Expression Quantification']['bq_dataset']
-            bq_table = config['process_files']['datatype2bqscript']['Gene Expression Quantification']['bq_table']
-            schema_file = config['process_files']['datatype2bqscript']['Gene Expression Quantification']['schema_file']
-            gcs_file_path = 'gs://' + config['buckets']['open'] + '/' + config['buckets']['folders']['base_run_folder'] + 'etl/%s/%s' % (project, data_type)
-            write_disposition = config['process_files']['datatype2bqscript']['Gene Expression Quantification']['write_disposition']
+            etl_config = config[program_name]['process_files']['datatype2bqscript']['Gene Expression Quantification']
+            bq_dataset = etl_config['bq_dataset']
+            bq_table = etl_config['bq_table']
+            schema_file = etl_config['schema_file']
+            gcs_file_path = 'gs://' + config['buckets']['open'] + '/' + config['buckets']['folders']['base_run_folder'] + 'etl/%s/%s/%s' % (endpt_type, project, data_type)
+            write_disposition = etl_config['write_disposition']
             self.load(config['cloud_projects']['open'], [bq_dataset], [bq_table], [schema_file], [gcs_file_path], [write_disposition], batch_count, log)
         except Exception as e:
             log.exception('problem finishing the etl: %s' % (e))

@@ -133,7 +133,7 @@ def __insert_rows(config, endpt_type, tablename, values, mapfilter, log):
 
 def save2db(config, endpt_type, table, endpt2info, table_mapping, log):
     if 0 == len(endpt2info.values()):
-        log.warning('\n\t====================\n\tno rows to save for %s!\n\t====================' % (table))
+        log.warning('no rows to save for %s!' % (table))
     else:
         log.info('\tbegin save rows to db for %s' % table)
         __insert_rows(config, endpt_type, table, endpt2info.values(), table_mapping, log)
@@ -239,13 +239,13 @@ def update_cloudsql_from_bigquery(config, postproc_config, project_name, cloudsq
             log.info('\t\t\tupdated total of %s rows%s' % (update_count, ' for ' + project_name if project_name else ''))
             return
 
-def instantiate_etl_class(config, data_type, log):
+def instantiate_etl_class(config, program_name, data_type, log):
     etl_class = None
-    if data_type in config['process_files']['datatype2bqscript']:
-        log.info('\t\t\tinstantiating etl class %s' % (config['process_files']['datatype2bqscript'][data_type]['class']))
-        etl_module_name = config['process_files']['datatype2bqscript'][data_type]['python_module']
+    if data_type in config[program_name]['process_files']['datatype2bqscript']:
+        log.info('\t\t\tinstantiating etl class %s' % (config[program_name]['process_files']['datatype2bqscript'][data_type]['class']))
+        etl_module_name = config[program_name]['process_files']['datatype2bqscript'][data_type]['python_module']
         module = import_module(etl_module_name)
-        etl_class_name = config['process_files']['datatype2bqscript'][data_type]['class']
+        etl_class_name = config[program_name]['process_files']['datatype2bqscript'][data_type]['class']
         Etl_class = getattr(module, etl_class_name)
         etl_class = Etl_class(config)
     return etl_class

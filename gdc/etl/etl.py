@@ -40,15 +40,15 @@ class Etl(object):
     def data_type_specific(self, config, file_df):
         return
     
-    def add_metadata(self, file_df, data_type, info, project, config):
+    def add_metadata(self, file_df, data_type, info, program_name, project, config):
         """Add metadata info to the dataframe
         """
-        metadata_list = flatten_map(info, config['process_files']['data_table_mapping'])
+        metadata_list = flatten_map(info, config[program_name]['process_files']['data_table_mapping'])
         metadata = metadata_list[0]
         for next_metadata in metadata_list[1:]:
             metadata.update(next_metadata)
     
-        metadata_columns = config['process_files']['datatype2bqscript'][data_type]['add_metadata_columns']
+        metadata_columns = config[program_name]['process_files']['datatype2bqscript'][data_type]['add_metadata_columns']
         for metadata_column in metadata_columns:
             if 'sample_type_code' == metadata_column:
                 program = project.split('-')[0]
@@ -61,8 +61,8 @@ class Etl(object):
     
         return file_df
     
-    def process_file(self, config, outputdir, data_type, path, info, project, log):
-        if config['process_files']['datatype2bqscript'][data_type]['file_compressed']:
+    def process_file(self, config, outputdir, data_type, path, info, program_name, project, log):
+        if config[program_name]['process_files']['datatype2bqscript'][data_type]['file_compressed']:
             with gzip.open(outputdir + path) as input_file:
                 file_df = convert_file_to_dataframe(input_file)
         else:
@@ -70,7 +70,7 @@ class Etl(object):
                 file_df = convert_file_to_dataframe(input_file)
         
         #now filter down to the desired columns
-        use_columns = config['process_files']['datatype2bqscript'][data_type]['use_columns']
+        use_columns = config[program_name]['process_files']['datatype2bqscript'][data_type]['use_columns']
         file_df = file_df[use_columns.keys()]
         #modify to BigQuery desired names, checking for columns that will be split in the next step
         new_names = []
@@ -89,18 +89,21 @@ class Etl(object):
                 extracted_df = file_df[colname].str.extract(fields[1], expand = True)
                 file_df = pd.concat([file_df, extracted_df], axis=1)
         # add the metadata columns
-        file_df = self.add_metadata(file_df, data_type, info, project, config)
+        file_df = self.add_metadata(file_df, data_type, info, program_name, project, config)
         # allow subclasses to make final updates
         self.data_type_specific(config, file_df)
         # and reorder them
-        file_df = file_df[config['process_files']['datatype2bqscript'][data_type]['order_columns']]
+        file_df = file_df[config[program_name]['process_files']['datatype2bqscript'][data_type]['order_columns']]
         
         return file_df
     
-    def skip_file(self, config, path, file2info, info, log):
+    def skip_file(self, config, data_type, path, program_name, file2info, info, log):
+        etl_config = config[program_name]['process_files']['datatype2bqscript'][data_type]
+        if 'experimental_strategy' in etl_config and info['experimental_strategy'] != etl_config['experimental_strategy']:
+            return True
         return False
     
-    def process_paths(self, config, outputdir, data_type, paths, project, file2info, log):
+    def process_paths(self, config, outputdir, data_type, paths, program_name, project, file2info, log):
         count = 0
         complete_df = None
         log.info('\tprocessing %d paths for %s:%s' % (len(paths), data_type, project))
@@ -108,9 +111,9 @@ class Etl(object):
             count += 1
             fields = path.split('/')
             info = file2info[fields[-2] + '/' + fields[-1]]
-            if self.skip_file(config, path, file2info, info, log):
+            if self.skip_file(config, data_type, path, program_name, file2info, info, log):
                 continue
-            file_df = self.process_file(config, outputdir, data_type, path, info, project, log)
+            file_df = self.process_file(config, outputdir, data_type, path, info, program_name, project, log)
             if complete_df is None:
                 complete_df = file_df
             else:
@@ -129,13 +132,13 @@ class Etl(object):
             log.info('\tno complete data frame created')
         return complete_df
     
-    def upload_batch_etl(self, config, outputdir, paths, file2info, project, data_type, log):
+    def upload_batch_etl(self, config, outputdir, paths, file2info, endpt_type, program_name, project, data_type, log):
         log.info('\tstart upload_batch_etl() for %s and %s' % (project, data_type))
         try:
-            complete_df = self.process_paths(config, outputdir, data_type, paths, project, file2info, log)
+            complete_df = self.process_paths(config, outputdir, data_type, paths, program_name, project, file2info, log)
             if complete_df is not None:
                 gcs = GcsConnector(config['cloud_projects']['open'], config['buckets']['open'])
-                keyname = config['buckets']['folders']['base_run_folder'] + 'etl/%s/%s/%s' % (project, data_type, paths[0].replace('/', '_'))
+                keyname = config['buckets']['folders']['base_run_folder'] + 'etl/%s/%s/%s/%s' % (endpt_type, project, data_type, paths[0].replace('/', '_'))
                 log.info('\t\tstart convert and upload %s to the cloud' % (keyname))
                 gcs.convert_df_to_njson_and_upload(complete_df, keyname, logparam = log)
                 log.info('\t\tfinished convert and upload %s to the cloud' % (keyname))
@@ -164,22 +167,25 @@ class Etl(object):
     
         log.info('done load %s of data into bigquery' % (gcs_file_paths))
 
-    def finish_etl(self, config, project, data_type, batch_count, log):
+    def finish_etl(self, config, endpt_type, program_name, project, data_type, batch_count, log):
         log.info('\tstart finish_etl() for %s %s' % (project, data_type))
         try:
-            bq_dataset = config['process_files']['datatype2bqscript'][data_type]['bq_dataset']
-            bq_table = config['process_files']['datatype2bqscript'][data_type]['bq_table']
-            schema_file = config['process_files']['datatype2bqscript'][data_type]['schema_file']
-            gcs_file_path = 'gs://' + config['buckets']['open'] + '/' + config['buckets']['folders']['base_run_folder'] + 'etl/%s/%s' % (project, data_type)
-            write_disposition = config['process_files']['datatype2bqscript'][data_type]['write_disposition']
-            self.load(config['cloud_projects']['open'], [bq_dataset], [bq_table], [schema_file], [gcs_file_path], [write_disposition], batch_count, log)
+            etl_config = config[program_name]['process_files']['datatype2bqscript'][data_type]
+            if endpt_type in etl_config['endpt_types'] and 0 < batch_count:
+                log.info('\t\tprocessing finish_etl() for %s %s %s' % (endpt_type, project, data_type))
+                bq_dataset = etl_config['bq_dataset']
+                bq_table = etl_config['bq_table']
+                schema_file = etl_config['schema_file']
+                gcs_file_path = 'gs://' + config['buckets']['open'] + '/' + config['buckets']['folders']['base_run_folder'] + 'etl/%s/%s/%s' % (endpt_type, project, data_type)
+                write_disposition = etl_config['write_disposition']
+                self.load(config['cloud_projects']['open'], [bq_dataset], [bq_table], [schema_file], [gcs_file_path], [write_disposition], batch_count, log)
         except Exception as e:
             log.exception('problem finishing the etl: %s' % (e))
             raise
         log.info('\tfinished finish_etl() for %s %s' % (project, data_type))
 
-    def initialize(self, config, log): 
+    def initialize(self, config, program_name, log): 
         pass
     
-    def finalize(self, config, log): 
+    def finalize(self, config, program_name, log): 
         pass

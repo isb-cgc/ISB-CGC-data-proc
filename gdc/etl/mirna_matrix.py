@@ -53,15 +53,15 @@ class miRNA_matrix(Isoform_expression_quantification):
         invoking the main routine will currently do the entire matrix creation 
         '''
 
-    def upload_batch_etl(self, config, outputdir, paths, file2info, project, data_type, log):
-        if not config['process_files']['datatype2bqscript']['Isoform Expression Quantification']['only_matrix']:
-            super(miRNA_matrix, self).upload_batch_etl(config, outputdir, paths, file2info, project, data_type, log)
+    def upload_batch_etl(self, config, outputdir, paths, file2info, program_name, project, data_type, log):
+        if not config[program_name]['process_files']['datatype2bqscript']['Isoform Expression Quantification']['only_matrix']:
+            super(miRNA_matrix, self).upload_batch_etl(config, outputdir, paths, file2info, program_name, project, data_type, log)
         else:
             log.info('not calling upload_batch_etl() for %s:%s' % (project, data_type))
         
         # copy files to common location cross all projects, flattening the directory names into the file names
         input_dir = config['download_base_output_dir'] + '%s/%s/' % (project, data_type)
-        common_dir = config['download_base_output_dir'] + config['process_files']['datatype2bqscript']['Isoform Expression Quantification']['matrix_subdir']
+        common_dir = config['download_base_output_dir'] + config[program_name]['process_files']['datatype2bqscript']['Isoform Expression Quantification']['matrix_subdir']
 
         log.info('\tcopy files for %s:%s for mirna isoform matrix' % (data_type, project))
         contents = listdir(input_dir)
@@ -77,13 +77,13 @@ class miRNA_matrix(Isoform_expression_quantification):
         
         # first time this is called, safe off the file2info, transformed into aliquot2info, for use in finalize
         mapfile_name = project + "_aliquotinfo.txt"
-        mapfile_path = config['download_base_output_dir'] + config['process_files']['datatype2bqscript']['Isoform Expression Quantification']['matrix_persist_subdir'] + mapfile_name
+        mapfile_path = config['download_base_output_dir'] + config[program_name]['process_files']['datatype2bqscript']['Isoform Expression Quantification']['matrix_persist_subdir'] + mapfile_name
         if not path.exists(mapfile_path):
             log.info('\tcreate metadata file for %s:%s for mirna isoform matrix' % (data_type, project))
             # create the aliquot centric map
             file_name2info = {}
             for value in file2info.values():
-                flattened = flatten_map(value, config['process_files']['data_table_mapping'])[0]
+                flattened = flatten_map(value, config[program_name]['process_files']['data_table_mapping'])[0]
                 info = file_name2info.setdefault('_'.join([flattened['file_gdc_id'], flattened['file_name']]), {})
                 info['aliquot_barcode'] = flattened['aliquot_barcode']
                 info['project_short_name'] = flattened['project_short_name']
@@ -100,15 +100,15 @@ class miRNA_matrix(Isoform_expression_quantification):
                 dump(file_name2info, mapfile, protocol = HIGHEST_PROTOCOL)
             log.info('\tsaved metadata file for %s:%s for mirna isoform matrix' % (data_type, project))
     
-    def finish_etl(self, config, project, data_type, batch_count, log):
-        if not config['process_files']['datatype2bqscript']['Isoform Expression Quantification']['only_matrix']:
-            super(miRNA_matrix, self).finish_etl(config, project, data_type, batch_count, log)
+    def finish_etl(self, config, endpt_type, program_name, project, data_type, batch_count, log):
+        if not config[program_name]['process_files']['datatype2bqscript']['Isoform Expression Quantification']['only_matrix']:
+            super(miRNA_matrix, self).finish_etl(config, endpt_type, program_name, project, data_type, batch_count, log)
         else:
             log.info('not calling finish_etl() for %s:%s' % (project, data_type))
             
-    def initialize(self, config, log): 
-        common_dir = config['download_base_output_dir'] + config['process_files']['datatype2bqscript']['Isoform Expression Quantification']['matrix_subdir']
-        mapfile_dir = config['download_base_output_dir'] + config['process_files']['datatype2bqscript']['Isoform Expression Quantification']['matrix_persist_subdir']
+    def initialize(self, config, program_name, log): 
+        common_dir = config['download_base_output_dir'] + config[program_name]['process_files']['datatype2bqscript']['Isoform Expression Quantification']['matrix_subdir']
+        mapfile_dir = config['download_base_output_dir'] + config[program_name]['process_files']['datatype2bqscript']['Isoform Expression Quantification']['matrix_persist_subdir']
         with lock:
             if not path.exists(common_dir):
                 makedirs(common_dir)
@@ -124,8 +124,8 @@ class miRNA_matrix(Isoform_expression_quantification):
                 for file_name in files:
                     remove(mapfile_dir + file_name)
     
-    def get_aliquot_info(self, config):
-        mapfile_path = config['download_base_output_dir'] + config['process_files']['datatype2bqscript']['Isoform Expression Quantification']['matrix_persist_subdir']
+    def get_aliquot_info(self, config, program_name):
+        mapfile_path = config['download_base_output_dir'] + config[program_name]['process_files']['datatype2bqscript']['Isoform Expression Quantification']['matrix_persist_subdir']
         mapfiles = listdir(mapfile_path)
         master_file2info = {}
         for mapfile in mapfiles:
@@ -134,7 +134,7 @@ class miRNA_matrix(Isoform_expression_quantification):
             master_file2info.update(curmap)
         return master_file2info
 
-    def melt_matrix(self, matrix_file, platform, file2info, config, log):
+    def melt_matrix(self, matrix_file, platform, file2info, program_name, config, log):
         """
         # melt matrix
         """
@@ -173,7 +173,7 @@ class miRNA_matrix(Isoform_expression_quantification):
                 df = convert_file_to_dataframe(buf)
                 df = cleanup_dataframe(df, log)
                 gcs = GcsConnector(config['cloud_projects']['open'], config['buckets']['open'])
-                gcs.convert_df_to_njson_and_upload(df, config['process_files']['datatype2bqscript']['Isoform Expression Quantification']['gcs_output_path'] + file_name, logparam=log)
+                gcs.convert_df_to_njson_and_upload(df, config[program_name]['process_files']['datatype2bqscript']['Isoform Expression Quantification']['gcs_output_path'] + file_name, logparam=log)
                 buf = StringIO()
                 buf.write("sample_barcode	mirna_id	mirna_accession	normalized_count	platform	project_short_name	program_name	sample_type_code" +
                           "	file_name	file_gdc_id	aliquot_barcode	case_barcode	case_gdc_id	sample_gdc_id	aliquot_gdc_id\n")
@@ -185,37 +185,37 @@ class miRNA_matrix(Isoform_expression_quantification):
         # TODO: return count of files uploaded
     
 
-    def load_isoform_matrix(self, config, write_disposition, log):
+    def load_isoform_matrix(self, config, program_name, write_disposition, log):
         # TODO: add batch_count parameter
-        bq_dataset = config['process_files']['datatype2bqscript']['Isoform Expression Quantification']['bq_dataset']
-        bq_table = config['process_files']['datatype2bqscript']['Isoform Expression Quantification']['matrix_bq_table']
-        schema_file = config['process_files']['datatype2bqscript']['Isoform Expression Quantification']['matrix_schema_file']
+        bq_dataset = config[program_name]['process_files']['datatype2bqscript']['Isoform Expression Quantification']['bq_dataset']
+        bq_table = config[program_name]['process_files']['datatype2bqscript']['Isoform Expression Quantification']['matrix_bq_table']
+        schema_file = config[program_name]['process_files']['datatype2bqscript']['Isoform Expression Quantification']['matrix_schema_file']
         bucket_name = config['buckets']['open']
-        object_path = config['process_files']['datatype2bqscript']['Isoform Expression Quantification']['gcs_output_path']
+        object_path = config[program_name]['process_files']['datatype2bqscript']['Isoform Expression Quantification']['gcs_output_path']
         gcs_file_path = 'gs://' + bucket_name + '/' + object_path[:-1]
         self.load(config['cloud_projects']['open'], [bq_dataset], [bq_table], [schema_file], [gcs_file_path], [write_disposition], 21, log)
 
-    def finalize(self, config, log): 
+    def finalize(self, config, program_name, log): 
         log.info('\tstart creating isoform matrix')
         
         log.info('\t\trunning expression_matrix_mimat.pl')
         # TODO: split this into HiSeq and GA platforms when metadata is available at the gdc
-        matrix_script = config['process_files']['datatype2bqscript']['Isoform Expression Quantification']['matrix_script']
-        matrix_adf = config['process_files']['datatype2bqscript']['Isoform Expression Quantification']['matrix_adf']
-        matrix_output_dir = config['process_files']['datatype2bqscript']['Isoform Expression Quantification']['matrix_output_dir']
-        common_dir = config['download_base_output_dir'] + config['process_files']['datatype2bqscript']['Isoform Expression Quantification']['matrix_subdir']
+        matrix_script = config[program_name]['process_files']['datatype2bqscript']['Isoform Expression Quantification']['matrix_script']
+        matrix_adf = config[program_name]['process_files']['datatype2bqscript']['Isoform Expression Quantification']['matrix_adf']
+        matrix_output_dir = config[program_name]['process_files']['datatype2bqscript']['Isoform Expression Quantification']['matrix_output_dir']
+        common_dir = config['download_base_output_dir'] + config[program_name]['process_files']['datatype2bqscript']['Isoform Expression Quantification']['matrix_subdir']
         check_call([matrix_script, '-m', matrix_adf, '-o', matrix_output_dir, '-p', common_dir, '-n', 'IlluminaHiSeq_miRNASeq'])
         log.info('\t\tcompleted expression_matrix_mimat.pl')
         
         log.info('\t\trunning melt isoform matrix')
-        matrix_filename = config['process_files']['datatype2bqscript']['Isoform Expression Quantification']['matrix_filename'] % ('IlluminaHiSeq')
-        file2info = self.get_aliquot_info(config)
-        self.melt_matrix(matrix_output_dir + '/' + matrix_filename, 'IlluminaHiSeq', file2info, config, log)
+        matrix_filename = config[program_name]['process_files']['datatype2bqscript']['Isoform Expression Quantification']['matrix_filename'] % ('IlluminaHiSeq')
+        file2info = self.get_aliquot_info(config, program_name)
+        self.melt_matrix(matrix_output_dir + '/' + matrix_filename, 'IlluminaHiSeq', file2info, program_name, config, log)
         log.info('\t\tcompleted melt isoform matrix')
         
         log.info('\t\trunning load isoform matrix into bigquery')
         write_disposition = 'WRITE_EMPTY'
-        self.load_isoform_matrix(config, write_disposition, log)
+        self.load_isoform_matrix(config, program_name, write_disposition, log)
         log.info('\t\tcompleted load isoform matrix into bigquery')
         
         log.info('\tfinished creating isoform matrix')

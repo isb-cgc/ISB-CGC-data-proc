@@ -62,7 +62,7 @@ class Methylation(etl.Etl):
             curplatforms = self.__aliquot2platforms.setdefault(curinfo['cases'][0]['samples'][0]['portions'][0]['analytes'][0]['aliquots'][0]['submitter_id'], [])
             curplatforms += [curinfo['platform']]
 
-    def skip_file(self, config, path, file2info, info, log):
+    def skip_file(self, config, data_type, path, program_name, file2info, info, log):
         if 'Illumina Human Methylation 27' == info['platform']:
             if not self.__aliquot2platforms:
                 self.set_aliquot2platforms(file2info)
@@ -71,7 +71,7 @@ class Methylation(etl.Etl):
                 log.info('\tskipping %s for etl' % (path))
                 return True
             
-        return False
+        return super(Methylation, self).skip_file(config, data_type, path, program_name, file2info, info, log)
 
     def get_service(self):
         # Grab the application's default credentials from the environment.
@@ -153,15 +153,12 @@ class Methylation(etl.Etl):
             print ("Credentials have been revoked or expired, please re-run"
                "the application to re-authorize")
     
-    def finish_etl(self, config, project, data_type, batch_count, log):
-        super(Methylation, self).finish_etl(config, project, data_type, batch_count, log)
-        
-    def finalize(self, config, log): 
+    def finalize(self, config, program_name, log): 
         # now create the tables per chromosome
         log.info('start splitting methylation data by chromosome')
         project_id = config['cloud_projects']['open']
-        dataset_id = config['process_files']['datatype2bqscript']['Methylation Beta Value']['bq_dataset']
-        table_name = config['process_files']['datatype2bqscript']['Methylation Beta Value']['bq_table']
+        dataset_id = config[program_name]['process_files']['datatype2bqscript']['Methylation Beta Value']['bq_dataset']
+        table_name = config[program_name]['process_files']['datatype2bqscript']['Methylation Beta Value']['bq_table']
         chromosomes = map(str,range(1,23)) + ['X', 'Y']
     #    chromosomes = map(lambda orig_string: 'chr' + orig_string, chr_nums)
         for chromosome in chromosomes:

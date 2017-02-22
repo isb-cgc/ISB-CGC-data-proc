@@ -117,20 +117,20 @@ def process_project(config, endpt_type, program_name, project, log_dir):
     
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-def initialize_etl(config, log):
+def initialize_etl(config, program_name, log):
     if config['upload_etl_files']:
-        for data_type in config['process_files']['datatype2bqscript'].keys():
+        for data_type in config[program_name]['process_files']['datatype2bqscript'].keys():
             if (len(config['data_type_restrict']) == 0 or data_type in config['data_type_restrict']):
-                instantiate_etl_class(config, data_type, log).initialize(config, log)
+                instantiate_etl_class(config, program_name, data_type, log).initialize(config, program_name, log)
 
 
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-def finalize_etl(config, log):
+def finalize_etl(config, program_name, log):
     if config['upload_etl_files']:
-        for data_type in config['process_files']['datatype2bqscript'].keys():
+        for data_type in config[program_name]['process_files']['datatype2bqscript'].keys():
             if (len(config['data_type_restrict']) == 0 or data_type in config['data_type_restrict']):
-                instantiate_etl_class(config, data_type, log).finalize(config, log)
+                instantiate_etl_class(config, program_name, data_type, log).finalize(config, program_name, log)
 
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
@@ -142,7 +142,7 @@ def process_program(config, endpt_type, program_name, projects, log_dir):
         log.info('begin process_program(%s)' % (program_name))
 
         future2project = {}
-        initialize_etl(config, log)
+        initialize_etl(config, program_name, log)
         with futures.ThreadPoolExecutor(max_workers=config['program_threads']) as executor:
             for project in projects:
                 if project in config['skip_projects']:
@@ -164,7 +164,7 @@ def process_program(config, endpt_type, program_name, projects, log_dir):
                 else:
                     future.result()
                     log.info('\tfinished project %s' % (project))
-        finalize_etl(config, log)
+        finalize_etl(config, program_name, log)
     
         log.info('finished process_program(%s)' % (program_name))
     except:
@@ -312,7 +312,7 @@ def finalize(config, log):
                 postproc_module = import_module(config[program_name]['process_cases']['postproc_case']['postproc_module'])
                 postproc_module.process_metadata_attrs(config, log)
     
-    if config['process_data_type']:
+    if config['process_data_type'] and config['update_cloudsql']:
         set_uploaded_path(config, log)
         populate_data_availibility(config, log)
 

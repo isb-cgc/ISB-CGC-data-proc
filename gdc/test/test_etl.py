@@ -33,7 +33,7 @@ class GDCETLTest(GDCTestSetup):
         miRNA_matrix(self.config).finalize(self.config, self.log)
         
     def test_etl_melt(self):
-        mapfile_path = self.config['download_base_output_dir'] + self.config['process_files']['datatype2bqscript']['Isoform Expression Quantification']['matrix_persist_subdir']
+        mapfile_path = self.config['download_base_output_dir'] + self.config['TCGA']['process_files']['datatype2bqscript']['Isoform Expression Quantification']['matrix_persist_subdir']
         mapfiles = listdir(mapfile_path)
         master_aliquot2info = {}
         for mapfile in mapfiles:
