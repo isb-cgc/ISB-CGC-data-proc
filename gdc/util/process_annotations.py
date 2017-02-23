@@ -19,12 +19,39 @@ limitations under the License.
 '''
 import logging
 
-from gdc.util.gdc_util import get_map_rows, save2db
+from bigquery_etl.extract.gcloud_wrapper import GcsConnector
+from bigquery_etl.utils.gcutils import read_mysql_query
+from gdc.etl.etl import Etl
 from gdc.model.isbcgc_cloudsql_gdc_model import ISBCGC_database_helper
+from gdc.util.gdc_util import get_map_rows, save2db
 from util import close_log, create_log
+
+def etl(config, log):
+    log.info('\tbegin creating annotation big query table')
+    etl_config = config['TCGA']['process_annotations']['etl']
+    columns = ', '.join(etl_config['use_columns'])
+    sql = etl_config['sql_template'] % (columns)
+    log.info("\t\tselect annotation records from db")
+    metadata_df = read_mysql_query(config['cloudsql']['host'], config['cloudsql']['db'], config['cloudsql']['user'], config['cloudsql']['passwd'], sql)
+    log.info("\t\tFound {0} rows, columns." .format(str(metadata_df.shape)))
+
+    log.info("\tupload data to GCS.")
+    project_id = config['cloud_projects']['open']
+    bucket_name = config['buckets']['open']
+    gcs_file_path = 'gs://' + bucket_name + '/' + config['buckets']['folders']['base_run_folder'] + 'etl/annotation'
+    gcs = GcsConnector(project_id, bucket_name)
+    gcs.convert_df_to_njson_and_upload(metadata_df, gcs_file_path + 'annotation.json')
+    
+    log.info('create the BigQuery table')
+    Etl().load(project_id, [etl_config['bq_dataset']], [etl_config['bq_table']], [etl_config['schema_file']], [gcs_file_path], [etl_config['write_dispositions']], 1, log)
+    
+    log.info('\tfinished creating annotation big query table')
 
 def associate_metadata2annotation(config, program_name, build, log):
     # now save the associations
+    if not config['update_cloudsql']:
+        return
+    
     data_associate_statements = [
         "insert into %s_metadata_annotation2data_%s " \
             "(metadata_annotation_id, metadata_data_id) " \
