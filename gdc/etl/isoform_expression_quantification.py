@@ -60,3 +60,8 @@ class Isoform_expression_quantification(etl.Etl):
     def data_type_specific(self, config, file_df):
         # combine the two versions of the transcript fields (one with an accession, the other without)
         file_df['mirna_transcript'] = file_df[['mirna_transcript', 'mirna_trans']].apply(lambda x: x[0] if pd.isnull(x[1]) else x[1], axis=1)
+
+    def skip_file(self, config, data_type, path, program_name, file2info, info, log):
+        if 'miRNA isoform quantification' == info['data_type'] and -1 == info['file_name'].find('hg19.mirbase20'):
+            return True
+        return False

@@ -50,3 +50,8 @@ class Mirna_expression_quantification(etl.Etl):
 
         '''
         pass
+
+    def skip_file(self, config, data_type, path, program_name, file2info, info, log):
+        if 'miRNA gene quantification' == info['data_type'] and -1 == info['file_name'].find('hg19.mirbase20'):
+            return True
+        return False

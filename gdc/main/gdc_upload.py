@@ -332,7 +332,7 @@ def uploadGDC():
         log = logging.getLogger(log_name)
         
         try:
-            if config['process_adjustments']:
+            if 'process_adjustments' in config and config['process_adjustments']:
                 log.info('getting run input')
                 set_run_info(config)
                 log.info('finished getting run input')
