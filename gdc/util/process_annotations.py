@@ -179,6 +179,9 @@ def process_annotations(config, endpt_type, log_dir):
             annotation2info = get_map_rows(config, endpt_type, 'annotation', program_name, get_filter(), log)
             add_barcodes(annotation2info)
             save2db(config, endpt_type, '%s_metadata_annotation' % program_name, annotation2info, config['%s' % (program_name)]['process_annotations']['annotation_table_mapping'], log)
+            
+            if etl in config[program_name]['process_annotations']:
+                etl(config, log)
             log.info('finished process_annotations %s' % (program_name))
 
         return annotation2info
