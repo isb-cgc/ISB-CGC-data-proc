@@ -175,7 +175,12 @@ class GcsConnector(object):
 
         log.info('\t\t\tstart conversion of %s' % (destination_blobname))
         file_to_upload = StringIO()
-
+        
+        # look for datetime columns and convert them to string
+        for column in df.columns:
+            if df[column].dtype == 'datetime64[ns]':
+                df[column] = df[column].apply(str)
+        
         try:
             log.info('\t\t\t\tconverting dataframe as a whole')
             df_json = df.convert_objects(convert_numeric=False).to_json(orient = 'records', lines = True) + '\n'
