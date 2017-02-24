@@ -26,24 +26,26 @@ from gdc.model.isbcgc_cloudsql_gdc_model import ISBCGC_database_helper
 from gdc.util.gdc_util import get_map_rows, save2db
 from util import close_log, create_log
 
+
+def process_sql2bq(config, etl_config, sql, log):
+    log.info("\t\tselect annotation records from db")
+    metadata_df = read_mysql_query(config['cloudsql']['host'], config['cloudsql']['db'], config['cloudsql']['user'], config['cloudsql']['passwd'], sql)
+    log.info("\t\tFound {0} rows, columns.".format(str(metadata_df.shape)))
+    log.info("\tupload data to GCS.")
+    project_id = config['cloud_projects']['open']
+    bucket_name = config['buckets']['open']
+    gcs_file_path = config['buckets']['folders']['base_run_folder'] + 'etl/annotation'
+    gcs = GcsConnector(project_id, bucket_name)
+    gcs.convert_df_to_njson_and_upload(metadata_df, gcs_file_path + '/annotation.json', logparam=log)
+    log.info('create the BigQuery table')
+    Etl().load(project_id, [etl_config['bq_dataset']], [etl_config['bq_table']], [etl_config['schema_file']], ['gs://' + bucket_name + '/' + gcs_file_path], [etl_config['write_disposition']], 1, log)
+
 def etl(config, log):
     log.info('\tbegin creating annotation big query table')
     etl_config = config['TCGA']['process_annotations']['etl']
     columns = ', '.join(etl_config['use_columns'])
-    sql = etl_config['sql_template'] % (columns)
-    log.info("\t\tselect annotation records from db")
-    metadata_df = read_mysql_query(config['cloudsql']['host'], config['cloudsql']['db'], config['cloudsql']['user'], config['cloudsql']['passwd'], sql)
-    log.info("\t\tFound {0} rows, columns." .format(str(metadata_df.shape)))
-
-    log.info("\tupload data to GCS.")
-    project_id = config['cloud_projects']['open']
-    bucket_name = config['buckets']['open']
-    gcs_file_path = 'gs://' + bucket_name + '/' + config['buckets']['folders']['base_run_folder'] + 'etl/annotation'
-    gcs = GcsConnector(project_id, bucket_name)
-    gcs.convert_df_to_njson_and_upload(metadata_df, gcs_file_path + 'annotation.json')
-    
-    log.info('create the BigQuery table')
-    Etl().load(project_id, [etl_config['bq_dataset']], [etl_config['bq_table']], [etl_config['schema_file']], [gcs_file_path], [etl_config['write_dispositions']], 1, log)
+    for sql_template in etl_config['sql_templates']:
+        process_sql2bq(config, etl_config, sql_template % (columns), log)
     
     log.info('\tfinished creating annotation big query table')
 
@@ -180,7 +182,7 @@ def process_annotations(config, endpt_type, log_dir):
             add_barcodes(annotation2info)
             save2db(config, endpt_type, '%s_metadata_annotation' % program_name, annotation2info, config['%s' % (program_name)]['process_annotations']['annotation_table_mapping'], log)
             
-            if etl in config[program_name]['process_annotations']:
+            if 'etl' in config[program_name]['process_annotations']:
                 etl(config, log)
             log.info('finished process_annotations %s' % (program_name))
 
