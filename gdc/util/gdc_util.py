@@ -25,9 +25,10 @@ from bq_wrapper import fetch_paged_results, query_bq_table
 from isbcgc_cloudsql_model import ISBCGC_database_helper
 from util import filter_map, flatten_map, import_module, print_list_synopsis
 
-def request(url, params, msg, log, timeout):
+def request(url, params, msg, log, timeout, verbose = True):
     try:
-        log.info('\t\tstart request for %s' % (url))
+        if verbose:
+            log.info('\t\tstart request for %s\n%s' % (url, params))
         response = requests.get(url, params=params, timeout=timeout)
         response.raise_for_status()
     except Exception as e:
@@ -46,7 +47,8 @@ def request(url, params, msg, log, timeout):
                     log.exception('%s, giving up...' % (msg))
                     raise
                 retry_count += 1 
-    log.info('\t\tfinished request for %s' % (url))
+    if verbose:
+        log.info('\t\tfinished request for %s' % (url))
     
     return response
 
