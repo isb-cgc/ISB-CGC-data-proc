@@ -122,10 +122,12 @@ def process_files(config, endpt_type, file2info, outputdir, start, end, program_
         else:
             log.info('\t\t\tnot uploading files for %s:%s' % (project, data_type))
             
+        etl_uploaded = False
         if config['upload_etl_files'] and data_type in config[program_name]['process_files']['datatype2bqscript'] and etl_class is not None:
-            etl_class.upload_batch_etl(config, outputdir, paths, file2info, endpt_type, program_name, project, data_type, log)
+            etl_uploaded = etl_class.upload_batch_etl(config, outputdir, paths, file2info, endpt_type, program_name, project, data_type, log)
         else:
             log.warning('\t\tnot processing files for ETL for project %s and datatype %s%s' % (project, data_type, ' because there is no script specified' if config['upload_etl_files'] else ''))
+        return etl_uploaded
     except:
         log.exception('problem process file %s for project %s and data_type %s' % (filepath, project, data_type))
         raise
@@ -146,10 +148,11 @@ def request(config, endpt_type, url, file2info, outputdir, program_name, project
     while start < len(file2info):
         log.info('\t\tfetching range %d:%d' % (start, end))
         request_try(config, url, ordered2info.keys(), start, end, outputdir, log)
-        process_files(config, endpt_type, ordered2info, outputdir, start, end, program_name, project, data_type, etl_class, log)
+        etl_uploaded = process_files(config, endpt_type, ordered2info, outputdir, start, end, program_name, project, data_type, etl_class, log)
+        if etl_uploaded:
+            batch_count += 1
         start = end
         end += download_files_per
-        batch_count += 1
         
     if config['upload_etl_files'] and data_type in config[program_name]['process_files']['datatype2bqscript'] and etl_class is not None:
         etl_class.finish_etl(config, endpt_type, program_name, project, data_type, batch_count, log)

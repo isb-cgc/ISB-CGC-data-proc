@@ -137,17 +137,20 @@ class Etl(object):
         try:
             complete_df = self.process_paths(config, outputdir, data_type, paths, program_name, project, file2info, log)
             if complete_df is not None:
+                etl_uploaded = True
                 gcs = GcsConnector(config['cloud_projects']['open'], config['buckets']['open'])
                 keyname = config['buckets']['folders']['base_run_folder'] + 'etl/%s/%s/%s/%s' % (endpt_type, project, data_type, paths[0].replace('/', '_'))
                 log.info('\t\tstart convert and upload %s to the cloud' % (keyname))
                 gcs.convert_df_to_njson_and_upload(complete_df, keyname, logparam = log)
                 log.info('\t\tfinished convert and upload %s to the cloud' % (keyname))
             else:
+                etl_uploaded = False
                 log.info('\t\tno upload for this batch of files')
         except Exception as e:
             log.exception('problem finishing the etl: %s' % (e))
             raise
         log.info('\tfinished upload_batch_etl() for %s and %s' % (project, data_type))
+        return etl_uploaded
     
     def load(self, project_id, bq_datasets, bq_tables, schema_files, gcs_file_paths, write_dispositions, batch_count, log):
         """
