@@ -32,6 +32,7 @@ from gdc.util.process_annotations import call_metadata2annotation, process_annot
 from gdc.util.process_projects import process_projects_for_programs, process_projects
 from gdc.util.process_cases import process_cases
 from gdc.util.process_data_type import process_data_type, populate_data_availibility, set_uploaded_path
+from gdc.util.process_images import process_images
 
 from util import close_log, create_log, import_module
 
@@ -306,16 +307,19 @@ def finalize(config, log):
     if config['process_annotation']:
         call_metadata2annotation(config, log)
 
-    if config['process_case']:
+    if config['process_case'] and config['process_metadata_attrs']:
         for program_name in config['program_names']:
             if 0 == len(config['program_name_restrict']) or program_name in config['program_name_restrict']:
                 postproc_module = import_module(config[program_name]['process_cases']['postproc_case']['postproc_module'])
                 postproc_module.process_metadata_attrs(config, log)
     
-    if config['process_data_type'] and config['update_cloudsql']:
+    if 'process_images' in config and config['process_images']:
+        process_images(config, log)
+
+    if config['process_data_type'] and config['update_cloudsql'] and config['process_paths']:
         set_uploaded_path(config, log)
         populate_data_availibility(config, log)
-
+    
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 def uploadGDC():

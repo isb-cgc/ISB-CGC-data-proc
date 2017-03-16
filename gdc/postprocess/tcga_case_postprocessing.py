@@ -19,8 +19,8 @@ limitations under the License.
 
 @author: michael
 '''
-from gdc.util.gdc_util import update_cloudsql_from_bigquery
 from gdc.model.isbcgc_cloudsql_tcga_model import ISBCGC_database_helper
+from gdc.util.gdc_util import update_cloudsql_from_bigquery
 from util import order4insert
 
 def postprocess(config, project_name, endpt_type, log):

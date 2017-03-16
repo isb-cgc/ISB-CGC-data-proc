@@ -142,7 +142,7 @@ class GDCTestUpload(GDCTestSetup):
 
     def run_upload(self, config, project, data_type, log):
         file_ids = self.setup_file_ids(config, data_type)
-        instantiate_etl_class(config, data_type, log).initialize(config, log)
+        instantiate_etl_class(config, 'TCGA', data_type, log).initialize(config, log)
         for download_files_per in [17]:
             config['download_files_per'] = download_files_per
             try:
@@ -150,7 +150,7 @@ class GDCTestUpload(GDCTestSetup):
             except:
                 log.exception('failed with lines per @ %d' % (download_files_per))
         
-        instantiate_etl_class(config, data_type, log).finalize(config, log)
+        instantiate_etl_class(config, 'TCGA', data_type, log).finalize(config, log)
 
     def test_mrna_expression_quantification(self):
         pass
