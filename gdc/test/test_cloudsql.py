@@ -20,7 +20,7 @@ limitations under the License.
 import json
 
 from gdc.test.test_setup import GDCTestSetup
-from gdc.util.gdc_util import request
+from gdc.util.gdc_util import get_map_rows, request
 from isbcgc_cloudsql_model import ISBCGC_database_helper
 
 class GDCCloudSQLTest(GDCTestSetup):
@@ -119,13 +119,13 @@ class GDCCloudSQLTest(GDCTestSetup):
         params = {
             'filters':json.dumps(filt), 
             'sort': '%s:asc' % ('%s_id' % (endpt)),
-            'from': 0, 
+            'from': 1, 
             'size': 1
         }
 
         endpt_url = self.config['%ss_endpt' % (endpt)]['%s endpt' % (endpt_type)]
 #         query = self.config['%ss_endpt' % (endpt)]['query']
-        query = ''
+        query = '?expand=cases'
         url = endpt_url + query
         
         response = request(url, params, "query %s for total for %s" % (url, params), self.log, self.config['map_requests_timeout'], verbose)
@@ -133,7 +133,21 @@ class GDCCloudSQLTest(GDCTestSetup):
         rj = response.json()
         
         return rj['data']['pagination']['total']
-        
+    
+    def countCaseOrNot(self, endpt_type, endpt, fields, values, operands):
+        filt = self.make_filter(fields, values, operands)
+        rows = get_map_rows(self.config, endpt_type, endpt, 'TCGA', filt, self.log)
+        sampletype2count = {}
+        counts = [0, 0]
+        for info in rows.itervalues():
+            count = sampletype2count.setdefault(info['file_name'][13:16], 0)
+            sampletype2count[info['file_name'][13:16]] = count + 1
+            if 'cases' in info and 0 < len(info['cases']):
+                counts[1] += 1
+            else:
+                counts[0] += 1
+        return counts, sampletype2count
+    
     def testCloudSQL(self):
 #         query = "select * from metadata_program order by program_name"
 #         self.run_query(query)
@@ -750,6 +764,12 @@ class GDCCloudSQLTest(GDCTestSetup):
             "CCLE-UCEC"
         ]
 
+#         counts, sampletype2counts = self.countCaseOrNot('legacy', 'file', ['data_type'], ['Diagnostic image'], ['='])
+#         self.log.info('%s had no case for %d files and had case for %d files' % ('Diagnostic image', counts[0], counts[1]))
+#         sampletypes = sorted(sampletype2counts.keys())
+#         self.log.info('sample types:\n\t%s\n' % ('\n\t'.join('%s: %s' % (sampletype, sampletype2counts[sampletype]) for sampletype in sampletypes)))
+            
+        
         query = "select data_type, count(distinct case_gdc_id) cases, count( distinct file_gdc_id) files from %s_metadata_data_HG19 group by data_type order by data_type"
         rows = self.getHG19combined_totals(query)
         
@@ -822,14 +842,17 @@ class GDCCloudSQLTest(GDCTestSetup):
         fields = ['cases', 'data_type']
         values = [projects] + ['Diagnostic image']
         total = int(self.getAPITotal('legacy', 'file', fields, ["TCGA-BRCA", 'Diagnostic image'], ['is', '='], True))
-        self.log.info('for %s found %d files with no project info' % ('Diagnostic image', total))
+        self.log.info('\nfor %s found %d files with no project info\n' % ('Diagnostic image', total))
         
         total = int(self.getAPITotal('legacy', 'file', ['cases'], [""], ['is'], True))
-        self.log.info('for all projects found %d files with no project info' % (total))
+        self.log.info('\nfor all projects found %d files with no project info using is\n' % (total))
         
         total = int(self.getAPITotal('legacy', 'file', ['cases'], [""], ['not'], True))
-        self.log.info('for all projects found %d files with project info' % (total))
+        self.log.info('\nfor all projects found %d files with project info using not\n' % (total))
         
+        total = int(self.getAPITotal('legacy', 'file', ['cases.project.project_id'], [projects], ['in'], True))
+        self.log.info('\nfor all projects found %d files with project info\n' % (total))
+
         query = "select experimental_strategy, count(distinct case_gdc_id) cases, count( distinct file_gdc_id) files from %s_metadata_data_HG19 group by experimental_strategy order by experimental_strategy"
         rows = self.getHG19combined_totals(query)
 
