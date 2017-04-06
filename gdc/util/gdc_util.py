@@ -25,7 +25,7 @@ from bq_wrapper import fetch_paged_results, query_bq_table
 from isbcgc_cloudsql_model import ISBCGC_database_helper
 from util import filter_map, flatten_map, import_module, print_list_synopsis
 
-def request(url, params, msg, log, timeout, verbose = True):
+def request(url, params, msg, log, timeout = 1, verbose = True):
     try:
         if verbose:
             log.info('\t\tstart request for %s\n%s' % (url, params))
@@ -67,14 +67,14 @@ def __addrow(endpt_type, fieldnames, row2map, log):
                 row += ['FFPE' if row2map['is_ffpe'] else 'frozen']
             else:
                 row += [None]
-        elif 'project_disease_type' == fieldname:
+        elif 'disease_code' == fieldname:
             if 'project_short_name' in row2map:
-                row += ['-'.join(row2map['project_short_name'].split('-')[1:])]
+                row += ['-'.join(row2map['project_short_name'].split('-')[1])]
             else:
                 if 'case_gdc_id' in row2map:
-                    log.warning('problem setting project_disease_type for %s' % row2map['case_gdc_id'])
+                    log.warning('problem setting disease_code for %s' % row2map['case_gdc_id'])
                 else:
-                    log.warning('problem setting project_disease_type for %s' % row2map['file_gdc_id'])
+                    log.warning('problem setting disease_code for %s' % row2map['file_gdc_id'])
                 row += [None]
         elif 'aliquot_gdc_id' == fieldname:
             if 'aliquot_gdc_id' in row2map:
