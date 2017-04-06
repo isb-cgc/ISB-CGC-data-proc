@@ -148,6 +148,83 @@ class GDCCloudSQLTest(GDCTestSetup):
                 counts[0] += 1
         return counts, sampletype2count
     
+
+
+    def add_to_map(self, count_map, count_field, program, case_id, file_id):
+        project2counts = count_map.setdefault(program, {})
+        counts = project2counts.setdefault(count_field, [count_field, set(), set()])
+        counts[1].add(case_id)
+        counts[2].add(file_id)
+
+    def get_file_counts(self, endpt):
+        params = {
+            'filters':"{}", 
+            'sort':'file_id:asc', 
+            'from':1, 
+            'size':200}
+        curstart = 1
+        no_case = 0
+        program2project2counts = {}
+        program2data_type2counts = {}
+        program2experimental_strategy2counts = {}
+        program2access2counts = {}
+        while True:
+            msg = '\t\tproblem getting filtered map for files'
+            response = None
+            retries = 4
+            while retries:
+                retries -= 1
+                try:
+                    response = request(endpt, params, msg, self.log, None)
+                    response.raise_for_status()
+                    try:
+                        rj = response.json()
+                        break
+                    except:
+                        self.log.exception('problem with response, not json: %s' % (response.text))
+                        raise
+                finally:
+                    if response:
+                        response.close
+            
+            params['from'] = params['from'] + params['size']
+            for index in range(len(rj['data']['hits'])):
+                themap = rj['data']['hits'][index]
+                if 'cases' not in themap:
+                    no_case += 1
+                    continue
+                file_id = themap['file_id']
+                for i in range(len(themap['cases'])):
+                    case_id = themap['cases'][i]['case_id']
+                    project_id = themap['cases'][i]['project']['project_id']
+                    program = project_id.split('-')[0]
+                    self.add_to_map(program2project2counts, project_id, program, case_id, file_id)
+                    self.add_to_map(program2data_type2counts, themap['data_type'], program, case_id, file_id)
+                    if 'experimental_strategy' in themap:
+                        self.add_to_map(program2experimental_strategy2counts, themap['experimental_strategy'], program, case_id, file_id)
+                    self.add_to_map(program2access2counts, themap['access'], program, case_id, file_id)
+            
+            curstart += rj['data']['pagination']['count']
+            if curstart > rj['data']['pagination']['total']:
+                break
+
+        if 0 < no_case:
+            self.log.info('found %d records with no cases' % (no_case))
+        program2project_counts = {}
+        program2data_type_counts = {}
+        program2exp_strat_counts = {}
+        program2access_counts = {}
+        for program2field2counts, program2field_counts  in zip([program2project2counts, program2data_type2counts, program2experimental_strategy2counts, program2access2counts], 
+                                        [program2project_counts, program2data_type_counts, program2exp_strat_counts, program2access_counts]):
+            for program, field2counts in program2field2counts.iteritems():
+                counts_list = []
+                for counts in field2counts.values():
+                    counts[1] = len(counts[1])
+                    counts[2] = len(counts[2])
+                    counts_list += [counts]
+                program2field_counts[program] = counts_list
+        return program2project_counts, program2data_type_counts, program2exp_strat_counts, program2access_counts
+
     def testCloudSQL(self):
 #         query = "select * from metadata_program order by program_name"
 #         self.run_query(query)
@@ -476,227 +553,235 @@ class GDCCloudSQLTest(GDCTestSetup):
 #         self.run_query(query)
 #  
 # HG38 compare for target
-#         query = "select project_short_name, count(distinct case_gdc_id) cases, count( distinct file_gdc_id) files from TARGET_metadata_data_HG38 group by project_short_name order by project_short_name"
-#         rows = self.run_query(query, False)
-# 
-#         targetHG38project = [
-#             ['TARGET-AML', int(923), int(1870)],
-#             ['TARGET-CCSK', int(13), int(2)],
-#             ['TARGET-NBL', int(1120), int(2803)],
-#             ['TARGET-OS', int(384), int(3)],
-#             ['TARGET-RT', int(75), int(173)],
-#             ['TARGET-WT', int(663), int(1321)]
-#         ]
-#         
-#         self.compare_metadata2gdcportal('TARGET project cases', rows, targetHG38project, 1)
-#         self.compare_metadata2gdcportal('TARGET project files', rows, targetHG38project, 2)
-#         
-#         query = "select data_type, count(distinct case_gdc_id) cases, count( distinct file_gdc_id) files from TARGET_metadata_data_HG38 group by data_type order by data_type"
-#         rows = self.run_query(query, False)
-# 
-#         targetHG38type = [
-#             ['Aggregated Somatic Mutation', int(258), int(12)],
-#             ['Aligned Reads', int(741), int(1586)],
-#             ['Annotated Somatic Mutation', int(258), int(1071)],
-#             ['Biospecimen Supplement', int(88), int(3)],
-#             ['Clinical Supplement', int(1820), int(8)],
-#             ['Gene Expression Quantification', int(434), int(1443)],
-#             ['Isoform Expression Quantification', int(436), int(489)],
-#             ['miRNA Expression Quantification', int(436), int(489)],
-#             ['Raw Simple Somatic Mutation', int(258), int(1071)],
-#         ]
-#         
-#         self.compare_metadata2gdcportal('TARGET data_type cases', rows, targetHG38type, 1)
-#         self.compare_metadata2gdcportal('TARGET data_type files', rows, targetHG38type, 2)
-#         
-#         query = "select experimental_strategy, count(distinct case_gdc_id) cases, count( distinct file_gdc_id) files from TARGET_metadata_data_HG38 group by experimental_strategy order by experimental_strategy"
-#         rows = self.run_query(query, False)
-# 
-#         targetHG38strategy = [
-#             ['miRNA-Seq', int(436), int(1467)],
-#             ['RNA-Seq', int(457), int(1954)],
-#             ['WXS', int(281), int(2740)]
-#         ]
-# 
-#         self.compare_metadata2gdcportal('TARGET experimental_strategy cases', rows, targetHG38strategy, 1)
-#         self.compare_metadata2gdcportal('TARGET experimental_strategy files', rows, targetHG38strategy, 2)
-#         
-#         query = "select access, count(distinct case_gdc_id) cases, count( distinct file_gdc_id) files from TARGET_metadata_data_HG38 group by access order by access"
-#         rows = self.run_query(query, False)
-# 
-#         targetHG38file = [
-#             ['controlled', int(741), int(3740)],
-#             ['open', int(1856), int(2432)]
-#         ]
-# 
-#         self.compare_metadata2gdcportal('TARGET access cases', rows, targetHG38file, 1)
-#         self.compare_metadata2gdcportal('TARGET access files', rows, targetHG38file, 2)
-#         
-#         query = "select project_short_name, count(distinct case_gdc_id) cases from TARGET_metadata_clinical where endpoint_type = 'current' group by project_short_name order by project_short_name"
-#         rows = self.run_query(query, False)
-# 
-#         targetHG38case = [
-#             ['TARGET-AML', int(923)],
-#             ['TARGET-CCSK', int(13)],
-#             ['TARGET-NBL', int(1120)],
-#             ['TARGET-OS', int(384)],
-#             ['TARGET-RT', int(75)],
-#             ['TARGET-WT', int(663)]
-#         ]
-# 
-#         self.compare_metadata2gdcportal('TARGET project to cases', rows, targetHG38case, 1)
-#         
-#         query = "select project_short_name, count(distinct case_barcode) cases from TARGET_metadata_biospecimen where endpoint_type = 'current' group by project_short_name order by project_short_name"
-#         rows = self.run_query(query, False)
-# 
-#         self.compare_metadata2gdcportal('TARGET project cases in biospecimen', rows, targetHG38case, 1)
-#         
-#         query = "select project_short_name, count(distinct case_barcode) cases from TARGET_metadata_samples where endpoint_type = 'current' group by project_short_name order by project_short_name"
-#         rows = self.run_query(query, False)
-# 
-#         self.compare_metadata2gdcportal('TARGET project cases in samples', rows, targetHG38case, 1)
-#         
-# # HG38 compare for tcga
-#         query = "select project_short_name, count(distinct case_gdc_id) cases, count( distinct file_gdc_id) files from TCGA_metadata_data_HG38 group by project_short_name order by project_short_name"
-#         rows = self.run_query(query, False)
-# 
-#         tcgaHG38project = [
-#             ['TCGA-ACC', int(92), int(2108)],
-#             ['TCGA-BLCA', int(412), int(10193)],
-#             ['TCGA-BRCA', int(1098), int(27207)],
-#             ['TCGA-CESC', int(308), int(7350)],
-#             ['TCGA-CHOL', int(51), int(1157)],
-#             ['TCGA-COAD', int(463), int(11827)],
-#             ['TCGA-DLBC', int(58), int(1163)],
-#             ['TCGA-ESCA', int(185), int(4473)],
-#             ['TCGA-GBM', int(617), int(9657)],
-#             ['TCGA-HNSC', int(528), int(12895)],
-#             ['TCGA-KICH', int(113), int(1853)],
-#             ['TCGA-KIRC', int(537), int(12272)],
-#             ['TCGA-KIRP', int(291), int(7368)],
-#             ['TCGA-LAML', int(200), int(3954)],
-#             ['TCGA-LGG', int(516), int(12603)],
-#             ['TCGA-LIHC', int(377), int(9511)],
-#             ['TCGA-LUAD', int(585), int(14804)],
-#             ['TCGA-LUSC', int(504), int(13124)],
-#             ['TCGA-MESO', int(87), int(2050)],
-#             ['TCGA-OV', int(608), int(13054)],
-#             ['TCGA-PAAD', int(185), int(4433)],
-#             ['TCGA-PCPG', int(179), int(4422)],
-#             ['TCGA-PRAD', int(500), int(12568)],
-#             ['TCGA-READ', int(172), int(4012)],
-#             ['TCGA-SARC', int(261), int(6282)],
-#             ['TCGA-SKCM', int(470), int(11265)],
-#             ['TCGA-STAD', int(478), int(10835)],
-#             ['TCGA-TGCT', int(150), int(3636)],
-#             ['TCGA-THCA', int(507), int(12703)],
-#             ['TCGA-THYM', int(124), int(2974)],
-#             ['TCGA-UCEC', int(560), int(13604)],
-#             ['TCGA-UCS', int(57), int(1364)],
-#             ['TCGA-UVM', int(80), int(1928)]
-#         ]
-# 
-#         self.compare_metadata2gdcportal('TCGA project cases', rows, tcgaHG38project, 1)
-#         self.compare_metadata2gdcportal('TCGA project files', rows, tcgaHG38project, 2)
-#         
-#         query = "select data_type, count(distinct case_gdc_id) cases, count( distinct file_gdc_id) files from TCGA_metadata_data_HG38 group by data_type order by data_type"
-#         rows = self.run_query(query, False)
-# 
-#         tcgaHG38type = [
-#             ['Aggregated Somatic Mutation', int(10429), int(132)],
-#             ['Aligned Reads', int(10995), int(44402)],
-#             ['Annotated Somatic Mutation', int(10429), int(44506)],
-#             ['Biospecimen Supplement', int(11353), int(11353)],
-#             ['Clinical Supplement', int(11160), int(11160)],
-#             ['Copy Number Segment', int(10995), int(22376)],
-#             ['Gene Expression Quantification', int(10237), int(33279)],
-#             ['Isoform Expression Quantification', int(10165), int(10999)],
-#             ['Masked Copy Number Segment', int(10995), int(22376)],
-#             ['Masked Somatic Mutation', int(10429), int(132)],
-#             ['Methylation Beta Value', int(10979), int(12429)],
-#             ['miRNA Expression Quantification', int(10165), int(10999)],
-#             ['Raw Simple Somatic Mutation', int(10429), int(44506)]
-#         ]
-# 
-#         self.compare_metadata2gdcportal('TCGA data_type cases', rows, tcgaHG38type, 1)
-#         self.compare_metadata2gdcportal('TCGA data_type files', rows, tcgaHG38type, 2)
-#         
-#         query = "select experimental_strategy, count(distinct case_gdc_id) cases, count( distinct file_gdc_id) files from TCGA_metadata_data_HG38 group by experimental_strategy order by experimental_strategy"
-#         rows = self.run_query(query, False)
-# 
-#         tcgaHG38strategy = [
-#             ['Genotyping Array', int(10995), int(44752)],
-#             ['Methylation Array', int(10979), int(12429)],
-#             ['miRNA-Seq', int(10165), int(32997)],
-#             ['RNA-Seq', int(10239), int(44375)],
-#             ['WXS', int(10544), int(111583)]
-#         ]
-# 
-#         self.compare_metadata2gdcportal('TCGA experimental_strategy cases', rows, tcgaHG38strategy, 1)
-#         self.compare_metadata2gdcportal('TCGA experimental_strategy files', rows, tcgaHG38strategy, 2)
-#         
-#         query = "select access, count(distinct case_gdc_id) cases, count( distinct file_gdc_id) files from TCGA_metadata_data_HG38 group by access order by access"
-#         rows = self.run_query(query, False)
-# 
-#         tcgaHG38access = [
-#             ['controlled', int(10995), int(133546)],
-#             ['open', int(11353), int(135103)]
-#         ]
-# 
-#         self.compare_metadata2gdcportal('TCGA access cases', rows, tcgaHG38access, 1)
-#         self.compare_metadata2gdcportal('TCGA access files', rows, tcgaHG38access, 2)
-#         
-#         query = "select project_short_name, count(distinct case_gdc_id) cases from TCGA_metadata_clinical where endpoint_type = 'current' group by project_short_name order by project_short_name"
-#         rows = self.run_query(query, False)
-# 
-#         tcgaHG38case = [
-#             ['TCGA-ACC', int(92)],
-#             ['TCGA-BLCA', int(412)],
-#             ['TCGA-BRCA', int(1098)],
-#             ['TCGA-CESC', int(308)],
-#             ['TCGA-CHOL', int(51)],
-#             ['TCGA-COAD', int(463)],
-#             ['TCGA-DLBC', int(58)],
-#             ['TCGA-ESCA', int(185)],
-#             ['TCGA-GBM', int(617)],
-#             ['TCGA-HNSC', int(528)],
-#             ['TCGA-KICH', int(113)],
-#             ['TCGA-KIRC', int(537)],
-#             ['TCGA-KIRP', int(291)],
-#             ['TCGA-LAML', int(200)],
-#             ['TCGA-LGG', int(516)],
-#             ['TCGA-LIHC', int(377)],
-#             ['TCGA-LUAD', int(585)],
-#             ['TCGA-LUSC', int(504)],
-#             ['TCGA-MESO', int(87)],
-#             ['TCGA-OV', int(608)],
-#             ['TCGA-PAAD', int(185)],
-#             ['TCGA-PCPG', int(179)],
-#             ['TCGA-PRAD', int(500)],
-#             ['TCGA-READ', int(172)],
-#             ['TCGA-SARC', int(261)],
-#             ['TCGA-SKCM', int(470)],
-#             ['TCGA-STAD', int(478)],
-#             ['TCGA-TGCT', int(150)],
-#             ['TCGA-THCA', int(507)],
-#             ['TCGA-THYM', int(124)],
-#             ['TCGA-UCEC', int(560)],
-#             ['TCGA-UCS', int(57)],
-#             ['TCGA-UVM', int(80)]
-#         ]
-# 
-#         self.compare_metadata2gdcportal('TCGA project cases', rows, tcgaHG38case, 1)
-#         
-#         query = "select project_short_name, count(distinct case_barcode) cases from TCGA_metadata_biospecimen where endpoint_type = 'current' group by project_short_name order by project_short_name"
-#         rows = self.run_query(query, False)
-# 
-#         self.compare_metadata2gdcportal('TCGA project cases in biospecimen', rows, tcgaHG38case, 1)
-#         
-#         query = "select project_short_name, count(distinct case_barcode) cases from TCGA_metadata_samples where endpoint_type = 'current' group by project_short_name order by project_short_name"
-#         rows = self.run_query(query, False)
-# 
-#         self.compare_metadata2gdcportal('TCGA project cases in samples', rows, tcgaHG38case, 1)
-#         
+        query = "select project_short_name, count(distinct case_gdc_id) cases, count( distinct file_gdc_id) files from TARGET_metadata_data_HG38 group by project_short_name order by project_short_name"
+        rows = self.run_query(query, False)
+ 
+#         "files_endpt" = {
+#             "current endpt": "https://gdc-api.nci.nih.gov/files",
+#             "legacy endpt": "https://gdc-api.nci.nih.gov/legacy/files",
+#             "query": "?expand=archive,cases,cases.project.program,cases.samples,cases.samples.portions,cases.samples.portions.analytes,cases.samples.portions.analytes.aliquots,analysis,center,index_files&pretty=true"
+#         },
+        
+        program_counts, data_type_counts, exp_strat_counts, access_counts = self.get_file_counts('https://gdc-api.nci.nih.gov/files?expand=cases,cases.project')
+
+        targetHG38project = [
+            ['TARGET-AML', int(923), int(1870)],
+            ['TARGET-CCSK', int(13), int(2)],
+            ['TARGET-NBL', int(1120), int(2803)],
+            ['TARGET-OS', int(384), int(3)],
+            ['TARGET-RT', int(75), int(173)],
+            ['TARGET-WT', int(663), int(1321)]
+        ]
+         
+        self.compare_metadata2gdcportal('TARGET project cases', rows, program_counts['TARGET'], 1)
+        self.compare_metadata2gdcportal('TARGET project files', rows, program_counts['TARGET'], 2)
+         
+        query = "select data_type, count(distinct case_gdc_id) cases, count( distinct file_gdc_id) files from TARGET_metadata_data_HG38 group by data_type order by data_type"
+        rows = self.run_query(query, False)
+ 
+        targetHG38type = [
+            ['Aggregated Somatic Mutation', int(258), int(12)],
+            ['Aligned Reads', int(741), int(1586)],
+            ['Annotated Somatic Mutation', int(258), int(1071)],
+            ['Biospecimen Supplement', int(88), int(3)],
+            ['Clinical Supplement', int(1820), int(8)],
+            ['Gene Expression Quantification', int(434), int(1443)],
+            ['Isoform Expression Quantification', int(436), int(489)],
+            ['miRNA Expression Quantification', int(436), int(489)],
+            ['Raw Simple Somatic Mutation', int(258), int(1071)],
+        ]
+         
+        self.compare_metadata2gdcportal('TARGET data_type cases', rows, data_type_counts['TARGET'], 1)
+        self.compare_metadata2gdcportal('TARGET data_type files', rows, data_type_counts['TARGET'], 2)
+         
+        query = "select experimental_strategy, count(distinct case_gdc_id) cases, count( distinct file_gdc_id) files from TARGET_metadata_data_HG38 group by experimental_strategy order by experimental_strategy"
+        rows = self.run_query(query, False)
+ 
+        targetHG38strategy = [
+            ['miRNA-Seq', int(436), int(1467)],
+            ['RNA-Seq', int(457), int(1954)],
+            ['WXS', int(281), int(2740)]
+        ]
+ 
+        self.compare_metadata2gdcportal('TARGET experimental_strategy cases', rows, exp_strat_counts['TARGET'], 1)
+        self.compare_metadata2gdcportal('TARGET experimental_strategy files', rows, exp_strat_counts['TARGET'], 2)
+         
+        query = "select access, count(distinct case_gdc_id) cases, count( distinct file_gdc_id) files from TARGET_metadata_data_HG38 group by access order by access"
+        rows = self.run_query(query, False)
+ 
+        targetHG38file = [
+            ['controlled', int(741), int(3740)],
+            ['open', int(1856), int(2432)]
+        ]
+ 
+        self.compare_metadata2gdcportal('TARGET access cases', rows, access_counts['TARGET'], 1)
+        self.compare_metadata2gdcportal('TARGET access files', rows, access_counts['TARGET'], 2)
+         
+        query = "select project_short_name, count(distinct case_gdc_id) cases from TARGET_metadata_clinical where endpoint_type = 'current' group by project_short_name order by project_short_name"
+        rows = self.run_query(query, False)
+ 
+        targetHG38case = [
+            ['TARGET-AML', int(923)],
+            ['TARGET-CCSK', int(13)],
+            ['TARGET-NBL', int(1120)],
+            ['TARGET-OS', int(384)],
+            ['TARGET-RT', int(75)],
+            ['TARGET-WT', int(663)]
+        ]
+ 
+        self.compare_metadata2gdcportal('TARGET project to cases', rows, targetHG38case, 1)
+         
+        query = "select project_short_name, count(distinct case_barcode) cases from TARGET_metadata_biospecimen where endpoint_type = 'current' group by project_short_name order by project_short_name"
+        rows = self.run_query(query, False)
+ 
+        self.compare_metadata2gdcportal('TARGET project cases in biospecimen', rows, targetHG38case, 1)
+         
+        query = "select project_short_name, count(distinct case_barcode) cases from TARGET_metadata_samples where endpoint_type = 'current' group by project_short_name order by project_short_name"
+        rows = self.run_query(query, False)
+ 
+        self.compare_metadata2gdcportal('TARGET project cases in samples', rows, targetHG38case, 1)
+         
+# HG38 compare for tcga
+        query = "select project_short_name, count(distinct case_gdc_id) cases, count( distinct file_gdc_id) files from TCGA_metadata_data_HG38 group by project_short_name order by project_short_name"
+        rows = self.run_query(query, False)
+ 
+        tcgaHG38project = [
+            ['TCGA-ACC', int(92), int(2108)],
+            ['TCGA-BLCA', int(412), int(10193)],
+            ['TCGA-BRCA', int(1098), int(27207)],
+            ['TCGA-CESC', int(308), int(7350)],
+            ['TCGA-CHOL', int(51), int(1157)],
+            ['TCGA-COAD', int(463), int(11827)],
+            ['TCGA-DLBC', int(58), int(1163)],
+            ['TCGA-ESCA', int(185), int(4473)],
+            ['TCGA-GBM', int(617), int(9657)],
+            ['TCGA-HNSC', int(528), int(12895)],
+            ['TCGA-KICH', int(113), int(1853)],
+            ['TCGA-KIRC', int(537), int(12272)],
+            ['TCGA-KIRP', int(291), int(7368)],
+            ['TCGA-LAML', int(200), int(3954)],
+            ['TCGA-LGG', int(516), int(12603)],
+            ['TCGA-LIHC', int(377), int(9511)],
+            ['TCGA-LUAD', int(585), int(14804)],
+            ['TCGA-LUSC', int(504), int(13124)],
+            ['TCGA-MESO', int(87), int(2050)],
+            ['TCGA-OV', int(608), int(13054)],
+            ['TCGA-PAAD', int(185), int(4433)],
+            ['TCGA-PCPG', int(179), int(4422)],
+            ['TCGA-PRAD', int(500), int(12568)],
+            ['TCGA-READ', int(172), int(4012)],
+            ['TCGA-SARC', int(261), int(6282)],
+            ['TCGA-SKCM', int(470), int(11265)],
+            ['TCGA-STAD', int(478), int(10835)],
+            ['TCGA-TGCT', int(150), int(3636)],
+            ['TCGA-THCA', int(507), int(12703)],
+            ['TCGA-THYM', int(124), int(2974)],
+            ['TCGA-UCEC', int(560), int(13604)],
+            ['TCGA-UCS', int(57), int(1364)],
+            ['TCGA-UVM', int(80), int(1928)]
+        ]
+ 
+        self.compare_metadata2gdcportal('TCGA project cases', rows, tcgaHG38project, 1)
+        self.compare_metadata2gdcportal('TCGA project files', rows, tcgaHG38project, 2)
+         
+        query = "select data_type, count(distinct case_gdc_id) cases, count( distinct file_gdc_id) files from TCGA_metadata_data_HG38 group by data_type order by data_type"
+        rows = self.run_query(query, False)
+ 
+        tcgaHG38type = [
+            ['Aggregated Somatic Mutation', int(10429), int(132)],
+            ['Aligned Reads', int(10995), int(44402)],
+            ['Annotated Somatic Mutation', int(10429), int(44506)],
+            ['Biospecimen Supplement', int(11353), int(11353)],
+            ['Clinical Supplement', int(11160), int(11160)],
+            ['Copy Number Segment', int(10995), int(22376)],
+            ['Gene Expression Quantification', int(10237), int(33279)],
+            ['Isoform Expression Quantification', int(10165), int(10999)],
+            ['Masked Copy Number Segment', int(10995), int(22376)],
+            ['Masked Somatic Mutation', int(10429), int(132)],
+            ['Methylation Beta Value', int(10979), int(12429)],
+            ['miRNA Expression Quantification', int(10165), int(10999)],
+            ['Raw Simple Somatic Mutation', int(10429), int(44506)]
+        ]
+ 
+        self.compare_metadata2gdcportal('TCGA data_type cases', rows, tcgaHG38type, 1)
+        self.compare_metadata2gdcportal('TCGA data_type files', rows, tcgaHG38type, 2)
+         
+        query = "select experimental_strategy, count(distinct case_gdc_id) cases, count( distinct file_gdc_id) files from TCGA_metadata_data_HG38 group by experimental_strategy order by experimental_strategy"
+        rows = self.run_query(query, False)
+ 
+        tcgaHG38strategy = [
+            ['Genotyping Array', int(10995), int(44752)],
+            ['Methylation Array', int(10979), int(12429)],
+            ['miRNA-Seq', int(10165), int(32997)],
+            ['RNA-Seq', int(10239), int(44375)],
+            ['WXS', int(10544), int(111583)]
+        ]
+ 
+        self.compare_metadata2gdcportal('TCGA experimental_strategy cases', rows, tcgaHG38strategy, 1)
+        self.compare_metadata2gdcportal('TCGA experimental_strategy files', rows, tcgaHG38strategy, 2)
+         
+        query = "select access, count(distinct case_gdc_id) cases, count( distinct file_gdc_id) files from TCGA_metadata_data_HG38 group by access order by access"
+        rows = self.run_query(query, False)
+ 
+        tcgaHG38access = [
+            ['controlled', int(10995), int(133546)],
+            ['open', int(11353), int(135103)]
+        ]
+ 
+        self.compare_metadata2gdcportal('TCGA access cases', rows, tcgaHG38access, 1)
+        self.compare_metadata2gdcportal('TCGA access files', rows, tcgaHG38access, 2)
+         
+        query = "select project_short_name, count(distinct case_gdc_id) cases from TCGA_metadata_clinical where endpoint_type = 'current' group by project_short_name order by project_short_name"
+        rows = self.run_query(query, False)
+ 
+        tcgaHG38case = [
+            ['TCGA-ACC', int(92)],
+            ['TCGA-BLCA', int(412)],
+            ['TCGA-BRCA', int(1098)],
+            ['TCGA-CESC', int(308)],
+            ['TCGA-CHOL', int(51)],
+            ['TCGA-COAD', int(463)],
+            ['TCGA-DLBC', int(58)],
+            ['TCGA-ESCA', int(185)],
+            ['TCGA-GBM', int(617)],
+            ['TCGA-HNSC', int(528)],
+            ['TCGA-KICH', int(113)],
+            ['TCGA-KIRC', int(537)],
+            ['TCGA-KIRP', int(291)],
+            ['TCGA-LAML', int(200)],
+            ['TCGA-LGG', int(516)],
+            ['TCGA-LIHC', int(377)],
+            ['TCGA-LUAD', int(585)],
+            ['TCGA-LUSC', int(504)],
+            ['TCGA-MESO', int(87)],
+            ['TCGA-OV', int(608)],
+            ['TCGA-PAAD', int(185)],
+            ['TCGA-PCPG', int(179)],
+            ['TCGA-PRAD', int(500)],
+            ['TCGA-READ', int(172)],
+            ['TCGA-SARC', int(261)],
+            ['TCGA-SKCM', int(470)],
+            ['TCGA-STAD', int(478)],
+            ['TCGA-TGCT', int(150)],
+            ['TCGA-THCA', int(507)],
+            ['TCGA-THYM', int(124)],
+            ['TCGA-UCEC', int(560)],
+            ['TCGA-UCS', int(57)],
+            ['TCGA-UVM', int(80)]
+        ]
+ 
+        self.compare_metadata2gdcportal('TCGA project cases', rows, tcgaHG38case, 1)
+         
+        query = "select project_short_name, count(distinct case_barcode) cases from TCGA_metadata_biospecimen where endpoint_type = 'current' group by project_short_name order by project_short_name"
+        rows = self.run_query(query, False)
+ 
+        self.compare_metadata2gdcportal('TCGA project cases in biospecimen', rows, tcgaHG38case, 1)
+         
+        query = "select project_short_name, count(distinct case_barcode) cases from TCGA_metadata_samples where endpoint_type = 'current' group by project_short_name order by project_short_name"
+        rows = self.run_query(query, False)
+ 
+        self.compare_metadata2gdcportal('TCGA project cases in samples', rows, tcgaHG38case, 1)
+         
 # HG19 compare across all programs
         projects = [
             "TCGA-PCPG",
@@ -763,16 +848,16 @@ class GDCCloudSQLTest(GDCTestSetup):
             "CCLE-THCA",
             "CCLE-UCEC"
         ]
-
+ 
 #         counts, sampletype2counts = self.countCaseOrNot('legacy', 'file', ['data_type'], ['Diagnostic image'], ['='])
 #         self.log.info('%s had no case for %d files and had case for %d files' % ('Diagnostic image', counts[0], counts[1]))
 #         sampletypes = sorted(sampletype2counts.keys())
 #         self.log.info('sample types:\n\t%s\n' % ('\n\t'.join('%s: %s' % (sampletype, sampletype2counts[sampletype]) for sampletype in sampletypes)))
-            
-        
+             
+         
         query = "select data_type, count(distinct case_gdc_id) cases, count( distinct file_gdc_id) files from %s_metadata_data_HG19 group by data_type order by data_type"
         rows = self.getHG19combined_totals(query)
-        
+         
         gdc_type2file = [
             ['ABI sequence trace', int(360)],
             ['Aligned reads', int(87700)],
@@ -818,44 +903,44 @@ class GDCCloudSQLTest(GDCTestSetup):
             ['Unaligned reads', int(12360)],
         ]
         self.compare_metadata2gdcportal('HG19 datatype files', rows, gdc_type2file, 1)
-        
+         
         api_total2file = []
         for data_type in gdc_type2file:
             total = int(self.getAPITotal('legacy', 'file', ['data_type'], [data_type[0]], ['=']))
             api_total2file += [[data_type[0], total]]
         self.compare_metadata2gdcportal('HG19 datatype files against total', rows, api_total2file, 1)
-        
+         
         api_total_projects2file = []
         fields = ['cases.project.project_id'] + ['data_type']
         for data_type in gdc_type2file:
             total = int(self.getAPITotal('legacy', 'file', fields, [projects] + [data_type[0]], ['in', '=']))
             api_total_projects2file += [[data_type[0], total]]
         self.compare_metadata2gdcportal('HG19 datatype files by project against total', rows, api_total_projects2file, 1)
-        
+         
         api_total_projects2file = []
         fields = ['cases', 'data_type']
         for data_type in gdc_type2file:
             total = int(self.getAPITotal('legacy', 'file', fields, [projects] + [data_type[0]], ['is', '=']))
             api_total_projects2file += [[data_type[0], total]]
         self.compare_metadata2gdcportal('HG19 datatype files by no project against total', rows, api_total_projects2file, 1)
-        
+         
         fields = ['cases', 'data_type']
         values = [projects] + ['Diagnostic image']
         total = int(self.getAPITotal('legacy', 'file', fields, ["TCGA-BRCA", 'Diagnostic image'], ['is', '='], True))
         self.log.info('\nfor %s found %d files with no project info\n' % ('Diagnostic image', total))
-        
+         
         total = int(self.getAPITotal('legacy', 'file', ['cases'], [""], ['is'], True))
         self.log.info('\nfor all projects found %d files with no project info using is\n' % (total))
-        
+         
         total = int(self.getAPITotal('legacy', 'file', ['cases'], [""], ['not'], True))
         self.log.info('\nfor all projects found %d files with project info using not\n' % (total))
-        
+         
         total = int(self.getAPITotal('legacy', 'file', ['cases.project.project_id'], [projects], ['in'], True))
         self.log.info('\nfor all projects found %d files with project info\n' % (total))
-
+ 
         query = "select experimental_strategy, count(distinct case_gdc_id) cases, count( distinct file_gdc_id) files from %s_metadata_data_HG19 group by experimental_strategy order by experimental_strategy"
         rows = self.getHG19combined_totals(query)
-
+ 
         gdc_strategy2file = [
             ['AMPLICON', int(1478)],
             ['Bisulfite-Seq', int(229)],
@@ -877,22 +962,22 @@ class GDCCloudSQLTest(GDCTestSetup):
             ['WGS', int(8741)],
             ['WXS', int(30402)]
         ]
-        
+         
         self.compare_metadata2gdcportal('HG19 experimental_strategy files', rows, gdc_strategy2file, 1)
-        
+         
         query = "select access, count(distinct case_gdc_id) cases, count( distinct file_gdc_id) files from %s_metadata_data_HG19 group by access order by access"
         rows = self.getHG19combined_totals(query)
-
+ 
         gdc_access2file = [
             ['controlled', int(333156)],
             ['open', int(469243)]
         ]
-        
+         
         self.compare_metadata2gdcportal('HG19 access files', rows, gdc_access2file, 1)
-        
+         
         query = "select project_short_name, count(distinct case_gdc_id) cases from CCLE_metadata_clinical where endpoint_type = 'legacy' group by project_short_name order by project_short_name"
         rows = self.run_query(query, False)
-
+ 
         gdc_ccleHG19case = [
             ['CCLE-BLCA', int(26)],
             ['CCLE-BRCA', int(63)],
@@ -917,22 +1002,22 @@ class GDCCloudSQLTest(GDCTestSetup):
             ['CCLE-THCA', int(12)],
             ['CCLE-UCEC', int(4)],
         ]
-        
+         
         self.compare_metadata2gdcportal('HG19 CCLE cases', rows, gdc_ccleHG19case, 1)
-        
+         
         query = "select project_short_name, count(distinct case_barcode) cases from CCLE_metadata_biospecimen where endpoint_type = 'legacy' group by project_short_name order by project_short_name"
         rows = self.run_query(query, False)
-
+ 
         self.compare_metadata2gdcportal('HG19 CCLE cases in biospecimen', rows, gdc_ccleHG19case, 1)
-        
+         
         query = "select project_short_name, count(distinct case_barcode) cases from CCLE_metadata_samples where endpoint_type = 'legacy' group by project_short_name order by project_short_name"
         rows = self.run_query(query, False)
-
+ 
         self.compare_metadata2gdcportal('HG19 CCLE cases in samples', rows, gdc_ccleHG19case, 1)
-        
+         
         query = "select project_short_name, count(distinct case_gdc_id) cases from TARGET_metadata_clinical where endpoint_type = 'legacy' group by project_short_name order by project_short_name"
         rows = self.run_query(query, False)
-
+ 
         gdc_targetHG19case = [
             ['TARGET-ALL-P1', int(214)],
             ['TARGET-ALL-P2', int(1543)],
@@ -943,22 +1028,22 @@ class GDCCloudSQLTest(GDCTestSetup):
             ['TARGET-RT', int(75)],
             ['TARGET-WT', int(663)]
         ]
-        
+         
         self.compare_metadata2gdcportal('HG19 TARGET cases', rows, gdc_targetHG19case, 1)
-        
+         
         query = "select project_short_name, count(distinct case_barcode) cases from TARGET_metadata_biospecimen where endpoint_type = 'legacy' group by project_short_name order by project_short_name"
         rows = self.run_query(query, False)
-
+ 
         self.compare_metadata2gdcportal('HG19 TARGET cases in biospecimen', rows, gdc_targetHG19case, 1)
-        
+         
         query = "select project_short_name, count(distinct case_barcode) cases from TARGET_metadata_biospecimen where endpoint_type = 'legacy' and case_barcode in (select case_barcode from TARGET_metadata_samples) group by project_short_name order by project_short_name"
         rows = self.run_query(query, False)
-
+ 
         self.compare_metadata2gdcportal('HG19 TARGET cases in samples', rows, gdc_targetHG19case, 1)
-        
+         
         query = "select project_short_name, count(distinct case_gdc_id) cases from TCGA_metadata_clinical where endpoint_type = 'legacy' group by project_short_name order by project_short_name"
         rows = self.run_query(query, False)
-
+ 
         gdc_tcgaHG19case = [
             ['TCGA-ACC', int(92)],
             ['TCGA-BLCA', int(412)],
@@ -994,15 +1079,22 @@ class GDCCloudSQLTest(GDCTestSetup):
             ['TCGA-UCS', int(57)],
             ['TCGA-UVM', int(80)]
         ]
-        
+         
         self.compare_metadata2gdcportal('HG19 TCGA cases', rows, gdc_tcgaHG19case, 1)
-
+ 
         query = "select project_short_name, count(distinct case_barcode) cases from TCGA_metadata_biospecimen where endpoint_type = 'legacy' group by project_short_name order by project_short_name"
         rows = self.run_query(query, False)
-
+ 
         self.compare_metadata2gdcportal('HG19 TCGA cases in biospecimen', rows, gdc_tcgaHG19case, 1)
-        
+         
         query = "select project_short_name, count(distinct case_barcode) cases from TCGA_metadata_biospecimen where endpoint_type = 'legacy' and case_barcode in (select case_barcode from TCGA_metadata_samples) group by project_short_name order by project_short_name"
         rows = self.run_query(query, False)
-
+ 
         self.compare_metadata2gdcportal('HG19 TCGA cases in samples', rows, gdc_tcgaHG19case, 1)
+
+#         query = "select dcc.participantbarcode, dcc.samplebarcode, gdc.sample_barcode, 1 = instr(samplebarcode, sample_barcode) begins from test.metadata_biospecimen dcc left join 2017_02_17_gdc_dev.CCLE_metadata_biospecimen gdc on dcc.participantbarcode = gdc.case_barcode where dcc.project = 'CCLE' order by 3"
+#         rows = self.run_query(query, True)
+#         
+#         query = "select dcc.participantbarcode, dcc.samplebarcode, gdc.sample_barcode from test.metadata_biospecimen dcc left join 2017_02_17_gdc_dev.CCLE_metadata_biospecimen gdc on dcc.participantbarcode = gdc.case_barcode where dcc.project = 'CCLE' and gdc.sample_barcode is null"
+#         rows = self.run_query(query, True)
+#         
