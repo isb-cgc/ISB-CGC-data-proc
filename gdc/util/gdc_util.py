@@ -217,10 +217,13 @@ def request_facets_results(url, facet_query, facet, log, page_size = 0, params =
             response.close()
     return retval
 
-def update_cloudsql_from_bigquery(config, postproc_config, project_name, cloudsql_table, log):
+def update_cloudsql_from_bigquery(config, postproc_config, project_name, cloudsql_table, log, data_type = None):
     update_stmt = 'update %s\nset \n\t%s\nwhere %s = %%s' % (cloudsql_table, '\n\t'.join('%s = %%s,' % (postproc_config['postproc_columns'][key]) for key in postproc_config['postproc_columns'].keys())[:-1], postproc_config['postproc_key_column'])
     if project_name:
-        query_results = query_bq_table(postproc_config['postproc_query'] % (', '.join(postproc_config['postproc_columns'].keys()), project_name), False, postproc_config['postproc_project'], log)
+        if data_type:
+            query_results = query_bq_table(postproc_config['postproc_query'] % (', '.join(postproc_config['postproc_columns'].keys()), project_name, data_type), False, postproc_config['postproc_project'], log)
+        else:
+            query_results = query_bq_table(postproc_config['postproc_query'] % (', '.join(postproc_config['postproc_columns'].keys()), project_name), False, postproc_config['postproc_project'], log)
     else:
         query_results = query_bq_table(postproc_config['postproc_query'] % (', '.join(postproc_config['postproc_columns'].keys())), False, postproc_config['postproc_project'], log)
     page_token = None

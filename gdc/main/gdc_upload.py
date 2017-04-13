@@ -325,9 +325,6 @@ def finalize(config, log):
     
     if 'process_images' in config and config['process_images']:
         process_images(config, log)
-
-    if config['process_data_type'] and config['update_cloudsql'] and config['process_paths']:
-        set_uploaded_path(config, log)
     
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 

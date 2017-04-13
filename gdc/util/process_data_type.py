@@ -97,6 +97,17 @@ def populate_data_availibility(config, endpt_type, program_name, project_id, dat
     
     log.info('\tfinished populate_data_availibility() for %s:%s' % (project_id, data_type))
 
+def set_uploaded_path(config, endpt_type, program_name, project_id, data_type, log):
+    log.info('\tbegin set_uploaded_path()')
+    postproc_config = config['postprocess_keypath']
+    # first set file_name_key to null
+    cloudsql_table = '%s_metadata_data_%s' % (program_name, config['endpt2genomebuild'][endpt_type])
+    ISBCGC_database_helper.update(config, postproc_config['postproc_file_name_key_null_update'] % (cloudsql_table, project_id, data_type), log, [[]])
+    # now use the BigQuery table to set file_name_key
+    update_cloudsql_from_bigquery(config, postproc_config, project_id, cloudsql_table, log, data_type)
+    log.info('\tfinished set_uploaded_path()')
+    set_file_uploaded(config, log)
+
 def process_data_type(config, endpt_type, program_name, project_id, data_type, log_dir, log_name = None):
     try:
         if log_name:
@@ -110,6 +121,8 @@ def process_data_type(config, endpt_type, program_name, project_id, data_type, l
         file2info = filter_null_samples(config, file2info, project_id, data_type, log)
         if data_type in config['data_type_gcs']:
             save2db(config, endpt_type, '%s_metadata_data_%s' % (program_name, config['endpt2genomebuild'][endpt_type]), file2info, config[program_name]['process_files']['data_table_mapping'], log)
+            if config['process_paths']:
+                set_uploaded_path(config, endpt_type, program_name, project_id, data_type, log)
         if config['process_data_availability']:
             populate_data_availibility(config, endpt_type, program_name, project_id, data_type, file2info.values(), log)
         upload_files(config, endpt_type, file2info, program_name, project_id, data_type, log)
@@ -129,14 +142,3 @@ def set_file_uploaded(config, log):
         ISBCGC_database_helper.update(config, postproc_config['postproc_file_uploaded_update'] % (cloudsql_table), log, [[]])
     log.info('\tfinished set_file_uploaded')
     
-
-def set_uploaded_path(config, log):
-    log.info('\tbegin set_uploaded_path()')
-    postproc_config = config['postprocess_keypath']
-    for cloudsql_table in postproc_config['postproc_cloudsql_tables']:
-        # first set file_name_key to null
-        ISBCGC_database_helper.update(config, postproc_config['postproc_file_name_key_null_update'] % (cloudsql_table), log, [[]])
-        # now use the BigQuery table to set file_name_key
-        update_cloudsql_from_bigquery(config, postproc_config, None, cloudsql_table, log)
-    log.info('\tfinished set_uploaded_path()')
-    set_file_uploaded(config, log)
