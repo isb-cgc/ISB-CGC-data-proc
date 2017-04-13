@@ -421,7 +421,7 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
             ['archive_revision', 'INT', 'NULL'],
 # this should probably be a foreign key back to the index file record
             ['index_file_id', 'VARCHAR(36)', 'NULL'],
-            ['index_file_name', 'VARCHAR(80)', 'NULL'],
+            ['index_file_name', 'VARCHAR(120)', 'NULL'],
             ['index_file_size', 'BIGINT', 'NULL'],
         ],
 #         'natural_key_cols': [
@@ -501,7 +501,7 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
             ['archive_revision', 'INT', 'NULL'],
 # this should probably be a foreign key back to the index file record
             ['index_file_id', 'VARCHAR(36)', 'NULL'],
-            ['index_file_name', 'VARCHAR(80)', 'NULL'],
+            ['index_file_name', 'VARCHAR(120)', 'NULL'],
             ['index_file_size', 'BIGINT', 'NULL'],
         ],
 #         'natural_key_cols': [
@@ -545,33 +545,15 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
         'primary_key_name': 'metadata_data_type_availability_id',
         'columns': [
             ['genomic_build', 'VARCHAR(4)', 'NOT NULL'],
-            ['data_type', 'VARCHAR(35)', 'NOT NULL'],
-            ['experimental_strategy', 'VARCHAR(50)', 'NULL'],
-            ['platform', 'VARCHAR(50)', 'NULL'],
-            ['workflow_type', 'VARCHAR(60)', 'NULL'],
-            ['center', 'VARCHAR(8)', 'NULL'],
-            ['data_format', 'VARCHAR(10)', 'NULL'],
-            ['display_name', 'VARCHAR(200)', 'NOT NULL'],
-            ['deprecated', 'TINYINT', 'NOT NULL']
+            ['isb_label', 'VARCHAR(40)', 'NOT NULL']
         ],
         'natural_key_cols': [
-            'data_type',
-            'experimental_strategy',
-            'platform',
-            'workflow_type',
-            'center',
-            'data_format'
+            'genomic_build',
+            'isb_label'
         ],
         'indices_defs': [
             ['genomic_build'],
-            ['data_type'],
-            ['experimental_strategy'],
-            ['platform'],
-            ['workflow_type'],
-            ['center'],
-            ['data_format'],
-            ['display_name'],
-            ['deprecated']
+            ['isb_label']
         ]
     }
             
@@ -581,11 +563,13 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
         'columns': [
             ['metadata_data_type_availability_id', 'INTEGER', 'NOT NULL'],
             ['sample_barcode', 'VARCHAR(40)', 'NOT NULL'],
+            ['count', 'INTEGER', 'NOT NULL']
         ],
 
         'indices_defs': [
             ['metadata_data_type_availability_id', 'sample_barcode'],
-            ['sample_barcode']
+            ['sample_barcode'],
+            ['count']
         ],
         
         'foreign_keys': [
