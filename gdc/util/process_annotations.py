@@ -158,7 +158,7 @@ def associate_metadata2annotation(config, program_name, build, log):
 def call_metadata2annotation(config, log):
     # now save the associations
     for program_name in config['program_names_for_annotation']:
-        for build in config['genomic_builds_for_annotation']:
+        for build in config['genomic_builds']:
             associate_metadata2annotation(config, program_name, build, log)
     
 def get_filter():

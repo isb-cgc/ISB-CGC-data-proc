@@ -69,7 +69,7 @@ def __addrow(endpt_type, fieldnames, row2map, log):
                 row += [None]
         elif 'disease_code' == fieldname:
             if 'project_short_name' in row2map:
-                row += ['-'.join(row2map['project_short_name'].split('-')[1])]
+                row += [row2map['project_short_name'].split('-')[1]]
             else:
                 if 'case_gdc_id' in row2map:
                     log.warning('problem setting disease_code for %s' % row2map['case_gdc_id'])

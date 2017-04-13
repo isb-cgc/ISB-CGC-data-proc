@@ -63,6 +63,7 @@ def process_project(config, endpt_type, program_name, project, log_dir):
         
         case2info = {}
         if config['process_case']:
+            
             log.info('\tprocess cases for %s' % (project))
             case2info = process_cases(config, endpt_type, program_name, project, log_dir)
             log.info('\tcompleted process cases for %s' % (project))
@@ -76,7 +77,7 @@ def process_project(config, endpt_type, program_name, project, log_dir):
                 future2data_type = {}
                 data_types = request_facets_results(config['files_endpt']['%s endpt' % (endpt_type)], config['facets_query'], 'data_type', log)
                 for data_type in data_types:
-                    if (len(config['data_type_restrict']) == 0 or data_type in config['data_type_restrict']):
+                    if ((len(config['data_type_restrict']) == 0 or data_type in config['data_type_restrict']) and data_type in config['data_type2isb_label']):
                         log.info('\t\tprocess data_type \'%s\' for %s' % (data_type, project))
                         future2data_type[executor.submit(process_data_type, config, endpt_type, program_name, project, data_type, log_dir)] = data_type
                     else:
@@ -216,7 +217,16 @@ def process_programs(config, endpt_type, log_dir, log):
 
 def initializeDB(config, log):
     module = import_module(config['database_module'])
-    module.ISBCGC_database_helper.initialize(config, log)
+    helper = module.ISBCGC_database_helper
+    helper.initialize(config, log)
+    
+    # populate the data_availability tables
+    if config['update_schema']:
+        isb_labels = set(config['data_type2isb_label'].values())
+        for build in config['genomic_builds']:
+            params = [[build, isb_label] for isb_label in isb_labels]
+            for program_name in config['program_names']:
+                helper.column_insert(config, params, '%s_metadata_data_type_availability' % (program_name), ['genomic_build', 'isb_label'], log)
     
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
@@ -318,7 +328,6 @@ def finalize(config, log):
 
     if config['process_data_type'] and config['update_cloudsql'] and config['process_paths']:
         set_uploaded_path(config, log)
-        populate_data_availibility(config, log)
     
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 

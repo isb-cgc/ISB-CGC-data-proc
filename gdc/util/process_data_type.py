@@ -22,7 +22,7 @@ import logging
 from gdc.util.gdc_util import get_map_rows, save2db, update_cloudsql_from_bigquery
 from isbcgc_cloudsql_model import ISBCGC_database_helper
 from upload_files import upload_files
-from util import close_log, create_log
+from util import close_log, create_log, flatten_map
 
 def get_filter(config, data_type, project_id):
     data_types_legacy2use_project = config['data_types_legacy2use_project']
@@ -70,6 +70,32 @@ def filter_null_samples(config, file2info, project_id, data_type, log):
         else:
             log.info('found null sample for %s:%s:%s' % (info['cases'][0]['case_id'], data_type, project_id))
     return retval
+    
+def populate_data_availibility(config, endpt_type, program_name, project_id, data_type, infos, log):
+    log.info('\tbegin populate_data_availibility() for %s:%s' % (project_id, data_type))
+    
+    # iterate through the gdc info and put together the counts for the sample barcodes
+    sample_barcode2count = {}
+    for info in infos:
+        mapping = config[program_name]['process_files']['data_table_mapping']
+        flattened = flatten_map(info, mapping)
+        for index in range(len(flattened)):
+            sample_barcode = flattened[index]['sample_barcode']
+            count = sample_barcode2count.setdefault(sample_barcode, 0)
+            sample_barcode2count[sample_barcode] = count + 1
+        
+    # read in the appropriate data availability row to get the foreign key
+    isb_label = config['data_type2isb_label'][data_type]
+    stmt = 'select metadata_data_type_availability_id from %s_metadata_data_type_availability where genomic_build = %%s and isb_label = %%s' % (program_name)
+    foreign_key = ISBCGC_database_helper.select(config, stmt, log, [config['endpt2genomebuild'][endpt_type], isb_label])[0][0]
+    
+    params = []
+    for sample_barcode, count in sample_barcode2count.iteritems():
+        params += [[foreign_key, sample_barcode, count]]
+    
+    ISBCGC_database_helper.column_insert(config, params, '%s_metadata_sample_data_availability' % (program_name), ['metadata_data_type_availability_id', 'sample_barcode', 'count'], log)
+    
+    log.info('\tfinished populate_data_availibility() for %s:%s' % (project_id, data_type))
 
 def process_data_type(config, endpt_type, program_name, project_id, data_type, log_dir, log_name = None):
     try:
@@ -82,7 +108,10 @@ def process_data_type(config, endpt_type, program_name, project_id, data_type, l
         log.info('begin process_data_type %s for %s' % (data_type, project_id))
         file2info = get_map_rows(config, endpt_type, 'file', program_name, get_filter(config, data_type, project_id), log)
         file2info = filter_null_samples(config, file2info, project_id, data_type, log)
-        save2db(config, endpt_type, '%s_metadata_data_%s' % (program_name, config['endpt2genomebuild'][endpt_type]), file2info, config[program_name]['process_files']['data_table_mapping'], log)
+        if data_type in config['data_type_gcs']:
+            save2db(config, endpt_type, '%s_metadata_data_%s' % (program_name, config['endpt2genomebuild'][endpt_type]), file2info, config[program_name]['process_files']['data_table_mapping'], log)
+        if config['process_data_availability']:
+            populate_data_availibility(config, endpt_type, program_name, project_id, data_type, file2info.values(), log)
         upload_files(config, endpt_type, file2info, program_name, project_id, data_type, log)
         log.info('finished process_data_type %s for %s' % (data_type, project_id))
 
@@ -105,74 +134,9 @@ def set_uploaded_path(config, log):
     log.info('\tbegin set_uploaded_path()')
     postproc_config = config['postprocess_keypath']
     for cloudsql_table in postproc_config['postproc_cloudsql_tables']:
+        # first set file_name_key to null
+        ISBCGC_database_helper.update(config, postproc_config['postproc_file_name_key_null_update'] % (cloudsql_table), log, [[]])
+        # now use the BigQuery table to set file_name_key
         update_cloudsql_from_bigquery(config, postproc_config, None, cloudsql_table, log)
     log.info('\tfinished set_uploaded_path()')
     set_file_uploaded(config, log)
-    
-def populate_data_availibility(config, log):
-    log.info('\tbegin populate_data_availibility()')
-    postproc_config = config['postproc_data_availability']
-    columns = postproc_config['columns']
-    column_order = postproc_config['column_order']
-    column_list = ', '.join(postproc_config['select_columns'])
-    insert_columns = [columns[column] for column in column_order] + [postproc_config['display_column_name'], postproc_config['deprecated_column_name']]
-    data_type_exclude = postproc_config['data_type_exclude']
-    display_name_mappings = postproc_config['display_name_map']
-    deprecations = postproc_config['deprecated']
-    
-    for target_table in postproc_config['target2source_query']:
-        program_name = target_table.split('_')[0]
-        if 0 == len(config['program_name_restrict']) or program_name in config['program_name_restrict']:
-            rows = []
-            for source_table in postproc_config['target2source_query'][target_table]:
-                stmt = 'select %s from %s group by %s' % (column_list, source_table, column_list)
-                genome_build = source_table[-4:]
-                rows = map(lambda row: [genome_build] + list(row), ISBCGC_database_helper.select(config, stmt, log, params = []))
-                complete_rows = []
-                try:
-                    for row in rows:
-                        if row[column_order.index('data_type')] in data_type_exclude:
-                            log.info('\t\tskipping %s for data availability' % (row[column_order.index('data_type')]))
-                            complete_rows += [None]
-                            continue
-                        complete_row = [None] * (len(columns) + 2)
-                        display_name = []
-                        for index, column in enumerate(column_order):
-                            value = row[index]
-                            if value:
-                                if column in display_name_mappings:
-                                    display_name += [display_name_mappings[column][value]]
-                                else:
-                                    display_name += [value]
-                                complete_row[index] = value
-                        complete_row[-2] = ':'.join(display_name)
-                        complete_row[-1] = 1
-                        complete_rows += [complete_row]
-                except:
-                    log.exception('problem processing row:\n\trow: %s\n\tcolumn: %s' % (row, column))
-                    raise
-                ISBCGC_database_helper.column_insert(config, [row for row in complete_rows if row is not None], target_table, insert_columns, log)
-                
-                for row, complete_row in zip(rows, complete_rows):
-                    if not complete_row:
-                        log.info('\t\tnot processing %s for data availability' % (row[column_order.index('data_type')]))
-                        continue
-                    params = ['%s' % ('%s = \'%s\'' % (column, value) if value else column + ' is null') for column, value in zip(postproc_config['select_columns'], row[1:])]
-                    stmt = 'select sample_barcode from %s where %s group by sample_barcode' % (source_table, ' and '.join(params))
-                    log.info('')
-                    sample_barcodes = ISBCGC_database_helper.select(config, stmt, log, [])
-                    
-                    params = ['%s' % ('%s = \'%s\'' % (column, value) if value else column + ' is null') for column, value in zip([columns[column] for column in column_order], row)]
-                    stmt = 'select metadata_data_type_availability_id from %s where %s' % (target_table, ' and '.join(params))
-                    log.info('')
-                    ids = ISBCGC_database_helper.select(config, stmt, log, [])
-                    
-                    associations = []
-                    for barcode in sample_barcodes:
-                        associations += [[ids[0][0], barcode[0]]]
-                    field_names = ['metadata_data_type_availability_id', 'sample_barcode']
-                    ISBCGC_database_helper.column_insert(config, associations, '%s_metadata_sample_data_availability' % (target_table.split('_')[0]), field_names, log)
-            display_rows = [row for row in complete_rows if row is not None]
-            log.info('\t\tcompleted %s:\n\t\t\t%s\n\t\t\t\t...\n\t\t\t%s' % (target_table, display_rows[0], display_rows[-1]))
-    
-    log.info('\tfinished populate_data_availibility()')
