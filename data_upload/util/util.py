@@ -374,21 +374,16 @@ def __recurse_flatten_map(origmap, thefilter):
                     initmap[fields[1]] = string
                 else:
                     raise ValueError('unknown operation specification: %s %s' % (origmap[value], thefilter['value'][value]))
-
-    # there is an issue if there are more than one key on the map lists.  under the currently defined filters, this only happens with
-    # files where both cases and index_files are both on the map_list.  cases can legitimately be multi-valued, so index_files will be 
-    # reduced to its first member on the map list
-    if 'map_list' in thefilter:
-        if 'cases' in thefilter['map_list'] and 'index_files' in thefilter['map_list'] and 'index_files' in origmap:
-            # adjust the filter
-            maps = thefilter.setdefault('map', {})
-            index_files = thefilter['map_list'].pop('index_files')
-            maps['index_files'] = index_files
-                        # adjust the json
-            if len(origmap['index_files']) > 1:
-                print 'found more than one index_files for ' % origmap['file_id']
-            origmap['index_files'] = origmap['index_files'][0]
-            
+    
+    # TODO: map might have a list might have nested fields so might return multiple rows
+    # maplists = []
+    if 'map_list_first' in thefilter:
+        for value in thefilter['map_list_first']:
+            if value in origmap:
+                # flatten the key/values from the nested map with the top level key/values
+                if len(origmap[value]) > 1:
+                    print 'found more than one %s for %s' % (value, origmap['file_id'])
+                initmap.update(__recurse_flatten_map(origmap[value][0], thefilter['map_list_first'][value])[0])
     
     # TODO: map might have a list might have nested fields so might return multiple rows
     # maplists = []
