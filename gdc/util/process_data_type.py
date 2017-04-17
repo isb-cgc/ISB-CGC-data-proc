@@ -123,7 +123,7 @@ def process_data_type(config, endpt_type, program_name, project_id, data_type, l
             save2db(config, endpt_type, '%s_metadata_data_%s' % (program_name, config['endpt2genomebuild'][endpt_type]), file2info, config[program_name]['process_files']['data_table_mapping'], log)
             if config['process_paths']:
                 set_uploaded_path(config, endpt_type, program_name, project_id, data_type, log)
-        if config['process_data_availability'] and project_id not in ('Clinical Supplement', 'Biospecimen Supplement'):
+        if config['process_data_availability'] and data_type not in ('Clinical Supplement', 'Biospecimen Supplement'):
             populate_data_availibility(config, endpt_type, program_name, project_id, data_type, file2info.values(), log)
         upload_files(config, endpt_type, file2info, program_name, project_id, data_type, log)
         log.info('finished process_data_type %s for %s' % (data_type, project_id))
