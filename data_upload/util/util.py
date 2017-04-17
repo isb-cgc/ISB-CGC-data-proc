@@ -385,7 +385,7 @@ def __recurse_flatten_map(origmap, thefilter):
                     print 'found more than one %s for %s' % (value, origmap['file_id'])
                 initmap.update(__recurse_flatten_map(origmap[value][0], thefilter['map_list_first'][value])[0])
     
-    # TODO: map might have a list might have nested fields so might return multiple rows
+    # TODO: map might have a list or have nested fields so might return multiple rows
     # maplists = []
     if 'map' in thefilter:
         for value in thefilter['map']:
@@ -394,22 +394,15 @@ def __recurse_flatten_map(origmap, thefilter):
                 initmap.update(__recurse_flatten_map(origmap[value], thefilter['map'][value])[0])
     
     # for every value on the list, a new row needs to be created in the returned list
-    # TODO: currently never gone into, not really quite right so will need to be fixed if ever needed
-    listmaps = []
+    # TODO: currently finding lists with one value so for now just concatenating, need cross product?
     if 'list' in thefilter:
-        for value in thefilter['list']:
-            newlabel += [thefilter['list'][value]]
-            for value in origmap[value]:
-                # flatten the key/values from the nested map with the top level key/values
-                newmap = dict(initmap)
-                newmap.update([(newlabel, value)])
-                listmaps += [newmap]
-        if 0 == len(listmaps):
-            listmaps += [initmap]
-    else:
-        listmaps += [initmap]
-        
+        for label in thefilter['list']:
+            newlabel = thefilter['list'][label]
+            # flatten the key/values from the nested map with the top level key/values
+            initmap[newlabel] = ', '.join(origmap[label])
+                
     # for every map on the list, each row needs to be merged in the returned list
+    # TODO: if creating lists above is ever implemented, must implement here
     if 'map_list' in thefilter:
         retlist = []
         for value in thefilter['map_list']:
@@ -420,9 +413,10 @@ def __recurse_flatten_map(origmap, thefilter):
                     newmap.update(__recurse_flatten_map(nextmap, newfilter)[0])
                     retlist += [newmap]
         if 0 == len(retlist):
-            retlist = listmaps
+            retlist += [initmap]
     else:
-        retlist = listmaps
+        retlist = [initmap]
+    
     return retlist
 
 def flatten_map(origmap, thefilter):
