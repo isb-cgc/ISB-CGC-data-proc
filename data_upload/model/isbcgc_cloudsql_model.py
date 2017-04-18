@@ -209,8 +209,24 @@ class ISBCGC_database_helper(object):
             cursor = db.cursor()
             # now execute the updates
             cursor.execute("START TRANSACTION")
-            count = 0
-            cursor.executemany(stmt, params)
+            tries = 0
+            while True:
+                tries += 1
+                try:
+                    cursor.executemany(stmt, params)
+                    break
+                except MySQLdb.OperationalError as oe:
+                    try:
+                        if ('1213' in oe or oe.errno == 1213) and 11 > tries:
+                            cursor, db = cls.processOEError(config, cursor, db, 'update had operation error params(%s), %s deadlocked, sleeping' % (oe, stmt), log)
+                        else:
+                            log.exception('\t\t\tupdate had multiple operation errors 1213 for %s' % (stmt))
+                            raise oe
+                    except Exception as e:
+                        log.exception('problem checking OperationalError: %s' % (oe))
+                except Exception as e:
+                    log.exception('problem with update for:\n%s\n\t%s\n%s' % (stmt, e, params[:20]))
+                    raise
 #             report = len(params) / 20
 #             for paramset in params:
 #                 if 0 == report or 0 == count % report:
@@ -231,7 +247,7 @@ class ISBCGC_database_helper(object):
 #                     log.exception('problem with update(%s): \n\t\t\t%s\n\t\t\t%s' % (count, stmt, paramset))
 #                     raise e
             if verbose:
-                log.info('\t\tcompleted update.  updated %s:%s record', count, cursor.rowcount)
+                log.info('\t\tcompleted update.  updated %s record', cursor.rowcount)
             cursor.execute("COMMIT")
         except Exception as e:
             log.exception('\t\tupdate failed')
@@ -252,7 +268,7 @@ class ISBCGC_database_helper(object):
 
     @classmethod
     def processOEError(cls, config, cursor, db, msg, log):
-        log.warning('\t\t\t%s' % (msg))
+        log.warning('\n%s' % (msg))
         time.sleep(1) # rollback any previous inserts
         cursor.execute("ROLLBACK")
 
