@@ -80,6 +80,9 @@ def populate_data_availibility(config, endpt_type, program_name, project_id, dat
         mapping = config[program_name]['process_files']['data_table_mapping']
         flattened = flatten_map(info, mapping)
         for index in range(len(flattened)):
+            if (data_type in ('Simple somatic mutation', 'Masked Somatic Mutation') and 'controlled ' == flattened[index]['access']) or \
+                (data_type in ('Aligned reads') and 'open' == flattened[index]['access']):
+                continue
             sample_barcode = flattened[index]['sample_barcode']
             count = sample_barcode2count.setdefault(sample_barcode, 0)
             sample_barcode2count[sample_barcode] = count + 1
