@@ -217,7 +217,7 @@ class ISBCGC_database_helper(object):
                     break
                 except MySQLdb.OperationalError as oe:
                     try:
-                        if ('1213' in oe or oe.errno == 1213) and 11 > tries:
+                        if ('1213' in str(oe) or oe.errno == 1213) and 11 > tries:
                             cursor, db = cls.processOEError(config, cursor, db, 'update had operation error params(%s), %s deadlocked, sleeping' % (oe, stmt), log)
                         else:
                             log.exception('\t\t\tupdate had multiple operation errors 1213 for %s' % (stmt))
