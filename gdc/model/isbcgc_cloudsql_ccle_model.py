@@ -146,7 +146,6 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
             ['program_name'],
             ['project_short_name'],
             ['disease_code'],
-            ['sample_barcode'],
             ['sample_type'],
             ['endpoint_type'],
             ['gender'],
@@ -242,7 +241,6 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
             ['file_uploaded'],
             ['data_format'],
             ['platform'],
-            ['file_uploaded'],
             ['endpoint_type'],
             ['analysis_workflow_link'],
             ['analysis_workflow_type']
