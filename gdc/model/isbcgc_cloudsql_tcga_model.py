@@ -421,7 +421,7 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
             ['archive_revision', 'INT', 'NULL'],
 # this should probably be a foreign key back to the index file record
             ['index_file_id', 'VARCHAR(36)', 'NULL'],
-            ['index_file_name', 'VARCHAR(120)', 'NULL'],
+            ['index_file_name', 'VARCHAR(200)', 'NULL'],
             ['index_file_size', 'BIGINT', 'NULL'],
         ],
 #         'natural_key_cols': [
@@ -501,7 +501,7 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
             ['archive_revision', 'INT', 'NULL'],
 # this should probably be a foreign key back to the index file record
             ['index_file_id', 'VARCHAR(36)', 'NULL'],
-            ['index_file_name', 'VARCHAR(120)', 'NULL'],
+            ['index_file_name', 'VARCHAR(200)', 'NULL'],
             ['index_file_size', 'BIGINT', 'NULL'],
         ],
 #         'natural_key_cols': [
