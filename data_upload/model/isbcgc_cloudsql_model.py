@@ -225,7 +225,7 @@ class ISBCGC_database_helper(object):
                     except Exception as e:
                         log.exception('problem checking OperationalError: %s' % (oe))
                 except Exception as e:
-                    log.exception('problem with update for:\n%s\n\t%s\n%s' % (stmt, e, params[:20]))
+                    log.exception('problem with update for:\n%s\n\t%s\n%s' % (stmt, e, params))
                     raise
 #             report = len(params) / 20
 #             for paramset in params:

@@ -202,7 +202,7 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
             ['access', 'VARCHAR(10)', 'NOT NULL'],
             ['acl', 'VARCHAR(25)', 'NULL'],
             ['platform', 'VARCHAR(50)', 'NULL'],
-            ['file_name_key', 'VARCHAR(250)', 'NULL'],
+            ['file_name_key', 'VARCHAR(300)', 'NULL'],
             ['file_uploaded', 'VARCHAR(5)', 'NOT NULL'],
             ['endpoint_type', 'VARCHAR(8)', 'NULL'],
             ['analysis_gdc_id', 'VARCHAR(36)', 'NULL'],
