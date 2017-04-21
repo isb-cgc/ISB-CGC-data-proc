@@ -77,7 +77,8 @@ def process_project(config, endpt_type, program_name, project, log_dir):
                 future2data_type = {}
                 data_types = request_facets_results(config['files_endpt']['%s endpt' % (endpt_type)], config['facets_query'], 'data_type', log)
                 for data_type in data_types:
-                    if ((len(config['data_type_restrict']) == 0 or data_type in config['data_type_restrict']) and data_type in config['data_type2isb_label']):
+                    if ((len(config['data_type_restrict']) == 0 or data_type in config['data_type_restrict']) and 
+                          (data_type in config['data_type2isb_label'] or data_type in config['data_type_gcs'])):
                         log.info('\t\tprocess data_type \'%s\' for %s' % (data_type, project))
                         future2data_type[executor.submit(process_data_type, config, endpt_type, program_name, project, data_type, log_dir)] = data_type
                     else:
