@@ -71,8 +71,8 @@ def filter_null_samples(config, file2info, project_id, data_type, log):
             log.info('found null sample for %s:%s:%s' % (info['cases'][0]['case_id'], data_type, project_id))
     return retval
     
-def populate_data_availibility(config, endpt_type, program_name, project_id, data_type, infos, log):
-    log.info('\tbegin populate_data_availibility() for %s:%s' % (project_id, data_type))
+def populate_sample_availibility(config, endpt_type, program_name, project_id, data_type, infos, log):
+    log.info('\tbegin populate_sample_availibility() for %s:%s' % (project_id, data_type))
     
     # iterate through the gdc info and put together the counts for the sample barcodes
     sample_barcode2count = {}
@@ -98,7 +98,7 @@ def populate_data_availibility(config, endpt_type, program_name, project_id, dat
     
     ISBCGC_database_helper.column_insert(config, params, '%s_metadata_sample_data_availability' % (program_name), ['metadata_data_type_availability_id', 'sample_barcode', 'count'], log)
     
-    log.info('\tfinished populate_data_availibility() for %s:%s' % (project_id, data_type))
+    log.info('\tfinished populate_sample_availibility() for %s:%s' % (project_id, data_type))
 
 def set_uploaded_path(config, endpt_type, program_name, project_id, data_type, log):
     log.info('\tbegin set_uploaded_path()')
@@ -127,7 +127,7 @@ def process_data_type(config, endpt_type, program_name, project_id, data_type, l
             if config['process_paths']:
                 set_uploaded_path(config, endpt_type, program_name, project_id, data_type, log)
         if config['process_data_availability'] and data_type not in ('Clinical Supplement', 'Biospecimen Supplement'):
-            populate_data_availibility(config, endpt_type, program_name, project_id, data_type, file2info.values(), log)
+            populate_sample_availibility(config, endpt_type, program_name, project_id, data_type, file2info.values(), log)
         upload_files(config, endpt_type, file2info, program_name, project_id, data_type, log)
         log.info('finished process_data_type %s for %s' % (data_type, project_id))
 
