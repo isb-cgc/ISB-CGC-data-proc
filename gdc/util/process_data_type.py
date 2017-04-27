@@ -107,7 +107,7 @@ def set_uploaded_path(config, endpt_type, program_name, project_id, data_type, l
     cloudsql_table = '%s_metadata_data_%s' % (program_name, config['endpt2genomebuild'][endpt_type])
     ISBCGC_database_helper.update(config, postproc_config['postproc_file_name_key_null_update'] % (cloudsql_table, project_id, data_type), log, [[]])
     # now use the BigQuery table to set file_name_key
-    update_cloudsql_from_bigquery(config, postproc_config, project_id, cloudsql_table, log, data_type)
+    update_cloudsql_from_bigquery(config, postproc_config, project_id, cloudsql_table, log, data_type, endpt_type)
     ISBCGC_database_helper.update(config, postproc_config['postproc_file_uploaded_update'] % (cloudsql_table), log, [[]])
     log.info('\tfinished set_uploaded_path()')
 
