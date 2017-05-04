@@ -72,11 +72,12 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
             ['ethnicity', 'VARCHAR(22)', 'NULL'],
             ['first_event', 'VARCHAR(25)', 'NULL'],
             ['days_to_birth', 'INT', 'NULL'],
+            ['days_to_last_followup', 'INT', 'NULL'],
+            ['days_to_last_known_alive', 'INT', 'NULL'],
             ['days_to_death', 'INT', 'NULL'],
             ['age_at_diagnosis', 'INT', 'NULL'],
             ['year_of_diagnosis', 'INT', 'NULL'],
             ['year_of_last_follow_up', 'INT', 'NULL'],
-            ['overall_survival', 'INT', 'NULL'],
             ['event_free_survival', 'INT', 'NULL'],
             ['wbc_at_diagnosis', 'FLOAT', 'NULL'],
             ['protocol', 'VARCHAR(70)', 'NULL']
@@ -98,17 +99,18 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
             ['ethnicity'],
             ['first_event'],
             ['days_to_birth'],
+            ['days_to_last_followup'],
+            ['days_to_last_known_alive'],
             ['days_to_death'],
             ['age_at_diagnosis'],
             ['year_of_diagnosis'],
             ['year_of_last_follow_up'],
-            ['overall_survival'],
             ['event_free_survival'],
             ['wbc_at_diagnosis'],
             ['protocol']
         ]
     }
-    
+
     TARGET_metadata_biospecimen = {
         'table_name': 'TARGET_metadata_biospecimen',
         'primary_key_name': 'metadata_biospecimen_id',
@@ -116,6 +118,7 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
             ['endpoint_type', 'VARCHAR(10)', 'NOT NULL'],
             ['sample_gdc_id', 'VARCHAR(36)', 'NOT NULL'],
             ['sample_barcode', 'VARCHAR(40)', 'NOT NULL'],
+            ['case_gdc_id', 'VARCHAR(36)', 'NOT NULL'],
             ['case_barcode', 'VARCHAR(40)', 'NOT NULL'],
             ['program_name', 'VARCHAR(30)', 'NOT NULL'],
             ['project_short_name', 'VARCHAR(30)', 'NOT NULL'],
@@ -130,6 +133,7 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
             ['endpoint_type'],
             ['sample_gdc_id'],
             ['sample_barcode'],
+            ['case_gdc_id'],
             ['case_barcode'],
             ['program_name'],
             ['project_short_name'],
@@ -163,10 +167,11 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
             ['ethnicity', 'VARCHAR(22)', 'NULL'],
             ['first_event', 'VARCHAR(25)', 'NULL'],
             ['days_to_birth', 'INT', 'NULL'],
+            ['days_to_last_followup', 'INT', 'NULL'],
+            ['days_to_last_known_alive', 'INT', 'NULL'],
             ['days_to_death', 'INT', 'NULL'],
             ['year_of_diagnosis', 'INT', 'NULL'],
             ['event_free_survival', 'INT', 'NULL'],
-            ['overall_survival', 'INT', 'NULL'],
             ['wbc_at_diagnosis', 'FLOAT', 'NULL'],
             ['protocol', 'VARCHAR(70)', 'NULL']
         ],
@@ -183,10 +188,11 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
             ['ethnicity'],
             ['first_event'],
             ['days_to_birth'],
+            ['days_to_last_followup'],
+            ['days_to_last_known_alive'],
             ['days_to_death'],
             ['age_at_diagnosis'],
             ['year_of_diagnosis'],
-            ['overall_survival'],
             ['event_free_survival'],
             ['wbc_at_diagnosis'],
             ['protocol']
