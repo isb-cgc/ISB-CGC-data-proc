@@ -66,7 +66,7 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
             ['project_short_name', 'VARCHAR(30)', 'NOT NULL'],
             ['disease_code', 'VARCHAR(30)', 'NOT NULL'],
             ['summary_file_count', 'INT', 'NOT NULL'],
-            ['gender', 'VARCHAR(1)', 'NULL'],
+            ['gender', 'VARCHAR(9)', 'NULL'],
             ['histology', 'VARCHAR(60)', 'NULL'],
             ['hist_subtype', 'VARCHAR(60)', 'NULL'],
             ['site_primary', 'VARCHAR(35)', 'NULL'],
@@ -135,7 +135,7 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
             ['sample_barcode', 'VARCHAR(45)', 'NOT NULL'],
             ['sample_type', 'VARCHAR(2)', 'NOT NULL'],
             ['endpoint_type', 'VARCHAR(8)', 'NOT NULL'],
-            ['gender', 'VARCHAR(1)', 'NULL'],
+            ['gender', 'VARCHAR(9)', 'NULL'],
             ['histology', 'VARCHAR(60)', 'NULL'],
             ['hist_subtype', 'VARCHAR(60)', 'NULL'],
             ['site_primary', 'VARCHAR(35)', 'NULL']
