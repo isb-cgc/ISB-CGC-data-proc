@@ -77,6 +77,7 @@ def get_values_for_field(endpoint, field, field2values, output, template, print_
             output.write('\t\t\t\tunknown aggregations response format: %s' % (json))
     else:
         buckets = data['aggregations'][field]['buckets']
+        total = data['pagination']['total']
         too_many = False
         buckets.sort(key = lambda bucket: bucket['key'])
         if 60 < len(buckets):
@@ -88,9 +89,9 @@ def get_values_for_field(endpoint, field, field2values, output, template, print_
         elif too_many:
             output.write('\t\t\t%s (max=%d)\n' % (field, max(map(len, [str(bucket['key']) for bucket in buckets]))))
             field2values[field] = {'buckets':'many values'}
-            output.write('\t\t\t\tfirst values of greater than %s: %s\n' % (len(buckets), ', '.join('%s(%s)' % (bucket['key'], bucket['doc_count']) for bucket in buckets[:3])))
+            output.write('\t\t\t\tfirst values of greater than %s(total: %s): %s\n' % (len(buckets), total, ', '.join('%s(%s)' % (bucket['key'], bucket['doc_count']) for bucket in buckets[:3])))
         else:
-            output.write('\t\t\t%s (max=%d)\n' % (field, max(map(len, [str(bucket['key']) for bucket in buckets]))))
+            output.write('\t\t\t%s (max value length=%d, total: %s)\n' % (field, max(map(len, [str(bucket['key']) for bucket in buckets])), total))
             field2values[field] = {'buckets':set(bucket['key'] for bucket in buckets)}
             output.write('\t\t\t\tvalues(%d):\n\t\t\t\t\t%s\n' % (len(buckets), '\n\t\t\t\t\t'.join('%s(%s)' % (bucket['key'], bucket['doc_count']) for bucket in buckets)))
     return field
