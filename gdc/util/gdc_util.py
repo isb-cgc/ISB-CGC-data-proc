@@ -29,6 +29,7 @@ def request(url, params, msg, log, timeout = 1, verbose = True):
     try:
         if verbose:
             log.info('\t\tstart request for %s\n%s' % (url, params))
+#         time.sleep(timeout)
         response = requests.get(url, params=params, timeout=timeout)
         response.raise_for_status()
     except Exception as e:
@@ -36,7 +37,7 @@ def request(url, params, msg, log, timeout = 1, verbose = True):
         while True:
             # try again a few times with a brief pause
             log.warning('%s, retry %d(%d) because of %s:%s...' % (msg, retry_count, timeout if retry_count == 0 else timeout * (retry_count - 1) * 2, type(e).__name__, e))
-            time.sleep(retry_count * 2)
+            time.sleep(timeout * retry_count * 2)
             try:
                 response = requests.get(url, params=params, timeout=timeout * retry_count * 2)
                 response.raise_for_status()

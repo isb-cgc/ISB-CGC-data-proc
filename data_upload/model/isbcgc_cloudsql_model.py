@@ -224,6 +224,8 @@ class ISBCGC_database_helper(object):
                             raise oe
                     except Exception as e:
                         log.exception('problem checking OperationalError: %s' % (oe))
+                        if 11 <= tries:
+                            raise oe
                 except Exception as e:
                     log.exception('problem with update for:\n%s\n\t%s\n%s' % (stmt, e, params))
                     raise
