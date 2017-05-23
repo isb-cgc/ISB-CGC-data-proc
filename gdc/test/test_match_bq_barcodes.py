@@ -302,7 +302,7 @@ class GDCTestCloudSQLBQBarcodeMatchup(GDCTestSetup):
             barcode2info = self.get_gdc_file_info(barcode_type, barcodes, '{}{}{}'.format(tag1, ' vs. ', tag2))
             self.log.info('\t\tfound %d records for %d barcodes of type %s for %s' % (len(barcode2info), len(barcodes), barcode_type, '{}{}{}'.format(tag1, ' vs. ', tag2)))
             self.log_barcode2info(barcode2info)
-        elif 'bq' in tag1 and 'endpoint' in tag2:
+        elif ('bq' in tag1 or 'sql' in tag1) and 'endpoint' in tag2:
             barcode2info = self.get_bq_case_info(barcode_type, barcodes, '{}{}{}'.format(tag1, ' vs. ', tag2))
             self.log.info('\t\tfound %d records for %d barcodes of type %s for %s' % (len(barcode2info), len(barcodes), barcode_type, '{}{}{}'.format(tag1, ' vs. ', tag2)))
             self.log_barcode2info(barcode2info)
