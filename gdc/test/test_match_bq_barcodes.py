@@ -137,6 +137,59 @@ class GDCTestCloudSQLBQBarcodeMatchup(GDCTestSetup):
         
         return program2case_barcodes, program2case_no_samples_barcodes, program2sample_barcodes
 
+    def get_gdc_case_info(self, barcode_type, barcodes, tag):
+        barcode2infos = {}
+        endpt_template = 'https://gdc-api.nci.nih.gov/{}cases?expand=samples,platform'
+        for endpt_type in ('legacy/', ''):
+            endpt = endpt_template.format(endpt_type)
+            barcodes = list(barcodes)
+            start = 0
+            batch = 20
+            curstart = 1
+            while start < len(barcodes):
+                self.log.info('\t\t\tfetching batch %d:%d of total %d for %s' % (start, start + batch, len(barcodes), tag))
+                filt = {
+                    'op':'in', 
+                    'content':{
+                        'field':barcode_type, 
+                        'value':barcodes[start:start + batch]}}
+                params = {
+                    'filters':json.dumps(filt), 
+                    'sort':'file_id:asc', 
+                    'from':1, 
+                    'size':20}
+                start += batch
+                while True:
+                    msg = '\t\tproblem getting filtered map for files'
+                    rj = self.request_response(endpt, params, msg)
+                    params['from'] = params['from'] + params['size']
+                    for index in range(len(rj['data']['hits'])):
+                        try:
+                            themap = rj['data']['hits'][index]
+                            notfound = True
+                            case_barcode = themap['submitter_id'].strip()
+                            if case_barcode in barcodes:
+                                barcode2infos[case_barcode] = barcode2infos.setdefault(case_barcode, []) + [[case_barcode]]
+                                notfound = False
+                                break
+                            if 'samples' in themap:
+                                for j in range(len(themap['samples'])):
+                                    sample_barcode = themap['samples'][j]['submitter_id'].strip()
+                                    if sample_barcode in barcodes:
+                                        barcode2infos[sample_barcode] = barcode2infos.setdefault(sample_barcode, []) + [[sample_barcode]]
+                                        notfound = False
+                                        break
+                            if notfound:
+                                raise ValueError('unexpected mismatch of return with barcodes:\n{}\n'.format(', '.join(barcodes), json.dumps(themap, indent=2)))
+                        except:
+                            self.log.exception('problem with parsing returned json: \n{}'.format(json.dumps(rj, indent=2)))
+                    
+                    curstart += rj['data']['pagination']['count']
+                    if curstart > rj['data']['pagination']['total']:
+                        break
+        
+        return barcode2infos
+
     seen_gdc_barcodes = set()
     def get_gdc_file_info(self, barcode_type, barcodes, tag):
         if barcodes in self.seen_gdc_barcodes:
@@ -191,11 +244,11 @@ class GDCTestCloudSQLBQBarcodeMatchup(GDCTestSetup):
                                     for j in range(len(themap['cases'][i]['samples'])):
                                         sample_barcode = themap['cases'][i]['samples'][j]['submitter_id'].strip()
                                         if sample_barcode in barcodes:
-                                            barcode2infos[sample_barcode] = barcode2infos.setdefault(case_barcode, []) + [[data_type, data_format, experimental_strategy, platform, workflow_type]]
+                                            barcode2infos[sample_barcode] = barcode2infos.setdefault(sample_barcode, []) + [[data_type, data_format, experimental_strategy, platform, workflow_type]]
                                             notfound = False
                                             break
                             if notfound:
-                                raise ValueError('unexpected msmatch of return with barcodes:\n{}\n'.format(', '.join(barcodes), json.dumps(themap, indent=2)))
+                                raise ValueError('unexpected mismatch of return with barcodes:\n{}\n'.format(', '.join(barcodes), json.dumps(themap, indent=2)))
                         except:
                             self.log.exception('problem with parsing returned json: \n{}'.format(json.dumps(rj, indent=2)))
                     
@@ -205,38 +258,57 @@ class GDCTestCloudSQLBQBarcodeMatchup(GDCTestSetup):
         
         return barcode2infos
 
-    def get_bq_file_info(self, barcode_type, barcodes, tag):
-        barcode2infos = {}
-        stmt = ''
+    seen_bq_barcodes = set()
+    def get_bq_case_info(self, barcode_type, barcodes, tag):
+        barcode_type = barcode_type[6:]
+        return self.get_gdc_case_info(barcode_type, barcodes, tag)
+        
 
+    def get_bq_file_info(self, barcode_type, barcodes, tag):
+        return self.get_gdc_file_info(barcode_type, barcodes, tag)
+
+    seen_sql_barcodes = set()
     def get_sql_file_info(self, program, barcode_type, barcodes, tag):
         barcode2infos = {}
 
-    def get_file_info(self, program, barcode_type, barcodes, tag1, tag2):
-        barcode2info = {}
-        if 'endpoint' in tag1:
-            barcode2info = self.get_gdc_file_info(barcode_type, barcodes, '{}{}{}'.format(tag1, ' vs. ', tag2))
-            self.log.info('\t\tfound %d records for %d barcodes of type %s for %s' % (len(barcode2info), len(barcodes), barcode_type, '{}{}{}'.format(tag1, ' vs. ', tag2)))
 
+    def log_barcode2info(self, barcode2info):
         if 0 < len(barcode2info):
             barcode_infos = []
             for barcode, infos in barcode2info.iteritems():
                 unique = set()
                 for info in infos:
                     unique.add(tuple(info))
-                barcode_infos += ['{}\n\t\t\t{}'.format(barcode, '\n\t\t\t'.join([', '.join(info) for info in set(unique)]))]
                 
+                barcode_infos += ['{}\n\t\t\t{}'.format(barcode, '\n\t\t\t'.join([', '.join(info) for info in set(unique)]))]
+            
             self.print_partial_list('barcodes with info', barcode_infos, 20)
             info2count = {}
             for infos in barcode2info.itervalues():
                 unique = set()
                 for info in infos:
                     unique.add(tuple(info))
+                
                 for info in unique:
                     info2count[info] = info2count.setdefault(info, 0) + 1
-            self.print_partial_list('distinct info', ['{}, {}'.format(', '.join(info), count) for info, count in info2count.iteritems()], 30)
+            
+            self.print_partial_list('distinct info', ['{}, {}'.format(', '.join(info), count) for (info, count) in info2count.iteritems()], 30)
         else:
             self.log.info('\n\tno file info for barcodes')
+
+    def get_barcode_info(self, program, barcode_type, barcodes, tag1, tag2):
+        barcode2info = {}
+        if 'endpoint' in tag1:
+            barcode2info = self.get_gdc_file_info(barcode_type, barcodes, '{}{}{}'.format(tag1, ' vs. ', tag2))
+            self.log.info('\t\tfound %d records for %d barcodes of type %s for %s' % (len(barcode2info), len(barcodes), barcode_type, '{}{}{}'.format(tag1, ' vs. ', tag2)))
+            self.log_barcode2info(barcode2info)
+        elif 'bq' in tag1 and 'endpoint' in tag2:
+            barcode2info = self.get_bq_case_info(barcode_type, barcodes, '{}{}{}'.format(tag1, ' vs. ', tag2))
+            self.log.info('\t\tfound %d records for %d barcodes of type %s for %s' % (len(barcode2info), len(barcodes), barcode_type, '{}{}{}'.format(tag1, ' vs. ', tag2)))
+            self.log_barcode2info(barcode2info)
+            barcode2info = self.get_gdc_file_info(barcode_type, barcodes, '{}{}{}'.format(tag1, ' vs. ', tag2))
+            self.log.info('\t\tfound %d records for %d barcodes of type %s for %s' % (len(barcode2info), len(barcodes), barcode_type, '{}{}{}'.format(tag1, ' vs. ', tag2)))
+            self.log_barcode2info(barcode2info)
 
     def select_clinical_bq_barcodes(self, program):
         self.log.info('start select %s bq cases' % (program.lower()))
@@ -388,12 +460,12 @@ class GDCTestCloudSQLBQBarcodeMatchup(GDCTestSetup):
     def compare_barcodes(self, program, first_set, first_tag, second_set, second_tag, barcode_type):
         if 0 < len(first_set - second_set):
             self.print_partial_list('barcodes in {} not in {}'.format(first_tag, second_tag), first_set - second_set)
-            self.get_file_info(program, barcode_type, first_set - second_set, first_tag, second_tag)
+            self.get_barcode_info(program, barcode_type, first_set - second_set, first_tag, second_tag)
         else:
             self.log.info('barcodes in {} found in {}'.format(first_tag, second_tag))
         if 0 < len(second_set - first_set):
             self.print_partial_list('barcodes in {} not in {}'.format(second_tag, first_tag), second_set - first_set)
-            self.get_file_info(program, barcode_type, second_set - first_set, second_tag, first_tag)
+            self.get_barcode_info(program, barcode_type, second_set - first_set, second_tag, first_tag)
         else:
             self.log.info('barcodes in {} found in {}'.format(second_tag, first_tag))
 
@@ -408,15 +480,15 @@ class GDCTestCloudSQLBQBarcodeMatchup(GDCTestSetup):
         program2file_endpoint_case_barcodes = {}
         program2file_endpoint_case_no_samples_barcodes = {}
         program2file_endpoint_sample_barcodes = {}
-#         for program in ('CCLE', 'TARGET', 'TCGA'):
-        for program in ('TCGA',):
+        for program in ('CCLE', 'TARGET', 'TCGA'):
+#         for program in ('TCGA',):
             self.log.info('\n=======endpoint differences for %s=======' % program)
-            with open('Z:\\tcga\\cgc\\dataproc\\gdc\\doc/%s_case_endpt_case.txt' % program, 'r') as cc, \
-                 open('Z:\\tcga\\cgc\\dataproc\\gdc\\doc/%s_case_endpt_case_no.txt' % program, 'r') as ccno, \
-                 open('Z:\\tcga\\cgc\\dataproc\\gdc\\doc/%s_case_endpt_sample.txt' % program, 'r') as cs, \
-                 open('Z:\\tcga\\cgc\\dataproc\\gdc\\doc/%s_file_endpt_case.txt' % program, 'r') as fc, \
-                 open('Z:\\tcga\\cgc\\dataproc\\gdc\\doc/%s_file_endpt_case_no.txt' % program, 'r') as fcno, \
-                 open('Z:\\tcga\\cgc\\dataproc\\gdc\\doc/%s_file_endpt_sample.txt' % program, 'r') as fs:
+            with open('data/%s_case_endpt_case.txt' % program, 'r') as cc, \
+                 open('data/%s_case_endpt_case_no.txt' % program, 'r') as ccno, \
+                 open('data/%s_case_endpt_sample.txt' % program, 'r') as cs, \
+                 open('data/%s_file_endpt_case.txt' % program, 'r') as fc, \
+                 open('data/%s_file_endpt_case_no.txt' % program, 'r') as fcno, \
+                 open('data/%s_file_endpt_sample.txt' % program, 'r') as fs:
                 program2case_endpoint_case_barcodes[program] = set(self.read_barcodes(cc, '\treading case endpoint cases for %s' % (program)))
                 program2case_endpoint_case_no_samples_barcodes[program] = set(self.read_barcodes(ccno, '\treading case endpoint no samples for %s' % (program)))
                 program2case_endpoint_sample_barcodes[program] = set(self.read_barcodes(cs, '\treading case endpoint samples for %s' % (program)))
