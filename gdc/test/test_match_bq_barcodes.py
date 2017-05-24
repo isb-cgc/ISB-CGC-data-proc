@@ -226,10 +226,6 @@ class GDCTestCloudSQLBQBarcodeMatchup(GDCTestSetup):
                             themap = rj['data']['hits'][index]
                             data_type = themap['data_type'].strip() if 'data_type' in themap else 'none'
                             data_format = themap['data_format'].strip() if 'data_format' in themap else 'none'
-                            if 'data_type' not in themap:
-                                acopy = themap.copy()
-                                acopy.pop('cases')
-                                self.log.info('data_type not in the map:\n{}'.format(json.dumps(acopy, indent=2)))
                             experimental_strategy = themap['experimental_strategy'].strip() if 'experimental_strategy' in themap else 'none'
                             platform = themap['platform'] if 'platform' in themap else 'none'
                             workflow_type = themap['analysis']['workflow_type'] if 'analysis' in themap else 'none'
@@ -239,14 +235,12 @@ class GDCTestCloudSQLBQBarcodeMatchup(GDCTestSetup):
                                 if case_barcode in barcodes:
                                     barcode2infos[case_barcode] = barcode2infos.setdefault(case_barcode, []) + [[data_type, data_format, experimental_strategy, platform, workflow_type]]
                                     notfound = False
-                                    break
                                 if 'samples' in themap['cases'][i]:
                                     for j in range(len(themap['cases'][i]['samples'])):
                                         sample_barcode = themap['cases'][i]['samples'][j]['submitter_id'].strip()
                                         if sample_barcode in barcodes:
                                             barcode2infos[sample_barcode] = barcode2infos.setdefault(sample_barcode, []) + [[data_type, data_format, experimental_strategy, platform, workflow_type]]
                                             notfound = False
-                                            break
                             if notfound:
                                 raise ValueError('unexpected mismatch of return with barcodes:\n{}\n'.format(', '.join(barcodes), json.dumps(themap, indent=2)))
                         except:
@@ -473,7 +467,6 @@ class GDCTestCloudSQLBQBarcodeMatchup(GDCTestSetup):
 # these are running fine
 #         _, _, _ = self.get_case_counts()
 #         _, _, _ = self.get_file_counts()
-        
         program2case_endpoint_case_barcodes = {}
         program2case_endpoint_case_no_samples_barcodes = {}
         program2case_endpoint_sample_barcodes = {}
