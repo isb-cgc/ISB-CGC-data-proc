@@ -25,12 +25,17 @@ import unittest
 from util import create_log
 
 class GDCTestSetup(unittest.TestCase):
+    def __init__(self, param):
+        self.config = './gdc/config/uploadGDC_test.json'
+        self.log_tag = '_gdc_upload_data_migration/'
+        super(GDCTestSetup, self).__init__(param)
+    
     def setUp(self):
-        with open('./gdc/config/uploadGDC_test.json') as configFile:
+        with open(self.config) as configFile:
             self.config = json.load(configFile)
         
-        log_dir = str(date.today()).replace('-', '_') + '_gdc_upload_run/'
-        log_name = create_log(log_dir, 'gdc_upload')
+        log_dir = str(date.today()).replace('-', '_') + self.log_tag
+        log_name = create_log(log_dir, 'gdc_test')
         self.log = logging.getLogger(log_name)
 
     def tearDown(self):
