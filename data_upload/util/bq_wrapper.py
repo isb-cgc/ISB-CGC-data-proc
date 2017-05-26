@@ -26,7 +26,11 @@ def query_bq_table(query, use_legacy, project, log):
 # Use standard SQL syntax for queries.
 # See: https://cloud.google.com/bigquery/sql-reference/
     query_results.use_legacy_sql = use_legacy
-    query_results.run()
+    try:
+        query_results.run()
+    except:
+        log.exception('problem with query:\n{}'.format(query))
+        raise
     log.info('\t\tdone querying bq: %s' % query)
     return query_results
 
