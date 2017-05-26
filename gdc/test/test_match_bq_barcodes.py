@@ -253,17 +253,143 @@ class GDCTestCloudSQLBQBarcodeMatchup(GDCTestSetup):
         return barcode2infos
 
     seen_bq_barcodes = set()
-    def get_bq_case_info(self, barcode_type, barcodes, tag):
-        barcode_type = barcode_type[6:]
-        return self.get_gdc_case_info(barcode_type, barcodes, tag)
+    def get_bq_case_info(self, program, barcode_type, barcodes, tag):
+        if 'CCLE' == program:
+            table = 'isb-cgc:CCLE_bioclin_v0.clinical_v0'
+        else:
+            table = 'isb-cgc:{}_bioclin_v0.Clinical'.format(program)
+        stmt = 'SELECT case_barcode FROM [{}] where case_barcode in ({})'.format(table, ', '.join('"{}"'.format('-'.join(barcode.split('-')[:-1])) for barcode in set(barcodes)))
+        results = query_bq_table(stmt, True, 'isb-cgc', self.log)
+            
+        page_token = None
+        case_barcodes = {}
+        while True:
+            _, rows, page_token = fetch_paged_results(results, 10000, None, page_token, self.log)
+            for row in rows:
+                case_barcode = row[0].strip()
+                case_barcodes.setdefault(case_barcode, set()).add(case_barcode)
+            
+            if not page_token:
+                break
         
+        return case_barcodes
 
-    def get_bq_file_info(self, barcode_type, barcodes, tag):
-        return self.get_gdc_file_info(barcode_type, barcodes, tag)
+    def get_bq_file_info(self, program, barcode_type, barcodes, tag):
+        program2dataset2data_type2column_name = {
+            'TARGET': {
+                'TARGET_hg38_data_v0': {
+                    'RNAseq_Gene_Expression': 'file_gdc_id',
+                    'miRNAseq_Expression': 'file_gdc_id',
+                    'miRNAseq_Isoform_Expression': 'file_gdc_id'
+                },
+            },
+            'TCGA': {
+                'TCGA_hg19_data_v0': {
+                    'Copy_Number_Segment_Masked': 'aliquot_barcode',
+                    'DNA_Methylation': 'aliquot_barcode',
+                    'Protein_Expression': 'aliquot_barcode',
+                    'RNAseq_Gene_Expression_UNC_RSEM': 'aliquot_barcode',
+                    'miRNAseq_Expression': 'file_gdc_id',
+                    'miRNAseq_Isoform_Expression': 'file_gdc_id',
+                    'Somatic_Mutation_DCC': 'aliquot_barcode_tumor',
+                    'Somatic_Mutation_MC3': 'aliquot_barcode_tumor'
+                },
+                'TCGA_hg38_data_v0': {
+                    'Copy_Number_Segment_Masked': 'file_gdc_id',
+                    'RNAseq_Gene_Expression': 'file_gdc_id',
+                    'miRNAseq_Expression': 'file_gdc_id',
+                    'miRNAseq_Isoform_Expression': 'file_gdc_id',
+                    'DNA_Methylation': 'file_gdc_id',
+                    'Protein_Expression': 'aliquot_barcode',
+                    'Somatic_Mutation': 'fileName'
+                }
+            }
+        }
+        
+        barcodes_in = ','.join('"{}"'.format(barcode) for barcode in set(barcodes))
+        query_template = 'select left(data.{0}, {8}), meta.data_type, meta.data_format, meta.experimental_strategy, meta.platform, {1} from [isb-cgc:{2}.{3}] data join [isb-cgc:GDC_metadata.{4}] meta\n' \
+            '  on data.{5} = meta.{6}\nwhere data.{0} in ({7})\ngroup by 1,2,3,4,5,6'
+        barcode2infos = {}
+        dataset2data_type2column_name = program2dataset2data_type2column_name.setdefault(program, {})
+        for dataset in dataset2data_type2column_name:
+            if 'hg19' in dataset:
+                column_sub = '"None"'
+                table = 'rel5_legacy_fileData'
+            else:
+                column_sub = 'meta.analysis_workflow_type'
+                table = 'rel5_current_fileData'
+            data_type2column_name = dataset2data_type2column_name.setdefault(dataset, {})
+            for data_type, column_name in data_type2column_name.iteritems():
+                if column_name in ('aliquot_barcode', 'Tumor_Sample_Barcode', 'aliquot_barcode_tumor'):
+                    join_col = 'associated_entities__entity_submitter_id'
+                elif column_name in ('fileName'):
+                    join_col = 'file_name'
+                else:
+                    join_col = column_name
+                
+                if data_type in ('Somatic_Mutation',):
+                    barcode_t = 'Tumor_Sample_Barcode'
+                elif data_type in ('Somatic_Mutation_MC3','Somatic_Mutation_DCC'):
+                    barcode_t = 'sample_barcode_tumor'
+                else:
+                    barcode_t = barcode_type
+                    
+                if 'case_barcode'== barcode_type:
+                    if program == "CCLE":
+                        length = 200
+                    elif program == 'TARGET':
+                        length = 16
+                    else:
+                        length = 12
+                else:
+                    length = 200
+                
+                query = query_template.format(barcode_t, column_sub, dataset, data_type, table, column_name, join_col, barcodes_in, length)
+                results = query_bq_table(query, True, 'isb-cgc', self.log)
+                    
+                page_token = None
+                while True:
+                    _, rows, page_token = fetch_paged_results(results, 10000, None, page_token, self.log)
+                    for row in rows:
+                        barcode = row[0]
+                        if barcode in barcodes:
+                            barcode2infos[barcode] = barcode2infos.setdefault(barcode, []) + [[row[1], row[2], str(row[3]), str(row[4]), str(row[5])]]
+                        else:
+                            raise ValueError('unexpected mismatch of return with barcodes:\n{}\n'.format(', '.join(barcodes), ', '.join(str(field) for field in row)))
+                    
+                    if not page_token:
+                        break
+            
+        
+        return barcode2infos
 
     seen_sql_barcodes = set()
     def get_sql_file_info(self, program, barcode_type, barcodes, tag):
         barcode2infos = {}
+        query_template = 'select {0}, data_type, data_format, experimental_strategy, platform, {1}\n' \
+            'from {2}_metadata_data_HG{3}\n' \
+            'where {0} in ({4})\n'
+        barcodes_in = ','.join('"{}"'.format(barcode) for barcode in set(barcodes))
+        query = ''
+        for build in ('19', '38'):
+            if '38' == build:
+                if 'CCLE' == program:
+                    break
+                else:
+                    query += 'union\n'
+                    column = 'analysis_workflow_type'
+            else:
+                column = '"None"'
+            query += query_template.format(barcode_type, column, program, build, barcodes_in)
+        rows = ISBCGC_database_helper.select(self.config, query, self.log, [])
+        for row in rows:
+            barcode = row[0]
+            if barcode in barcodes:
+                barcode2infos[barcode] = barcode2infos.setdefault(barcode, []) + [[row[1], row[2], str(row[3]), str(row[4]), str(row[5])]]
+            else:
+                raise ValueError('unexpected mismatch of return with barcodes:\n{}\n'.format(', '.join(barcodes), ', '.join(str(field) for field in row)))
+        
+        return barcode2infos
 
 
     def log_barcode2info(self, barcode2info):
@@ -271,8 +397,8 @@ class GDCTestCloudSQLBQBarcodeMatchup(GDCTestSetup):
             barcode_infos = []
             for barcode, infos in barcode2info.iteritems():
                 unique = set()
-                for info in infos:
-                    unique.add(tuple(info))
+                for info in list(infos,):
+                    unique.add(tuple(info,))
                 
                 barcode_infos += ['{}\n\t\t\t{}'.format(barcode, '\n\t\t\t'.join([', '.join(info) for info in set(unique)]))]
             
@@ -280,13 +406,13 @@ class GDCTestCloudSQLBQBarcodeMatchup(GDCTestSetup):
             info2count = {}
             for infos in barcode2info.itervalues():
                 unique = set()
-                for info in infos:
-                    unique.add(tuple(info))
+                for info in list(infos,):
+                    unique.add(tuple(info,))
                 
                 for info in unique:
                     info2count[info] = info2count.setdefault(info, 0) + 1
             
-            self.print_partial_list('distinct info', ['{}, {}'.format(', '.join(info), count) for (info, count) in info2count.iteritems()], 30)
+            self.print_partial_list('distinct info', ['{}, {}'.format(', '.join(inf for inf in info), count) for (info, count) in info2count.iteritems()], 30)
         else:
             self.log.info('\n\tno file info for barcodes')
 
@@ -296,11 +422,23 @@ class GDCTestCloudSQLBQBarcodeMatchup(GDCTestSetup):
             barcode2info = self.get_gdc_file_info(barcode_type, barcodes, '{}{}{}'.format(tag1, ' vs. ', tag2))
             self.log.info('\t\tfound %d records for %d barcodes of type %s for %s' % (len(barcode2info), len(barcodes), barcode_type, '{}{}{}'.format(tag1, ' vs. ', tag2)))
             self.log_barcode2info(barcode2info)
-        elif ('bq' in tag1 or 'sql' in tag1) and 'endpoint' in tag2:
-            barcode2info = self.get_bq_case_info(barcode_type, barcodes, '{}{}{}'.format(tag1, ' vs. ', tag2))
+        elif 'bq' in tag1:
+            if 'cases.samples.submitter_id' == barcode_type:
+                barcode_type = 'sample_barcode'
+#                 barcode2info = self.get_bq_case_info(program, barcode_type, barcodes, '{}{}{}'.format(tag1, ' vs. ', tag2))
+#                 self.log.info('\t\tfound %d records for %d barcodes of type %s for %s' % (len(barcode2info), len(barcodes), barcode_type, '{}{}{}'.format(tag1, ' vs. ', tag2)))
+#                 self.log_barcode2info(barcode2info)
+            else:
+                barcode_type = 'case_barcode'
+            barcode2info = self.get_bq_file_info(program, barcode_type, barcodes, '{}{}{}'.format(tag1, ' vs. ', tag2))
             self.log.info('\t\tfound %d records for %d barcodes of type %s for %s' % (len(barcode2info), len(barcodes), barcode_type, '{}{}{}'.format(tag1, ' vs. ', tag2)))
             self.log_barcode2info(barcode2info)
-            barcode2info = self.get_gdc_file_info(barcode_type, barcodes, '{}{}{}'.format(tag1, ' vs. ', tag2))
+        elif 'sql' in tag1:
+            if 'cases.samples.submitter_id' == barcode_type:
+                barcode_type = 'sample_barcode'
+            else:
+                barcode_type = 'case_barcode'
+            barcode2info = self.get_sql_file_info(program, barcode_type, barcodes, '{}{}{}'.format(tag1, ' vs. ', tag2))
             self.log.info('\t\tfound %d records for %d barcodes of type %s for %s' % (len(barcode2info), len(barcodes), barcode_type, '{}{}{}'.format(tag1, ' vs. ', tag2)))
             self.log_barcode2info(barcode2info)
 
