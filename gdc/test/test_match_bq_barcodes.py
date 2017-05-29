@@ -591,15 +591,15 @@ class GDCTestCloudSQLBQBarcodeMatchup(GDCTestSetup):
 
     def compare_barcodes(self, program, first_set, first_tag, second_set, second_tag, barcode_type):
         if 0 < len(first_set - second_set):
-            self.print_partial_list('barcodes in {} not in {}'.format(first_tag, second_tag), first_set - second_set)
+            self.print_partial_list('\n{}\nbarcodes in {} not in {}'.format('=' * 25, first_tag, second_tag), first_set - second_set)
             self.get_barcode_info(program, barcode_type, first_set - second_set, first_tag, second_tag)
         else:
-            self.log.info('barcodes in {} found in {}'.format(first_tag, second_tag))
+            self.log.info('\n{}\nbarcodes in {} found in {}'.format('=' * 25, first_tag, second_tag))
         if 0 < len(second_set - first_set):
-            self.print_partial_list('barcodes in {} not in {}'.format(second_tag, first_tag), second_set - first_set)
+            self.print_partial_list('\n{}\nbarcodes in {} not in {}'.format('=' * 25, second_tag, first_tag), second_set - first_set)
             self.get_barcode_info(program, barcode_type, second_set - first_set, second_tag, first_tag)
         else:
-            self.log.info('barcodes in {} found in {}'.format(second_tag, first_tag))
+            self.log.info('\n{}\nbarcodes in {} found in {}'.format('=' * 25, second_tag, first_tag))
 
     def diff_program_barcodes(self):
 # these are running fine
@@ -614,6 +614,7 @@ class GDCTestCloudSQLBQBarcodeMatchup(GDCTestSetup):
         for program in ('CCLE', 'TARGET', 'TCGA'):
 #         for program in ('TCGA',):
             self.log.info('\n=======endpoint differences for %s=======' % program)
+#             with open('z://tcga//cgc//dataproc//gdc/doc///%s_case_endpt_case.txt' % program, 'r') as cc, \
             with open('data/%s_case_endpt_case.txt' % program, 'r') as cc, \
                  open('data/%s_case_endpt_case_no.txt' % program, 'r') as ccno, \
                  open('data/%s_case_endpt_sample.txt' % program, 'r') as cs, \
