@@ -43,30 +43,369 @@ class GDCCloudSQLTest(GDCTestSetup):
         except:
             self.log.exception()
 
+#    def testCloudSQL(self):
+    def CloudSQL(self):
+        query = "select * from metadata_program order by program_name"
+        self.run_query(query)
+   
+        query = "desc CCLE_metadata_project"
+        self.run_query(query)
+   
+        query = "select count(*), 'CCLE' from CCLE_metadata_project union select count(*), 'TARGET' from TARGET_metadata_project union select count(*), 'TCGA' from TCGA_metadata_project"
+        self.run_query(query)
+   
+        query = "select count(*), 'CCLE' from CCLE_metadata_clinical union select count(*), 'TARGET' from TARGET_metadata_clinical union select count(*), 'TCGA' from TCGA_metadata_clinical"
+        self.run_query(query)
+   
+        query = "select count(*), 'CCLE' from CCLE_metadata_biospecimen union select count(*), 'TARGET' from TARGET_metadata_biospecimen union select count(*), 'TCGA' from TCGA_metadata_biospecimen"
+        self.run_query(query)
+   
+        query = "select sample_type, count(*) ct from CCLE_metadata_biospecimen group by sample_type"
+        self.run_query(query)
+   
+        query = "select * from CCLE_metadata_project order by project_short_name"
+        self.run_query(query)
+   
+        query = "select * from TARGET_metadata_project order by project_short_name"
+        self.run_query(query)
+   
+        query = "select * from TCGA_metadata_project order by project_short_name"
+        self.run_query(query)
+   
+        query = "select * from CCLE_metadata_clinical order by case_barcode limit 50"
+        self.run_query(query)
+   
+        query = "desc TARGET_metadata_clinical"
+        self.run_query(query)
+   
+        query = "select * from TARGET_metadata_clinical order by case_barcode limit 50"
+        self.run_query(query)
+   
+        query = "select * from TARGET_metadata_clinical where endpoint_type = 'legacy' order by case_barcode limit 20"
+        self.run_query(query)
+   
+        query = "select * from TARGET_metadata_clinical where endpoint_type = 'current' order by case_barcode limit 20"
+        self.run_query(query)
+   
+        query = "desc TCGA_metadata_clinical"
+        self.run_query(query)
+   
+        query = "select * from TCGA_metadata_clinical order by case_barcode limit 50"
+        self.run_query(query)
+   
+        query = "select * from TCGA_metadata_clinical where endpoint_type = 'legacy' order by case_barcode limit 20"
+        self.run_query(query)
+   
+        query = "select * from TCGA_metadata_clinical where endpoint_type = 'current' order by case_barcode limit 20"
+        self.run_query(query)
+####################
+        query = 'select count(*) from TCGA_metadata_clinical where age_began_smoking_in_years is not null'
+        self.run_query(query)
+ 
+        query = 'select count(*) from TCGA_metadata_clinical where anatomic_neoplasm_subdivision is not null'
+        self.run_query(query)
+ 
+        query = 'select count(*) from TCGA_metadata_clinical where batch_number is not null'
+        self.run_query(query)
+ 
+        query = 'select count(*) from TCGA_metadata_clinical where bmi is not null'
+        self.run_query(query)
+ 
+        query = 'select count(*) from TCGA_metadata_clinical where clinical_M is not null'
+        self.run_query(query)
+ 
+        query = 'select count(*) from TCGA_metadata_clinical where clinical_N is not null'
+        self.run_query(query)
+ 
+        query = 'select count(*) from TCGA_metadata_clinical where clinical_stage is not null'
+        self.run_query(query)
+ 
+        query = 'select count(*) from TCGA_metadata_clinical where clinical_T is not null'
+        self.run_query(query)
+ 
+        query = 'select count(*) from TCGA_metadata_clinical where colorectal_cancer is not null'
+        self.run_query(query)
+ 
+        query = 'select count(*) from TCGA_metadata_clinical where country is not null'
+        self.run_query(query)
+ 
+        query = 'select count(*) from TCGA_metadata_clinical where days_to_initial_pathologic_diagnosis is not null'
+        self.run_query(query)
+ 
+        query = 'select count(*) from TCGA_metadata_clinical where days_to_last_followup is not null'
+        self.run_query(query)
+ 
+        query = 'select count(*) from TCGA_metadata_clinical where days_to_submitted_specimen_dx is not null'
+        self.run_query(query)
+ 
+        query = 'select count(*) from TCGA_metadata_clinical where gleason_score_combined is not null'
+        self.run_query(query)
+ 
+        query = 'select count(*) from TCGA_metadata_clinical where h_pylori_infection is not null'
+        self.run_query(query)
+ 
+        query = 'select count(*) from TCGA_metadata_clinical where height is not null'
+        self.run_query(query)
+ 
+        query = 'select count(*) from TCGA_metadata_clinical where history_of_colon_polyps is not null'
+        self.run_query(query)
+ 
+        query = 'select count(*) from TCGA_metadata_clinical where hpv_calls is not null'
+        self.run_query(query)
+ 
+        query = 'select count(*) from TCGA_metadata_clinical where hpv_status is not null'
+        self.run_query(query)
+ 
+        query = 'select count(*) from TCGA_metadata_clinical where lymphatic_invasion is not null'
+        self.run_query(query)
+ 
+        query = 'select count(*) from TCGA_metadata_clinical where lymphnodes_examined is not null'
+        self.run_query(query)
+ 
+        query = 'select count(*) from TCGA_metadata_clinical where lymphovascular_invasion_present is not null'
+        self.run_query(query)
+ 
+        query = 'select count(*) from TCGA_metadata_clinical where menopause_status is not null'
+        self.run_query(query)
+ 
+        query = 'select count(*) from TCGA_metadata_clinical where mononucleotide_and_dinucleotide_marker_panel_analysis_status is not null'
+        self.run_query(query)
+ 
+        query = 'select count(*) from TCGA_metadata_clinical where neoplasm_histologic_grade is not null'
+        self.run_query(query)
+ 
+        query = 'select count(*) from TCGA_metadata_clinical where new_tumor_event_after_initial_treatment is not null'
+        self.run_query(query)
+ 
+        query = 'select count(*) from TCGA_metadata_clinical where number_of_lymphnodes_examined is not null'
+        self.run_query(query)
+ 
+        query = 'select count(*) from TCGA_metadata_clinical where number_of_lymphnodes_positive_by_he is not null'
+        self.run_query(query)
+ 
+        query = 'select count(*) from TCGA_metadata_clinical where number_pack_years_smoked is not null'
+        self.run_query(query)
+ 
+        query = 'select count(*) from TCGA_metadata_clinical where other_dx is not null'
+        self.run_query(query)
+ 
+        query = 'select count(*) from TCGA_metadata_clinical where other_malignancy_anatomic_site is not null'
+        self.run_query(query)
+ 
+        query = 'select count(*) from TCGA_metadata_clinical where other_malignancy_histological_type is not null'
+        self.run_query(query)
+ 
+        query = 'select count(*) from TCGA_metadata_clinical where other_malignancy_type is not null'
+        self.run_query(query)
+ 
+        query = 'select count(*) from TCGA_metadata_clinical where pathologic_M is not null'
+        self.run_query(query)
+ 
+        query = 'select count(*) from TCGA_metadata_clinical where pathologic_N is not null'
+        self.run_query(query)
+ 
+        query = 'select count(*) from TCGA_metadata_clinical where pathologic_stage is not null'
+        self.run_query(query)
+ 
+        query = 'select count(*) from TCGA_metadata_clinical where pathologic_T is not null'
+        self.run_query(query)
+ 
+        query = 'select count(*) from TCGA_metadata_clinical where pregnancies is not null'
+        self.run_query(query)
+ 
+        query = 'select count(*) from TCGA_metadata_clinical where primary_neoplasm_melanoma_dx is not null'
+        self.run_query(query)
+ 
+        query = 'select count(*) from TCGA_metadata_clinical where primary_therapy_outcome_success is not null'
+        self.run_query(query)
+ 
+        query = 'select count(*) from TCGA_metadata_clinical where psa_value is not null'
+        self.run_query(query)
+ 
+        query = 'select count(*) from TCGA_metadata_clinical where residual_tumor is not null'
+        self.run_query(query)
+ 
+        query = 'select count(*) from TCGA_metadata_clinical where stopped_smoking_year is not null'
+        self.run_query(query)
+ 
+        query = 'select count(*) from TCGA_metadata_clinical where tobacco_smoking_history is not null'
+        self.run_query(query)
+ 
+        query = 'select count(*) from TCGA_metadata_clinical where tumor_type is not null'
+        self.run_query(query)
+ 
+        query = 'select count(*) from TCGA_metadata_clinical where venous_invasion is not null'
+        self.run_query(query)
+ 
+        query = 'select count(*) from TCGA_metadata_clinical where weight is not null'
+        self.run_query(query)
+ 
+        query = 'select count(*) from TCGA_metadata_clinical where year_of_tobacco_smoking_onset is not null'
+        self.run_query(query)
+##############
+        query = "select * from CCLE_metadata_biospecimen order by case_barcode limit 50"
+        self.run_query(query)
+   
+        query = "select * from TARGET_metadata_biospecimen order by case_barcode limit 50"
+        self.run_query(query)
+   
+        query = "select * from TARGET_metadata_biospecimen where 'legacy' = endpoint_type order by case_barcode limit 20"
+        self.run_query(query)
+   
+        query = "select * from TARGET_metadata_biospecimen where 'current' = endpoint_type order by case_barcode limit 50"
+        self.run_query(query)
+   
+        query = "desc TCGA_metadata_biospecimen"
+        self.run_query(query)
+   
+        query = "select * from TCGA_metadata_biospecimen order by case_barcode limit 50"
+        self.run_query(query)
+ 
+        query = "select * from TCGA_metadata_biospecimen where 'legacy' = endpoint_type order by case_barcode limit 20"
+        self.run_query(query)
+   
+        query = "select * from TCGA_metadata_biospecimen where 'current' = endpoint_type order by case_barcode limit 50"
+        self.run_query(query)
+   
+########################
+        query = 'select count(*) from TCGA_metadata_biospecimen where days_to_collection is not null'
+        self.run_query(query)
+ 
+        query = 'select count(*) from TCGA_metadata_biospecimen where days_to_sample_procurement is not null'
+        self.run_query(query)
+ 
+########################
+ 
+        query = "select * from CCLE_metadata_samples order by case_barcode limit 50"
+        self.run_query(query)
+   
+        query = "desc TARGET_metadata_samples"
+        self.run_query(query)
+   
+        query = "select * from TARGET_metadata_samples order by case_barcode limit 50"
+        self.run_query(query)
+   
+        query = "select * from TARGET_metadata_samples where 'legacy' = endpoint_type order by case_barcode limit 20"
+        self.run_query(query)
+   
+        query = "select * from TARGET_metadata_samples where 'current' = endpoint_type order by case_barcode limit 20"
+        self.run_query(query)
+#######################
+ 
+        query = "select * from TCGA_metadata_samples order by case_barcode limit 50"
+        self.run_query(query)
+   
+        query = "select * from TCGA_metadata_samples where 'legacy' = endpoint_type order by case_barcode limit 20"
+        self.run_query(query)
+   
+        query = "select * from TCGA_metadata_samples where 'current' = endpoint_type order by case_barcode limit 20"
+        self.run_query(query)
+#######################
+        query = 'select count(*) ct from TCGA_metadata_samples where bmi is not null'
+        self.run_query(query)
+  
+        query = 'select count(*) ct from TCGA_metadata_samples where tobacco_smoking_history is not null'
+        self.run_query(query)
+  
+        query = 'select count(*) ct from TCGA_metadata_samples where menopause_status is not null'
+        self.run_query(query)
+  
+        query = 'select count(*) ct from TCGA_metadata_samples where hpv_status is not null'
+        self.run_query(query)
+  
+        query = 'select count(*) ct from TCGA_metadata_samples where pathologic_stage is not null'
+        self.run_query(query)
+  
+        query = 'select count(*) ct from TCGA_metadata_samples where residual_tumor is not null'
+        self.run_query(query)
+  
+        query = 'select count(*) ct from TCGA_metadata_samples where neoplasm_histologic_grade is not null'
+        self.run_query(query)
+#######################
+ 
+        query = "select * from CCLE_metadata_attrs"
+        self.run_query(query)
+   
+        query = "select * from TARGET_metadata_attrs"
+        self.run_query(query)
+   
+        query = "select * from TCGA_metadata_attrs"
+        self.run_query(query)
+  
+        query = "select program_name, count(distinct sample_barcode) from CCLE_metadata_samples group by program_name union select program_name, count(distinct sample_barcode) from TARGET_metadata_samples group by program_name union select program_name, count(distinct sample_barcode) from TCGA_metadata_samples group by 1"
+        self.run_query(query)
+  
+        query = "select program_name, endpoint_type, count(distinct sample_barcode) from CCLE_metadata_samples group by 1, 2 union select program_name, endpoint_type, count(distinct sample_barcode) from TARGET_metadata_samples group by 1, 2 union select program_name, endpoint_type, count(distinct sample_barcode) from TCGA_metadata_samples group by 1, 2"
+        self.run_query(query)
+  
+        query = "select program_name, count(distinct case_barcode) from CCLE_metadata_samples group by program_name union select program_name, count(distinct case_barcode) from TARGET_metadata_samples group by program_name union select program_name, count(distinct case_barcode) from TCGA_metadata_samples group by 1"
+        self.run_query(query)
+  
+        query = "select program_name, endpoint_type, count(distinct case_barcode) from CCLE_metadata_samples group by 1, 2 union select program_name, endpoint_type, count(distinct case_barcode) from TARGET_metadata_samples group by 1, 2 union select program_name, endpoint_type, count(distinct case_barcode) from TCGA_metadata_samples group by 1, 2"
+        self.run_query(query)
+  
+        query = "select count(distinct a.case_barcode), count(distinct a.sample_barcode) from TCGA_metadata_samples a left join TCGA_metadata_samples b on a.sample_barcode = b.sample_barcode where a.endpoint_type = 'current' and b.endpoint_type = 'legacy' and b.sample_barcode is null"
+        self.run_query(query)
+  
+        query = "select count(distinct a.case_barcode), count(distinct a.sample_barcode) from TCGA_metadata_samples a where a.endpoint_type = 'current' and a.sample_barcode not in (select b.sample_barcode from TCGA_metadata_samples b where b.endpoint_type = 'legacy')"
+        self.run_query(query)
+  
+        query = "select a.project_short_name, count(distinct a.case_barcode), count(distinct a.sample_barcode) from TCGA_metadata_samples a where a.endpoint_type = 'current' and a.sample_barcode not in (select b.sample_barcode from TCGA_metadata_samples b where b.endpoint_type = 'legacy') group by a.project_short_name order by a.project_short_name"
+#         self.run_query(query)
+   
+        query = \
+            "select endpoint_type, count(distinct case_barcode) cases, count(distinct sample_barcode) samples, count(distinct aliquot_barcode) aliquots, count(distinct file_name) files, count(*) total, 'CCLE19' from CCLE_metadata_data_HG19 group by endpoint_type union " \
+            "select endpoint_type, count(distinct case_barcode) cases, count(distinct sample_barcode) samples, count(distinct aliquot_barcode) aliquots, count(distinct file_name) files, count(*) total, 'TARGET19' from TARGET_metadata_data_HG19 group by endpoint_type union " \
+            "select endpoint_type, count(distinct case_barcode) cases, count(distinct sample_barcode) samples, count(distinct aliquot_barcode) aliquots, count(distinct file_name) files, count(*) total, 'TARGET38' from TARGET_metadata_data_HG38 group by endpoint_type union " \
+            "select endpoint_type, count(distinct case_barcode) cases, count(distinct sample_barcode) samples, count(distinct aliquot_barcode) aliquots, count(distinct file_name) files, count(*) total, 'TCGA19' from TCGA_metadata_data_HG19 group by endpoint_type union " \
+            "select endpoint_type, count(distinct case_barcode) cases, count(distinct sample_barcode) samples, count(distinct aliquot_barcode) aliquots, count(distinct file_name) files, count(*) total, 'TCGA38' from TCGA_metadata_data_HG38 group by endpoint_type " \
+            "order by 3, 1"
+        self.run_query(query)
+  
+        query = \
+            "select file_uploaded, count(distinct file_name_key) name_keys, count(*) total, 'CCLE19' from CCLE_metadata_data_HG19 group by file_uploaded union " \
+            "select file_uploaded, count(distinct file_name_key) name_keys, count(*) total, 'TARGET19' from TARGET_metadata_data_HG19 group by file_uploaded union " \
+            "select file_uploaded, count(distinct file_name_key) name_keys, count(*) total, 'TARGET38' from TARGET_metadata_data_HG38 group by file_uploaded union " \
+            "select file_uploaded, count(distinct file_name_key) name_keys, count(*) total, 'TCGA19' from TCGA_metadata_data_HG19 group by file_uploaded union " \
+            "select file_uploaded, count(distinct file_name_key) name_keys, count(*) total, 'TCGA38' from TCGA_metadata_data_HG38 group by file_uploaded " \
+            "order by 3, 1"
+        self.run_query(query)
+  
+        query = \
+            "select genomic_build build, isb_label, count(distinct sample_barcode) barcodes, sum(count) total, count(*) ct " \
+            "from TCGA_metadata_data_type_availability dt join TCGA_metadata_sample_data_availability sd " \
+               "on dt.metadata_data_type_availability_id = sd.metadata_data_type_availability_id " \
+            "group by 1, 2"
+        self.run_query(query)
+
     def compare_metadata2gdcportal(self, msg, rows, compare_gdc, compare_index): 
-        compare = ''
         metadata = {row[0]: int(row[compare_index]) for row in rows}
         gdc = {row[0]: int(row[compare_index]) for row in compare_gdc}
         equal = True
         keys = sorted(gdc.keys())
+        matched = ''
+        not_matched = ''
+        not_metadata = ''
+        neither = ''
         for key in keys:
             if 0 == gdc[key]:
-                compare += '%s is in neither\n' % (key)
+                neither += '%s is in neither\n' % (key)
                 equal = False
             elif key not in metadata:
-                compare += '%s is not in metadata\n' % (key)
+                not_metadata += '%s is not in metadata\n' % (key)
                 equal = False
             else:
                 gdc_count = gdc[key]
                 metadata_count = metadata[key]
                 if gdc_count == metadata_count:
-                    compare += '%s matched counts\n' % (key)
+                    matched += '%s matched counts\n' % (key)
                 else:
-                    compare += '%s mismatch: %d vs. %d\n' % (key, gdc_count, metadata_count)
+                    not_matched += '%s mismatch: %d vs. %d\n' % (key, gdc_count, metadata_count)
                     equal = False
         if equal:
             self.log.info('%s compared equal!\n' % (msg))
         else:
+            compare = matched + not_matched + not_metadata + neither
             self.log.info('%s\n%s\n' % (msg, compare))
 
 
@@ -148,17 +487,76 @@ class GDCCloudSQLTest(GDCTestSetup):
                 counts[0] += 1
         return counts, sampletype2count
     
-
-
-    def add_to_map(self, count_map, count_field, program, case_id, file_id):
+    def add_to_map(self, count_map, count_field, program, case_id, id):
         project2counts = count_map.setdefault(program, {})
         counts = project2counts.setdefault(count_field, [count_field, set(), set()])
         counts[1].add(case_id)
-        counts[2].add(file_id)
+        counts[2].add(id)
 
-    def get_file_counts(self, endpt):
+    def get_case_and_sample_counts(self, endpt):
         params = {
             'filters':"{}", 
+            'sort':'case_id:asc', 
+            'from':1, 
+            'size':1000}
+        curstart = 1
+        no_case = 0
+        program2case2counts = {}
+        program2sample2counts = {}
+        while True:
+            msg = '\t\tproblem getting filtered map for files'
+            response = None
+            retries = 4
+            while retries:
+                retries -= 1
+                try:
+                    response = request(endpt, params, msg, self.log, None)
+                    response.raise_for_status()
+                    try:
+                        rj = response.json()
+                        break
+                    except:
+                        self.log.exception('problem with response, not json: %s' % (response.text))
+                        raise
+                finally:
+                    if response:
+                        response.close
+            
+            params['from'] = params['from'] + params['size']
+            for index in range(len(rj['data']['hits'])):
+                themap = rj['data']['hits'][index]
+                if 'cases' not in themap:
+                    no_case += 1
+                    continue
+                file_id = themap['file_id']
+                for i in range(len(themap['samples'])):
+                    case_id = themap['case_id']
+                    project_id = themap['project']['project_id']
+                    program = project_id.split('-')[0]
+                    self.add_to_map(program2case2counts, case_id, program, case_id, file_id)
+                    sample_id = themap['samples'][i]['sample_id']
+                    self.add_to_map(program2sample2counts, sample_id, program, case_id, sample_id)
+            
+            curstart += rj['data']['pagination']['count']
+            if curstart > rj['data']['pagination']['total']:
+                break
+
+        program2case_counts = {}
+        program2sample_counts = {}
+        for program2field2counts, program2field_counts  in zip([program2case2counts, program2sample2counts], 
+                                        [program2case_counts, program2sample_counts]):
+            for program, field2counts in program2field2counts.iteritems():
+                counts_list = []
+                for counts in field2counts.values():
+                    counts[1] = len(counts[1])
+                    counts[2] = len(counts[2])
+                    counts_list += [counts]
+                program2field_counts[program] = counts_list
+        return program2case_counts, program2sample_counts
+
+    def get_file_counts(self, endpt, filters = '{}'):
+        params = {
+            'filters': filters, 
             'sort':'file_id:asc', 
             'from':1, 
             'size':200}
@@ -175,7 +573,7 @@ class GDCCloudSQLTest(GDCTestSetup):
             while retries:
                 retries -= 1
                 try:
-                    response = request(endpt, params, msg, self.log, None)
+                    response = request(endpt, params, msg, self.log)
                     response.raise_for_status()
                     try:
                         rj = response.json()
@@ -225,333 +623,105 @@ class GDCCloudSQLTest(GDCTestSetup):
                 program2field_counts[program] = counts_list
         return program2project_counts, program2data_type_counts, program2exp_strat_counts, program2access_counts
 
-    def testCloudSQL(self):
-#         query = "select * from metadata_program order by program_name"
-#         self.run_query(query)
-#   
-#         query = "desc CCLE_metadata_project"
-#         self.run_query(query)
-#   
-#         query = "select count(*), 'CCLE' from CCLE_metadata_project union select count(*), 'TARGET' from TARGET_metadata_project union select count(*), 'TCGA' from TCGA_metadata_project"
-#         self.run_query(query)
-#   
-#         query = "select count(*), 'CCLE' from CCLE_metadata_clinical union select count(*), 'TARGET' from TARGET_metadata_clinical union select count(*), 'TCGA' from TCGA_metadata_clinical"
-#         self.run_query(query)
-#   
-#         query = "select count(*), 'CCLE' from CCLE_metadata_biospecimen union select count(*), 'TARGET' from TARGET_metadata_biospecimen union select count(*), 'TCGA' from TCGA_metadata_biospecimen"
-#         self.run_query(query)
-#   
-#         query = "select sample_type, count(*) ct from CCLE_metadata_biospecimen group by sample_type"
-#         self.run_query(query)
-#   
-#         query = "select * from CCLE_metadata_project order by project_short_name"
-#         self.run_query(query)
-#   
-#         query = "select * from TARGET_metadata_project order by project_short_name"
-#         self.run_query(query)
-#   
-#         query = "select * from TCGA_metadata_project order by project_short_name"
-#         self.run_query(query)
-#   
-#         query = "select * from CCLE_metadata_clinical order by case_barcode limit 50"
-#         self.run_query(query)
-#   
-#         query = "desc TARGET_metadata_clinical"
-#         self.run_query(query)
-#   
-#         query = "select * from TARGET_metadata_clinical order by case_barcode limit 50"
-#         self.run_query(query)
-#   
-#         query = "select * from TARGET_metadata_clinical where endpoint_type = 'legacy' order by case_barcode limit 20"
-#         self.run_query(query)
-#   
-#         query = "select * from TARGET_metadata_clinical where endpoint_type = 'current' order by case_barcode limit 20"
-#         self.run_query(query)
-#   
-#         query = "desc TCGA_metadata_clinical"
-#         self.run_query(query)
-#   
-#         query = "select * from TCGA_metadata_clinical order by case_barcode limit 50"
-#         self.run_query(query)
-#   
-#         query = "select * from TCGA_metadata_clinical where endpoint_type = 'legacy' order by case_barcode limit 20"
-#         self.run_query(query)
-#   
-#         query = "select * from TCGA_metadata_clinical where endpoint_type = 'current' order by case_barcode limit 20"
-#         self.run_query(query)
-# ####################
-#         query = 'select count(*) from TCGA_metadata_clinical where age_began_smoking_in_years is not null'
-#         self.run_query(query)
-# 
-#         query = 'select count(*) from TCGA_metadata_clinical where anatomic_neoplasm_subdivision is not null'
-#         self.run_query(query)
-# 
-#         query = 'select count(*) from TCGA_metadata_clinical where batch_number is not null'
-#         self.run_query(query)
-# 
-#         query = 'select count(*) from TCGA_metadata_clinical where bmi is not null'
-#         self.run_query(query)
-# 
-#         query = 'select count(*) from TCGA_metadata_clinical where clinical_M is not null'
-#         self.run_query(query)
-# 
-#         query = 'select count(*) from TCGA_metadata_clinical where clinical_N is not null'
-#         self.run_query(query)
-# 
-#         query = 'select count(*) from TCGA_metadata_clinical where clinical_stage is not null'
-#         self.run_query(query)
-# 
-#         query = 'select count(*) from TCGA_metadata_clinical where clinical_T is not null'
-#         self.run_query(query)
-# 
-#         query = 'select count(*) from TCGA_metadata_clinical where colorectal_cancer is not null'
-#         self.run_query(query)
-# 
-#         query = 'select count(*) from TCGA_metadata_clinical where country is not null'
-#         self.run_query(query)
-# 
-#         query = 'select count(*) from TCGA_metadata_clinical where days_to_initial_pathologic_diagnosis is not null'
-#         self.run_query(query)
-# 
-#         query = 'select count(*) from TCGA_metadata_clinical where days_to_last_followup is not null'
-#         self.run_query(query)
-# 
-#         query = 'select count(*) from TCGA_metadata_clinical where days_to_submitted_specimen_dx is not null'
-#         self.run_query(query)
-# 
-#         query = 'select count(*) from TCGA_metadata_clinical where gleason_score_combined is not null'
-#         self.run_query(query)
-# 
-#         query = 'select count(*) from TCGA_metadata_clinical where h_pylori_infection is not null'
-#         self.run_query(query)
-# 
-#         query = 'select count(*) from TCGA_metadata_clinical where height is not null'
-#         self.run_query(query)
-# 
-#         query = 'select count(*) from TCGA_metadata_clinical where history_of_colon_polyps is not null'
-#         self.run_query(query)
-# 
-#         query = 'select count(*) from TCGA_metadata_clinical where hpv_calls is not null'
-#         self.run_query(query)
-# 
-#         query = 'select count(*) from TCGA_metadata_clinical where hpv_status is not null'
-#         self.run_query(query)
-# 
-#         query = 'select count(*) from TCGA_metadata_clinical where lymphatic_invasion is not null'
-#         self.run_query(query)
-# 
-#         query = 'select count(*) from TCGA_metadata_clinical where lymphnodes_examined is not null'
-#         self.run_query(query)
-# 
-#         query = 'select count(*) from TCGA_metadata_clinical where lymphovascular_invasion_present is not null'
-#         self.run_query(query)
-# 
-#         query = 'select count(*) from TCGA_metadata_clinical where menopause_status is not null'
-#         self.run_query(query)
-# 
-#         query = 'select count(*) from TCGA_metadata_clinical where mononucleotide_and_dinucleotide_marker_panel_analysis_status is not null'
-#         self.run_query(query)
-# 
-#         query = 'select count(*) from TCGA_metadata_clinical where neoplasm_histologic_grade is not null'
-#         self.run_query(query)
-# 
-#         query = 'select count(*) from TCGA_metadata_clinical where new_tumor_event_after_initial_treatment is not null'
-#         self.run_query(query)
-# 
-#         query = 'select count(*) from TCGA_metadata_clinical where number_of_lymphnodes_examined is not null'
-#         self.run_query(query)
-# 
-#         query = 'select count(*) from TCGA_metadata_clinical where number_of_lymphnodes_positive_by_he is not null'
-#         self.run_query(query)
-# 
-#         query = 'select count(*) from TCGA_metadata_clinical where number_pack_years_smoked is not null'
-#         self.run_query(query)
-# 
-#         query = 'select count(*) from TCGA_metadata_clinical where other_dx is not null'
-#         self.run_query(query)
-# 
-#         query = 'select count(*) from TCGA_metadata_clinical where other_malignancy_anatomic_site is not null'
-#         self.run_query(query)
-# 
-#         query = 'select count(*) from TCGA_metadata_clinical where other_malignancy_histological_type is not null'
-#         self.run_query(query)
-# 
-#         query = 'select count(*) from TCGA_metadata_clinical where other_malignancy_type is not null'
-#         self.run_query(query)
-# 
-#         query = 'select count(*) from TCGA_metadata_clinical where pathologic_M is not null'
-#         self.run_query(query)
-# 
-#         query = 'select count(*) from TCGA_metadata_clinical where pathologic_N is not null'
-#         self.run_query(query)
-# 
-#         query = 'select count(*) from TCGA_metadata_clinical where pathologic_stage is not null'
-#         self.run_query(query)
-# 
-#         query = 'select count(*) from TCGA_metadata_clinical where pathologic_T is not null'
-#         self.run_query(query)
-# 
-#         query = 'select count(*) from TCGA_metadata_clinical where pregnancies is not null'
-#         self.run_query(query)
-# 
-#         query = 'select count(*) from TCGA_metadata_clinical where primary_neoplasm_melanoma_dx is not null'
-#         self.run_query(query)
-# 
-#         query = 'select count(*) from TCGA_metadata_clinical where primary_therapy_outcome_success is not null'
-#         self.run_query(query)
-# 
-#         query = 'select count(*) from TCGA_metadata_clinical where psa_value is not null'
-#         self.run_query(query)
-# 
-#         query = 'select count(*) from TCGA_metadata_clinical where residual_tumor is not null'
-#         self.run_query(query)
-# 
-#         query = 'select count(*) from TCGA_metadata_clinical where stopped_smoking_year is not null'
-#         self.run_query(query)
-# 
-#         query = 'select count(*) from TCGA_metadata_clinical where tobacco_smoking_history is not null'
-#         self.run_query(query)
-# 
-#         query = 'select count(*) from TCGA_metadata_clinical where tumor_type is not null'
-#         self.run_query(query)
-# 
-#         query = 'select count(*) from TCGA_metadata_clinical where venous_invasion is not null'
-#         self.run_query(query)
-# 
-#         query = 'select count(*) from TCGA_metadata_clinical where weight is not null'
-#         self.run_query(query)
-# 
-#         query = 'select count(*) from TCGA_metadata_clinical where year_of_tobacco_smoking_onset is not null'
-#         self.run_query(query)
-# ##############
-#         query = "select * from CCLE_metadata_biospecimen order by case_barcode limit 50"
-#         self.run_query(query)
-#   
-#         query = "select * from TARGET_metadata_biospecimen order by case_barcode limit 50"
-#         self.run_query(query)
-#   
-#         query = "select * from TARGET_metadata_biospecimen where 'legacy' = endpoint_type order by case_barcode limit 20"
-#         self.run_query(query)
-#   
-#         query = "select * from TARGET_metadata_biospecimen where 'current' = endpoint_type order by case_barcode limit 50"
-#         self.run_query(query)
-#   
-#         query = "desc TCGA_metadata_biospecimen"
-#         self.run_query(query)
-#   
-#         query = "select * from TCGA_metadata_biospecimen order by case_barcode limit 50"
-#         self.run_query(query)
-# 
-#         query = "select * from TCGA_metadata_biospecimen where 'legacy' = endpoint_type order by case_barcode limit 20"
-#         self.run_query(query)
-#   
-#         query = "select * from TCGA_metadata_biospecimen where 'current' = endpoint_type order by case_barcode limit 50"
-#         self.run_query(query)
-#   
-# ########################
-#         query = 'select count(*) from TCGA_metadata_biospecimen where days_to_collection is not null'
-#         self.run_query(query)
-# 
-#         query = 'select count(*) from TCGA_metadata_biospecimen where days_to_sample_procurement is not null'
-#         self.run_query(query)
-# 
-# ########################
-# 
-#         query = "select * from CCLE_metadata_samples order by case_barcode limit 50"
-#         self.run_query(query)
-#   
-#         query = "desc TARGET_metadata_samples"
-#         self.run_query(query)
-#   
-#         query = "select * from TARGET_metadata_samples order by case_barcode limit 50"
-#         self.run_query(query)
-#   
-#         query = "select * from TARGET_metadata_samples where 'legacy' = endpoint_type order by case_barcode limit 20"
-#         self.run_query(query)
-#   
-#         query = "select * from TARGET_metadata_samples where 'current' = endpoint_type order by case_barcode limit 20"
-#         self.run_query(query)
-# #######################
-# 
-#         query = "select * from TCGA_metadata_samples order by case_barcode limit 50"
-#         self.run_query(query)
-#   
-#         query = "select * from TCGA_metadata_samples where 'legacy' = endpoint_type order by case_barcode limit 20"
-#         self.run_query(query)
-#   
-#         query = "select * from TCGA_metadata_samples where 'current' = endpoint_type order by case_barcode limit 20"
-#         self.run_query(query)
-# #######################
-#         query = 'select count(*) ct from TCGA_metadata_samples where bmi is not null'
-#         self.run_query(query)
-#  
-#         query = 'select count(*) ct from TCGA_metadata_samples where tobacco_smoking_history is not null'
-#         self.run_query(query)
-#  
-#         query = 'select count(*) ct from TCGA_metadata_samples where menopause_status is not null'
-#         self.run_query(query)
-#  
-#         query = 'select count(*) ct from TCGA_metadata_samples where hpv_status is not null'
-#         self.run_query(query)
-#  
-#         query = 'select count(*) ct from TCGA_metadata_samples where pathologic_stage is not null'
-#         self.run_query(query)
-#  
-#         query = 'select count(*) ct from TCGA_metadata_samples where residual_tumor is not null'
-#         self.run_query(query)
-#  
-#         query = 'select count(*) ct from TCGA_metadata_samples where neoplasm_histologic_grade is not null'
-#         self.run_query(query)
-# #######################
-# 
-#         query = "select * from CCLE_metadata_attrs"
-#         self.run_query(query)
-#   
-#         query = "select * from TARGET_metadata_attrs"
-#         self.run_query(query)
-#   
-#         query = "select * from TCGA_metadata_attrs"
-#         self.run_query(query)
-#  
-#         query = "select program_name, count(distinct sample_barcode) from CCLE_metadata_samples group by program_name union select program_name, count(distinct sample_barcode) from TARGET_metadata_samples group by program_name union select program_name, count(distinct sample_barcode) from TCGA_metadata_samples group by 1"
-#         self.run_query(query)
-#  
-#         query = "select program_name, endpoint_type, count(distinct sample_barcode) from CCLE_metadata_samples group by 1, 2 union select program_name, endpoint_type, count(distinct sample_barcode) from TARGET_metadata_samples group by 1, 2 union select program_name, endpoint_type, count(distinct sample_barcode) from TCGA_metadata_samples group by 1, 2"
-#         self.run_query(query)
-#  
-#         query = "select program_name, count(distinct case_barcode) from CCLE_metadata_samples group by program_name union select program_name, count(distinct case_barcode) from TARGET_metadata_samples group by program_name union select program_name, count(distinct case_barcode) from TCGA_metadata_samples group by 1"
-#         self.run_query(query)
-#  
-#         query = "select program_name, endpoint_type, count(distinct case_barcode) from CCLE_metadata_samples group by 1, 2 union select program_name, endpoint_type, count(distinct case_barcode) from TARGET_metadata_samples group by 1, 2 union select program_name, endpoint_type, count(distinct case_barcode) from TCGA_metadata_samples group by 1, 2"
-#         self.run_query(query)
-#  
-#         query = "select count(distinct a.case_barcode), count(distinct a.sample_barcode) from TCGA_metadata_samples a left join TCGA_metadata_samples b on a.sample_barcode = b.sample_barcode where a.endpoint_type = 'current' and b.endpoint_type = 'legacy' and b.sample_barcode is null"
-#         self.run_query(query)
-#  
-#         query = "select count(distinct a.case_barcode), count(distinct a.sample_barcode) from TCGA_metadata_samples a where a.endpoint_type = 'current' and a.sample_barcode not in (select b.sample_barcode from TCGA_metadata_samples b where b.endpoint_type = 'legacy')"
-#         self.run_query(query)
-#  
-#         query = "select a.project_short_name, count(distinct a.case_barcode), count(distinct a.sample_barcode) from TCGA_metadata_samples a where a.endpoint_type = 'current' and a.sample_barcode not in (select b.sample_barcode from TCGA_metadata_samples b where b.endpoint_type = 'legacy') group by a.project_short_name order by a.project_short_name"
-# #         self.run_query(query)
-#   
-#         query = \
-#             "select endpoint_type, count(distinct case_barcode) cases, count(distinct sample_barcode) samples, count(distinct aliquot_barcode) aliquots, count(distinct file_name) files, count(*) total, 'CCLE19' from CCLE_metadata_data_HG19 group by endpoint_type union " \
-#             "select endpoint_type, count(distinct case_barcode) cases, count(distinct sample_barcode) samples, count(distinct aliquot_barcode) aliquots, count(distinct file_name) files, count(*) total, 'TARGET19' from TARGET_metadata_data_HG19 group by endpoint_type union " \
-#             "select endpoint_type, count(distinct case_barcode) cases, count(distinct sample_barcode) samples, count(distinct aliquot_barcode) aliquots, count(distinct file_name) files, count(*) total, 'TARGET38' from TARGET_metadata_data_HG38 group by endpoint_type union " \
-#             "select endpoint_type, count(distinct case_barcode) cases, count(distinct sample_barcode) samples, count(distinct aliquot_barcode) aliquots, count(distinct file_name) files, count(*) total, 'TCGA19' from TCGA_metadata_data_HG19 group by endpoint_type union " \
-#             "select endpoint_type, count(distinct case_barcode) cases, count(distinct sample_barcode) samples, count(distinct aliquot_barcode) aliquots, count(distinct file_name) files, count(*) total, 'TCGA38' from TCGA_metadata_data_HG38 group by endpoint_type " \
-#             "order by 3, 1"
-#         self.run_query(query)
-#  
-#         query = \
-#             "select file_uploaded, count(distinct file_name_key) name_keys, count(*) total, 'CCLE19' from CCLE_metadata_data_HG19 group by file_uploaded union " \
-#             "select file_uploaded, count(distinct file_name_key) name_keys, count(*) total, 'TARGET19' from TARGET_metadata_data_HG19 group by file_uploaded union " \
-#             "select file_uploaded, count(distinct file_name_key) name_keys, count(*) total, 'TARGET38' from TARGET_metadata_data_HG38 group by file_uploaded union " \
-#             "select file_uploaded, count(distinct file_name_key) name_keys, count(*) total, 'TCGA19' from TCGA_metadata_data_HG19 group by file_uploaded union " \
-#             "select file_uploaded, count(distinct file_name_key) name_keys, count(*) total, 'TCGA38' from TCGA_metadata_data_HG38 group by file_uploaded " \
-#             "order by 3, 1"
-#         self.run_query(query)
-#  
+#     def testSamplesExists(self):
+    def SamplesExists(self):
+        filters = {
+                    'op': 'in',
+                    'content': {
+                        'field': 'cases.samples.submitter_id',
+                        'value': [
+                            'TCGA-PN-A8M9-01A',
+                            'TCGA-PN-A8M9-10A',
+                            'TCGA-DM-A286-01A',
+                            'TCGA-F4-6857-01A',
+                            'TCGA-F4-6857-10A',
+                            'TCGA-BR-4186-01A',
+                            'TCGA-BR-4186-11A',
+                            'TCGA-BR-4190-01A',
+                            'TCGA-BR-4190-11A',
+                            'TCGA-BR-4194-01A',
+                            'TCGA-BR-4194-11A',
+                            'TCGA-BR-4195-01A',
+                            'TCGA-BR-4195-11A',
+                            'TCGA-BR-4196-01A',
+                            'TCGA-BR-4196-11A',
+                            'TCGA-BR-4197-01A',
+                            'TCGA-BR-4197-11A',
+                            'TCGA-BR-4199-01A',
+                            'TCGA-BR-4199-11A',
+                            'TCGA-BR-4200-01A',
+                            'TCGA-BR-4200-11A',
+                            'TCGA-BR-4205-01A',
+                            'TCGA-BR-4205-11A',
+                            'TCGA-BR-4259-01A',
+                            'TCGA-BR-4259-11A',
+                            'TCGA-BR-4260-01A',
+                            'TCGA-BR-4260-11A',
+                            'TCGA-BR-4261-01A',
+                            'TCGA-BR-4261-11A',
+                            'TCGA-BR-4263-01A',
+                            'TCGA-BR-4263-11A',
+                            'TCGA-BR-4264-01A',
+                            'TCGA-BR-4264-11A',
+                            'TCGA-BR-4265-01A',
+                            'TCGA-BR-4265-11A',
+                            'TCGA-BR-4266-01A',
+                            'TCGA-BR-4266-11A',
+                            'TCGA-BR-4270-01A',
+                            'TCGA-BR-4270-11A',
+                            'TCGA-BR-4271-01A',
+                            'TCGA-BR-4271-11A',
+                            'TCGA-BR-4272-01A',
+                            'TCGA-BR-4272-11A',
+                            'TCGA-BR-4273-01A',
+                            'TCGA-BR-4273-11A',
+                            'TCGA-BR-4274-01A',
+                            'TCGA-BR-4274-11A',
+                            'TCGA-BR-4276-01A',
+                            'TCGA-BR-4276-11A',
+                            'TCGA-BR-4277-01A',
+                            'TCGA-BR-4277-11A',
+                            'TCGA-BR-4278-01A',
+                            'TCGA-BR-4278-11A',
+                            'TCGA-BR-4281-01A',
+                            'TCGA-BR-4281-11A',
+                            'TCGA-BR-4282-01A',
+                            'TCGA-BR-4282-11A',
+                            'TCGA-BR-4283-01A',
+                            'TCGA-BR-4283-11A',
+                            'TCGA-BR-4284-01A',
+                            'TCGA-BR-4284-11A',
+                            'TCGA-BR-4285-01A',
+                            'TCGA-BR-4285-11A',
+                            'TCGA-BR-4286-01A',
+                            'TCGA-BR-4286-11A',
+                            'TCGA-BR-4288-01A',
+                            'TCGA-BR-4288-11A',
+                            'TCGA-BR-4291-01A',
+                            'TCGA-BR-4291-11A',
+                            'TCGA-BR-4298-01A',
+                            'TCGA-BR-4298-11A',
+                            'TCGA-BR-4375-01A',
+                            'TCGA-BR-4375-11A',
+                            'TCGA-BR-4376-01A',
+                            'TCGA-BR-4376-11A',
+                            'TCGA-01-0628-11A',
+                            'TCGA-01-0630-11A',
+                            'TCGA-01-0631-11A',
+                            'TCGA-01-0633-11A',
+                            'TCGA-01-0636-11A',
+                            'TCGA-01-0637-11A',
+                            'TCGA-01-0639-11A',
+                            'TCGA-01-0642-11A',
+                            'TCGA-02-0001-01C',
+                            'TCGA-02-0001-10A'
+                        ]
+                    }
+                }
+        self.log.info(self.get_file_counts('https://gdc-api.nci.nih.gov/legacy/files?expand=cases,cases.project', json.dumps(filters)))
+        
+#     def testCloudSQLvsGDC(self):
+    def cloudSQLvsGDC(self):
 # HG38 compare for target
         query = "select project_short_name, count(distinct case_gdc_id) cases, count( distinct file_gdc_id) files from TARGET_metadata_data_HG38 group by project_short_name order by project_short_name"
         rows = self.run_query(query, False)
@@ -1098,3 +1268,19 @@ class GDCCloudSQLTest(GDCTestSetup):
 #         query = "select dcc.participantbarcode, dcc.samplebarcode, gdc.sample_barcode from test.metadata_biospecimen dcc left join 2017_02_17_gdc_dev.CCLE_metadata_biospecimen gdc on dcc.participantbarcode = gdc.case_barcode where dcc.project = 'CCLE' and gdc.sample_barcode is null"
 #         rows = self.run_query(query, True)
 #         
+
+    def testRandom(self):
+        query = 'desc TCGA_metadata_data_type_availability'
+        self.run_query(query)
+        
+        query = 'select count(*) ct from TCGA_metadata_biospecimen'
+        self.run_query(query)
+        
+        query = "select * from TCGA_metadata_data_type_availability order by 1"
+        self.run_query(query)
+        
+        query = 'select metadata_data_type_availability_id from TCGA_metadata_data_type_availability where isb_label = "Somatic_Mutation" and genomic_build = "HG38"'
+        self.run_query(query)
+        
+        query = "select isb_label, s.metadata_data_type_availability_id id, count(distinct sample_barcode) barcodes, sum(count) count, count(*) ct from TCGA_metadata_sample_data_availability s join TCGA_metadata_data_type_availability d on s.metadata_data_type_availability_id = d.metadata_data_type_availability_id where genomic_build = 'HG38' group by 1;"
+        self.run_query(query)

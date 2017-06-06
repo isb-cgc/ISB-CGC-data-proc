@@ -24,7 +24,7 @@ from gdc.util.process_images import process_images
 
 class GDCTestUpload(GDCTestSetup):
     def setUp(self):
-        self.log_tag = '_test_process_images'
+        self.log_tag = '_test_process_dev_images'
         super(GDCTestUpload, self).setUp()
         
     def test_process_images(self):

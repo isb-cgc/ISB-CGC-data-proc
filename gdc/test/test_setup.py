@@ -27,7 +27,7 @@ from util import create_log
 class GDCTestSetup(unittest.TestCase):
     def __init__(self, param):
         self.config = './gdc/config/uploadGDC_test.json'
-        self.log_tag = '_gdc_upload_data_migration/'
+        self.log_tag = '_gdc_test/'
         super(GDCTestSetup, self).__init__(param)
     
     def setUp(self):
