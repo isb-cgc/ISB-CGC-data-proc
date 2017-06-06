@@ -409,9 +409,11 @@ def __recurse_flatten_map(origmap, thefilter):
             newfilter = thefilter['map_list'][value]
             if value in origmap:
                 for nextmap in origmap[value]:
-                    newmap = dict(initmap)
-                    newmap.update(__recurse_flatten_map(nextmap, newfilter)[0])
-                    retlist += [newmap]
+                    newmaps = __recurse_flatten_map(nextmap, newfilter)
+                    for nextmap in newmaps:
+                        newmap = dict(initmap)
+                        newmap.update(nextmap)
+                        retlist += [newmap]
         if 0 == len(retlist):
             retlist += [initmap]
     else:
