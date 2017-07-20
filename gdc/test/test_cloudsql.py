@@ -38,7 +38,7 @@ class GDCCloudSQLTest(GDCTestSetup):
             for row in rows:
                 results += '%s\n' % ('\t'.join(str(item) for item in row))
             if verbose:
-                self.log.info('rows for query:%s\n%s\n' % (self.process_header(query), results))
+                self.log.info('%d rows for query:%s\n%s\n' % (len(rows), self.process_header(query), results))
             return rows
         except:
             self.log.exception()
@@ -1270,17 +1270,8 @@ class GDCCloudSQLTest(GDCTestSetup):
 #         
 
     def testRandom(self):
-        query = 'desc TCGA_metadata_data_type_availability'
-        self.run_query(query)
-        
-        query = 'select count(*) ct from TCGA_metadata_biospecimen'
-        self.run_query(query)
-        
-        query = "select * from TCGA_metadata_data_type_availability order by 1"
-        self.run_query(query)
-        
-        query = 'select metadata_data_type_availability_id from TCGA_metadata_data_type_availability where isb_label = "Somatic_Mutation" and genomic_build = "HG38"'
-        self.run_query(query)
-        
-        query = "select isb_label, s.metadata_data_type_availability_id id, count(distinct sample_barcode) barcodes, sum(count) count, count(*) ct from TCGA_metadata_sample_data_availability s join TCGA_metadata_data_type_availability d on s.metadata_data_type_availability_id = d.metadata_data_type_availability_id where genomic_build = 'HG38' group by 1;"
-        self.run_query(query)
+        for query in self.config.get('queries', []):
+            query = query.strip()
+            if 0 == len(query) or '#' == query[0]:
+                continue
+            self.run_query(query, False)

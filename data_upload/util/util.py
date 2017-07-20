@@ -233,24 +233,25 @@ def _download_file(url, file_path, log, user, password):
     decrease_backoff()
 
 # def upload_files(archive_path, key_path):
-#     
+#    
 def create_log(log_dir, log_name):
     try:
         # creates the logs for the run
-        if not os.path.isdir(log_dir):
-            os.makedirs(log_dir)
-        logger = logging.getLogger(log_name)
-        logger.setLevel(logging.DEBUG)
-        log = logging.FileHandler(log_dir + log_name + '.txt', 'w')
-        log.setLevel(logging.DEBUG)
-        slog = logging.StreamHandler()
-        slog.setLevel(logging.DEBUG)
-        formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(threadName)s - %(message)s')
-        log.setFormatter(formatter)
-        slog.setFormatter(formatter)
-        logger.addHandler(log)
-        logger.addHandler(slog)
-        return log_name
+        with lock:
+            if not os.path.isdir(log_dir):
+                os.makedirs(log_dir)
+            logger = logging.getLogger(log_name)
+            logger.setLevel(logging.DEBUG)
+            log = logging.FileHandler(log_dir + log_name + '.txt', 'w')
+            log.setLevel(logging.DEBUG)
+            slog = logging.StreamHandler()
+            slog.setLevel(logging.DEBUG)
+            formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(threadName)s - %(message)s')
+            log.setFormatter(formatter)
+            slog.setFormatter(formatter)
+            logger.addHandler(log)
+            logger.addHandler(slog)
+            return log_name
     except:
         print 'ERROR: couldn\'t create log %s in %s' % (log_name, log_dir)
 
