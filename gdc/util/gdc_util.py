@@ -181,7 +181,7 @@ def __get_filtered_map_rows(url, idname, filt, mapfilter, activity, log, size = 
             count += 1
         
         curstart += rj['data']['pagination']['count']
-        if curstart > rj['data']['pagination']['total']:
+        if curstart >= rj['data']['pagination']['total']:
             break
 
     return id2map
