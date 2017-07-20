@@ -16,6 +16,7 @@ lib-cov
 *.onco
 *.pdf
 *.maf
+*ssl
 
 pids
 logs
@@ -43,6 +44,8 @@ data
 data_upload/data
 data_upload/ssl
 data_upload/config
+gdc/download_client/
+data_upload/latestarchive
 scripts
 ssl
 venv_upload
