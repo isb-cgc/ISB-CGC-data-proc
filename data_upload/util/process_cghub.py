@@ -17,7 +17,7 @@ limitations under the License.
 
 @author: michael
 '''
-from util import import_module, log_exception, log_info
+from util import import_module, log_exception, log_info, post_run_file
 
 import pprint
 
@@ -32,9 +32,10 @@ def addPlatformPipelineFields(config, metadata, seen_bad_codes, log):
         pprint.pprint(metadata['platform_full_name'])
         log_exception(log, 'KeyError in fullPlatform2platform[metadata["platform_full_name"]]: %s' % str(e))
     centerName = shortname2centername[metadata['DataCenterCode']]
-    assembly = metadata['GenomeReference']
     try:
         moltype = analyte2strategy2moltype[metadata['analyte_code']][metadata['library_strategy']]
+        if 'None' == moltype:
+            log_info(log, 'didn\'t find a useful molecular type for %s:%s' % (metadata['analyte_code'], metadata['library_strategy']))
     except Exception as e:
         log_exception(log, 'problem setting molecular type: \'%s\' \'%s\'' % (metadata['analyte_code'], metadata['library_strategy']))
         raise e
@@ -49,22 +50,25 @@ def addPlatformPipelineFields(config, metadata, seen_bad_codes, log):
     shortname = metadata['DataCenterCode']
     if metadata['analyte_code'] in ('H', 'R', 'T'):
         metadata['DataCenterCode'] = shortname2centercodes[metadata['DataCenterCode']][1]
+        metadata['Datatype'] = 'RNA Sequence-Alignment'
     elif metadata['analyte_code'] in ('D', 'W', 'X'):
         metadata['DataCenterCode'] = shortname2centercodes[metadata['DataCenterCode']][0]
+        metadata['Datatype'] = 'DNA Sequence-Alignment'
     else:
         metadata['DataCenterCode'] = None
     if "00" == metadata['DataCenterCode'] and shortname not in seen_bad_codes:
         log.warning('did not find a proper center code for %s with analyte %s' % (shortname, metadata['analyte_code']))
         seen_bad_codes.add(shortname)
     
-    upload_platforms = config['upload_platforms']
-    deprecated_centers = config['deprecated_centers']
-    deprecated_assemblies = config['deprecated_assemblies']
-    deprecated = False
-    for deprecated_assembly in deprecated_assemblies:
-        if deprecated_assembly in assembly:
-            deprecated = True
 # will let CGHub upload update records (#718)
+#     assembly = metadata['GenomeReference']
+#     upload_platforms = config['upload_platforms']
+#     deprecated_centers = config['deprecated_centers']
+#     deprecated_assemblies = config['deprecated_assemblies']
+#     deprecated = False
+#     for deprecated_assembly in deprecated_assemblies:
+#         if deprecated_assembly in assembly:
+#             deprecated = True
 #     if platformName in upload_platforms and centerName not in deprecated_centers and moltype != 'None' and not deprecated:
 #         metadata['DatafileUploaded'] = 'true' if 'Live' == metadata['state'] else 'false'
 #     else:
@@ -109,6 +113,8 @@ def create_cghub_metadata(mappings, cghub_record, seen_bad_codes, log):
             fields = field.split(':')
             if 2 == len(fields) and 'literal' == fields[0]:
                 metadata[part] = fields[1]
+            elif 3 == len(fields) and 'map' == fields[0]:
+                metadata[part] = mappings[fields[1]][metadata[fields[2]]]
             elif 4 == len(fields) and 'substring' == fields[0]:
                 metadata[part] = metadata[fields[1]][int(fields[2]):int(fields[3])]
             elif 5 == len(fields) and 'match' == fields[0]:
@@ -126,7 +132,7 @@ def create_cghub_metadata(mappings, cghub_record, seen_bad_codes, log):
     addPlatformPipelineFields(mappings, metadata, seen_bad_codes, log)
     return metadata
 
-def process_cghub(config, type_uri = 'detail', log = None, removedups = False, limit = -1, verbose = False, print_response = False):
+def process_cghub(config, run_dir, type_uri = 'detail', log = None, removedups = False, limit = -1, verbose = False, print_response = False):
     """
     return type:
         tumor_type2cghub_records: organizes the cghub record classes per tumor type
@@ -134,7 +140,7 @@ def process_cghub(config, type_uri = 'detail', log = None, removedups = False, l
     log_info(log, 'begin process cghub')
     module = import_module(config['cghub_module'])
     mappings = config['metadata_locations']['cghub']
-    cghub_records, _ = module.main(mappings['study'], log = log, removedups = removedups, limit = limit)
+    cghub_records, _, cghub_manifest = module.main(mappings['study'], log = log, removedups = removedups, limit = limit)
     tumor_type2cghub_records = {}
     count = 0
     seen_bad_codes = set()
@@ -143,5 +149,6 @@ def process_cghub(config, type_uri = 'detail', log = None, removedups = False, l
             log_info(log, '\tprocess %s cghub records' % (count))
         count += 1
         tumor_type2cghub_records.setdefault(cghub_record.disease_abbr, []).append(create_cghub_metadata(mappings, cghub_record, seen_bad_codes, log))
+    post_run_file(run_dir, 'CGHub_LATEST_MANIFEST.tsv', cghub_manifest)
     log_info(log, 'finished process cghub: %s total records' % (count))
     return tumor_type2cghub_records

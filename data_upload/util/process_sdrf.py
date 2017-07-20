@@ -21,7 +21,6 @@ import os
 import re
 import shutil
 
-import gcs_wrapper
 import parseSDRF
 import util
 
@@ -44,7 +43,7 @@ def upload_sdrf_file(config, archive_path, file_name, metadata, log):
     bucket_name = config['buckets']['open']
     key_name = getSDRFKeyName(file_name, metadata, log)
     if config['upload_files'] and config['upload_open']:
-        gcs_wrapper.upload_file(archive_path + file_name, bucket_name, key_name, log)
+        util.upload_file(config, archive_path + file_name, bucket_name, key_name, log)
     else:
         log.info('\t\tnot uploading %s from sdrf archive to %s' % (file_name, key_name))
  
@@ -141,13 +140,19 @@ def parse_sdrf(config, log, file_name, archive2metadata, barcode2files2term2valu
                         term2value['SDRFFileName'] = sdrf_file_name
                         
                         
-                        if 'DataArchiveName' in term2value:
+                        if 'DataArchiveName' in term2value and term2value['DataArchiveName'] in archive2metadata:
+                            # the archive2metadata will set the following fields: DataArchiveURL, DataArchiveVersion, DataCenterName, DataCenterType, 
+                            #   Pipeline, Platform, Project, SecurityProtocol 
                             term2value.update(archive2metadata[term2value['DataArchiveName']])
                         else:
                             term2value.update(centerfields2values)
                         if 'bam' in term2value['DatafileName'] or 'tar.gz' in term2value['DatafileName']:
                             if 'DataLevel' not in term2value:
                                 term2value['DataLevel'] = 'Level 1'
+                            if 'Datatype' not in term2value:
+                                term2value['Datatype'] = 'DNA Sequence-Alignment' if 'DNA' in term2value['Platform'] else 'RNA Sequence-Alignment'
+                            term2value['SecurityProtocol'] = config['access_tags']['controlled']
+                        if term2value['DatafileName'].endswith('vcf') or term2value['DatafileName'].endswith('protected.maf') or 'wig' in term2value['DatafileName']:
                             term2value['SecurityProtocol'] = config['access_tags']['controlled']
                         node2term2value[nodeInstance.name] = term2value
                         term2value['SDRFFileNameKey'] = getSDRFKeyName(sdrf_file_name, term2value, log)
@@ -228,9 +233,10 @@ def process_sdrf(config, log, magetab_archives, archive2metadata, barcode2annota
     barcode2files2term2values = {}
     archive2barcodes = {}
     for archive_fields in magetab_archives:
+        archive_path = None
         try:
             log.info('\tprocessing %s' % (archive_fields[0]))
-            archive_path = util.setup_archive(archive_fields, log)
+            archive_path = util.setup_archive(config, archive_fields, log)
             files = os.listdir(archive_path)
             antibody_files = []
             cur_barcode2files2term2values = {}
@@ -245,6 +251,7 @@ def process_sdrf(config, log, magetab_archives, archive2metadata, barcode2annota
             for file_name in antibody_files:
                 upload_sdrf_file(config, archive_path, file_name, barcode2files2term2values.values()[0].values()[0], log)
         finally:
-            shutil.rmtree(archive_path)
+            if archive_path:
+                shutil.rmtree(archive_path)
     log.info('finished processing sdrf')
     return barcode2files2term2values

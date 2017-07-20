@@ -17,23 +17,46 @@
 """
 from bigquery_etl.extract.utils import convert_file_to_dataframe
 from bigquery_etl.transform.tools import cleanup_dataframe
+from datetime import datetime
 import MySQLdb
 import pandas as pd
 import os
 
-def convert_blob_to_dataframe(gcs, project_id, bucket_name, filename, skiprows=0):
+def logit(log, message, level):
+    if None == log:
+        print '%s--%s: %s' % (datetime.now(), level.upper(), message)
+    else:
+        if 'INFO' == level.upper():
+            log.info(message)
+        elif 'WARNING' == level.upper():
+            log.warning(message)
+        elif 'ERROR' == level.upper():
+            log.error(message)
+        elif 'EXCEPTION' == level.upper():
+            log.exception(message)
+
+def convert_blob_to_dataframe(gcs, project_id, bucket_name, filename, skiprows=0, log = None):
     """
     Function to connect to google cloud storage, download the file,
     and convert to a dataframe
     """
 
-    filebuffer = gcs.download_blob_to_file(filename)
-
-    # convert blob into dataframe
-    data_df = convert_file_to_dataframe(filebuffer, skiprows=skiprows)
-
-    # clean-up dataframe
-    data_df = cleanup_dataframe(data_df)
+    try:
+        logit(log, 'calling download_blob_to_file() for %s' % (filename), 'info')
+        filebuffer = gcs.download_blob_to_file(filename)
+        logit(log, 'done calling download_blob_to_file() for %s' % (filename), 'info')
+    
+        # convert blob into dataframe
+        logit(log, 'calling convert_file_to_dataframe() for %s' % (filename), 'info')
+        data_df = convert_file_to_dataframe(filebuffer, skiprows=skiprows)
+        logit(log, 'done calling convert_file_to_dataframe() for %s' % (filename), 'info')
+    
+        # clean-up dataframe
+        logit(log, 'calling cleanup_dataframe() for %s' % (filename), 'info')
+        data_df = cleanup_dataframe(data_df)
+        logit(log, 'done calling cleanup_dataframe() for %s' % (filename), 'info')
+    except Exception as e:
+        logit(log, 'problem in convert_blob_to_dataframe(%s): %s' % (filename, e), 'exception')
 
     return data_df
 

@@ -1,6 +1,6 @@
 '''
 Created on May 27, 2015
-a wrapper to google cloud storage.
+a wrapper to google cloud storage using boto.
 
 Copyright 2015, Institute for Systems Biology.
 
@@ -31,7 +31,7 @@ connection = None
 name2bucket = {}
 lock = Lock()
 
-def open_connection():
+def open_connection(config, log):
     global connection
     if connection:
         raise ValueError('the connection to GCS is already open')
@@ -43,6 +43,18 @@ def close_connection():
         connection.close()
         connection = None
     
+def __get_bucket(bucket_name):
+    if bucket_name in name2bucket:
+        bucket = name2bucket[bucket_name]
+    else:
+        with lock:
+            if bucket_name in name2bucket:
+                bucket = name2bucket[bucket_name]
+            else:
+                bucket = connection.get_bucket(bucket_name)
+                name2bucket[bucket_name] = bucket
+    return bucket
+
 def upload_file(file_path, bucket_name, key_name, log):
     global backoff
     for attempt in range(1, 4):
@@ -62,26 +74,74 @@ def upload_file(file_path, bucket_name, key_name, log):
                     backoff = min(1, backoff * 1.15)
             log.warning('\tattempt %s had connection error.  backoff at: %s' % (attempt, backoff))
         except Exception as e:
-            log.exception('\tproblem uploading %s' % (key_name))
-            raise e
-    log.error('\tfailed to upload %s' % (key_name))
-    raise ValueError('\tcould not load %s' % (key_name))
+            log.warning('\tproblem uploading %s due to %s' % (key_name, e))
+            time.sleep(1)
+    log.error('\tfailed to upload %s due to multiple errors' % (key_name))
         
 def __attempt_upload(file_path, bucket_name, key_name, log):
     time.sleep(backoff)
-    if bucket_name in name2bucket:
-        bucket = name2bucket[bucket_name]
-    else:
-        with lock:
-            if bucket_name in name2bucket:
-                bucket = name2bucket[bucket_name]
-            else:
-                bucket = connection.get_bucket(bucket_name)
-                name2bucket[bucket_name] = bucket
+    bucket = __get_bucket(bucket_name)
     if key_name in bucket:
-        raise ValueError('found %s in %s' % (key_name, bucket_name))
+        raise ValueError('found %s already uploaded in %s' % (key_name, bucket_name))
     key = boto.gs.key.Key(bucket, key_name)
     try:
-        key.set_contents_from_filename(file_path)
+        if (file_path.endswith('txt')):
+            # make sure can be loaded as ascii!!!
+            with open(file_path) as infile:
+                contents = infile.read()
+                key.set_contents_from_string(str(contents.encode('ascii','replace')))
+        else:
+            key.set_contents_from_filename(file_path)
     finally:
         key.close()
+
+def download_file(file_path, bucket_name, key_name, log):
+    global backoff
+    if key_name.startswith('/'):
+        key_name = key_name[1:]
+    for attempt in range(1, 4):
+        try:
+            __attempt_download(file_path, bucket_name, key_name, log)
+            backoff *= .9
+            if backoff < .006:
+                backoff = 0
+#             log.info('\tcompleted upload %s' % (key_name))
+            return
+        except requests.exceptions.ConnectionError:
+            with lock:
+                # request failed, trigger backoff
+                if backoff == 0:
+                    backoff = .005
+                else:
+                    backoff = min(1, backoff * 1.15)
+            log.warning('\tattempt %s had connection error.  backoff at: %s' % (attempt, backoff))
+        except Exception as e:
+            log.warning('\tproblem downloading %s due to %s' % (key_name, e))
+    log.error('\tfailed to upload %s due to multiple connection errors' % (key_name))
+
+def __attempt_download(file_path, bucket_name, key_name, log):
+    time.sleep(backoff)
+    bucket = __get_bucket(bucket_name)
+    if key_name not in bucket:
+        raise ValueError('did not find %s in %s' % (key_name, bucket_name))
+    key = boto.gs.key.Key(bucket, key_name)
+    try:
+        key.get_contents_to_filename(file_path)
+    finally:
+        key.close()
+
+    log.info('successfully downloaded %s' % key_name)
+
+def delete_objects(bucket_name, key_names, log):
+    bucket = __get_bucket(bucket_name)
+    try:
+        results = bucket.delete_keys(key_names, True)
+    except:
+        raise
+    log.info('problem deleting keys: %s' % (results))
+
+    log.info('successfully deleted %s keys' % (len(key_names)))
+
+def get_bucket_contents(bucket_name, prefix, log):
+    bucket = __get_bucket(bucket_name)
+    return bucket.list(prefix)

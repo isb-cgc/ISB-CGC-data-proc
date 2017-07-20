@@ -23,484 +23,61 @@ limitations under the License.
 import MySQLdb
 import time
 
-class ISBCGC_database_helper():
+class ISBCGC_database_helper(object):
     """
-    this class manages the cloud sql metadata upload
+    this class is the base class to manage subclass the CloudSQL  uploads
     """
-    metadata_clinical = {
-        'table_name': 'metadata_clinical',
-        'primary_key_name': 'metadata_clinical_id',
-        'columns': [
-            ['age_at_initial_pathologic_diagnosis', 'INTEGER', 'NULL'],
-            ['anatomic_neoplasm_subdivision', 'VARCHAR(63)', 'NULL'],
-            ['batch_number', 'INTEGER', 'NULL'],
-            ['BMI', 'FLOAT(3,1)', 'NULL'],
-            ['bcr', 'VARCHAR(63)', 'NULL'],
-            ['clinical_M', 'VARCHAR(12)', 'NULL'],
-            ['clinical_N', 'VARCHAR(12)', 'NULL'],
-            ['clinical_stage', 'VARCHAR(12)', 'NULL'],
-            ['clinical_T', 'VARCHAR(12)', 'NULL'],
-            ['colorectal_cancer', 'VARCHAR(10)', 'NULL'],
-            ['country', 'VARCHAR(63)', 'NULL'],
-            ['days_to_birth', 'INTEGER', 'NULL'],
-            ['days_to_death', 'INTEGER', 'NULL'],
-            ['days_to_initial_pathologic_diagnosis', 'INTEGER', 'NULL'],
-            ['days_to_last_followup', 'INTEGER', 'NULL'],
-            ['days_to_last_known_alive', 'INTEGER', 'NULL'],
-            ['days_to_submitted_specimen_dx', 'INTEGER', 'NULL'],
-            ['ethnicity', 'VARCHAR(30)', 'NULL'],
-            ['frozen_specimen_anatomic_site', 'VARCHAR(63)', 'NULL'],
-            ['gender', 'VARCHAR(15)', 'NULL'],
-            ['gleason_score_combined', 'INTEGER', 'NULL'],
-            ['height', 'INTEGER', 'NULL'],
-            ['histological_type', 'VARCHAR(120)', 'NULL'],
-            ['history_of_colon_polyps', 'VARCHAR(8)', 'NULL'],
-            ['history_of_neoadjuvant_treatment', 'VARCHAR(63)', 'NULL'],
-            ['history_of_prior_malignancy', 'VARCHAR(25)', 'NULL'],
-            ['hpv_calls', 'VARCHAR(20)', 'NULL'],
-            ['hpv_status', 'VARCHAR(20)', 'NULL'],
-            ['icd_10', 'VARCHAR(8)', 'NULL'],
-            ['icd_o_3_histology', 'VARCHAR(10)', 'NULL'],
-            ['icd_o_3_site', 'VARCHAR(8)', 'NULL'],
-            ['lymphatic_invasion', 'VARCHAR(8)', 'NULL'],
-            ['lymphnodes_examined', 'VARCHAR(8)', 'NULL'],
-            ['lymphovascular_invasion_present', 'VARCHAR(63)', 'NULL'],
-            ['menopause_status', 'VARCHAR(120)', 'NULL'],
-            ['mononucleotide_and_dinucleotide_marker_panel_analysis_status', 'VARCHAR(20)', 'NULL'],
-            ['mononucleotide_marker_panel_analysis_status', 'VARCHAR(20)', 'NULL'],
-            ['neoplasm_histologic_grade', 'VARCHAR(15)', 'NULL'],
-            ['new_tumor_event_after_initial_treatment', 'VARCHAR(8)', 'NULL'],
-            ['number_of_lymphnodes_examined', 'INTEGER', 'NULL'],
-            ['number_of_lymphnodes_positive_by_he', 'INTEGER', 'NULL'],
-            ['number_pack_years_smoked', 'INTEGER', 'NULL'],
-            ['ParticipantBarcode', 'VARCHAR(35)', 'NOT NULL'],
-            ['ParticipantUUID', 'VARCHAR(36)', 'NOT NULL'],
-            ['pathologic_M', 'VARCHAR(12)', 'NULL'],
-            ['pathologic_N', 'VARCHAR(12)', 'NULL'],
-            ['pathologic_stage', 'VARCHAR(15)', 'NULL'],
-            ['pathologic_T', 'VARCHAR(12)', 'NULL'],
-            ['person_neoplasm_cancer_status', 'VARCHAR(15)', 'NULL'],
-            ['pregnancies', 'VARCHAR(35)', 'NULL'],
-            ['primary_neoplasm_melanoma_dx', 'VARCHAR(10)', 'NULL'],
-            ['primary_therapy_outcome_success', 'VARCHAR(70)', 'NULL'],
-            ['prior_dx', 'VARCHAR(100)', 'NULL'],
-            ['Project', 'VARCHAR(40)', 'NOT NULL'],
-            ['psa_value', 'FLOAT', 'NULL'],
-            ['race', 'VARCHAR(50)', 'NULL'],
-            ['residual_tumor', 'VARCHAR(5)', 'NULL'],
-            ['Study', 'VARCHAR(40)', 'NOT NULL'],
-            ['tobacco_smoking_history', 'VARCHAR(50)', 'NULL'],
-            ['TSSCode', 'VARCHAR(2)', 'NULL'],
-            ['tumor_tissue_site', 'VARCHAR(100)', 'NULL'],
-            ['tumor_type', 'VARCHAR(30)', 'NULL'],
-            ['venous_invasion', 'VARCHAR(40)', 'NULL'],
-            ['vital_status', 'VARCHAR(63)', 'NULL'],
-            ['weight', 'INTEGER', 'NULL'],
-            ['year_of_initial_pathologic_diagnosis', 'INTEGER', 'NULL']
-        ],
-#         'natural_key_cols': [
-#             'ParticipantBarcode'
-#         ],
-        'indices_defs': [
-            ['days_to_birth'],
-            ['days_to_death'],
-            ['ethnicity'],
-            ['gender'],
-            ['histological_type'],
-            ['history_of_prior_malignancy'],
-            ['icd_10'],
-            ['icd_o_3_histology'],
-            ['icd_o_3_site'],
-            ['lymphatic_invasion'],
-            ['mononucleotide_and_dinucleotide_marker_panel_analysis_status'],
-            ['mononucleotide_marker_panel_analysis_status'],
-            ['neoplasm_histologic_grade'],
-            ['new_tumor_event_after_initial_treatment'],
-            ['number_of_lymphnodes_positive_by_he'],
-            ['pathologic_M'],
-            ['pathologic_N'],
-            ['pathologic_stage'],
-            ['pathologic_T'],
-            ['person_neoplasm_cancer_status'],
-            ['pregnancies'],
-            ['primary_neoplasm_melanoma_dx'],
-            ['pregnancies'],
-            ['prior_dx'],
-            ['Project'],
-            ['race'],
-            ['Study'],
-            ['tobacco_smoking_history'],
-            ['TSSCode'],
-            ['tumor_tissue_site'],
-            ['vital_status'],
-            ['year_of_initial_pathologic_diagnosis']
-        ]
-    }
-    
-    metadata_biospecimen = {
-        'table_name': 'metadata_biospecimen',
-        'primary_key_name': 'metadata_biospecimen_id',
-        'columns': [
-            ['ParticipantBarcode', 'VARCHAR(35)', 'NOT NULL'],
-            ['SampleBarcode', 'VARCHAR(45)', 'NOT NULL'],
-            ['SampleUUID', 'VARCHAR(36)', 'NULL'],
-            ['SampleType', 'VARCHAR(55)', 'NULL'],
-            ['SampleTypeCode', 'VARCHAR(2)', 'NULL'],
-            ['SampleTypeLetterCode', 'VARCHAR(2)', 'NULL'],
-            ['batch_number', 'INTEGER', 'NULL'],
-            ['bcr', 'VARCHAR(63)', 'NULL'],
-            ['days_to_collection', 'INTEGER', 'NULL'],
-            ['days_to_sample_procurement', 'INTEGER', 'NULL'],
-            ['analyte_code', 'VARCHAR(2)', 'NULL'],
-            ['is_ffpe', 'VARCHAR(5)', 'NULL'],
-            ['num_portions', 'INTEGER', 'NULL'],
-            ['num_samples', 'INTEGER', 'NULL'],
-            ['Study', 'VARCHAR(40)', 'NULL'],
-            ['Project', 'VARCHAR(40)', 'NOT NULL'],
-            ['avg_percent_lymphocyte_infiltration', 'FLOAT', 'NULL'],
-            ['avg_percent_monocyte_infiltration', 'FLOAT', 'NULL'],
-            ['avg_percent_necrosis', 'FLOAT', 'NULL'],
-            ['avg_percent_neutrophil_infiltration', 'FLOAT', 'NULL'],
-            ['avg_percent_normal_cells', 'FLOAT', 'NULL'],
-            ['avg_percent_stromal_cells', 'FLOAT', 'NULL'],
-            ['avg_percent_tumor_cells', 'FLOAT', 'NULL'],
-            ['avg_percent_tumor_nuclei', 'FLOAT', 'NULL'],
-            ['max_percent_lymphocyte_infiltration', 'FLOAT', 'NULL'],
-            ['max_percent_monocyte_infiltration', 'FLOAT', 'NULL'],
-            ['max_percent_necrosis', 'FLOAT', 'NULL'],
-            ['max_percent_neutrophil_infiltration', 'FLOAT', 'NULL'],
-            ['max_percent_normal_cells', 'FLOAT', 'NULL'],
-            ['max_percent_stromal_cells', 'FLOAT', 'NULL'],
-            ['max_percent_tumor_cells', 'FLOAT', 'NULL'],
-            ['max_percent_tumor_nuclei', 'FLOAT', 'NULL'],
-            ['min_percent_lymphocyte_infiltration', 'FLOAT', 'NULL'],
-            ['min_percent_monocyte_infiltration', 'FLOAT', 'NULL'],
-            ['min_percent_necrosis', 'FLOAT', 'NULL'],
-            ['min_percent_neutrophil_infiltration', 'FLOAT', 'NULL'],
-            ['min_percent_normal_cells', 'FLOAT', 'NULL'],
-            ['min_percent_stromal_cells', 'FLOAT', 'NULL'],
-            ['min_percent_tumor_cells', 'FLOAT', 'NULL'],
-            ['min_percent_tumor_nuclei', 'FLOAT', 'NULL']
-        ],
-#         'natural_key_cols': [
-#             'SampleBarcode'
-#         ],
-        'indices_defs': [
-            ['bcr'],
-            ['Project'],
-            ['Study'],
-            ['SampleType'],
-            ['SampleTypeCode']
-        ],
-#         'foreign_key': [
-#             'ParticipantBarcode',
-#             'metadata_clinical',
-#             'ParticipantBarcode'
-#         ]
-    }
-    
-    metadata_data = {
-        'table_name': 'metadata_data',
-        'primary_key_name': 'metadata_data_id',
-        'columns': [
-            ['ParticipantBarcode', 'VARCHAR(35)', 'NOT NULL'],
-            ['SampleBarcode', 'VARCHAR(45)', 'NOT NULL'],
-            ['AliquotBarcode', 'VARCHAR(45)', 'NOT NULL'],
-            ['AliquotUUID', 'VARCHAR(36)', 'NULL'],
-            ['AnnotationCategory', 'VARCHAR(100)', 'NULL'],
-            ['AnnotationClassification', 'VARCHAR(100)', 'NULL'],
-            ['DataArchiveName', 'VARCHAR(100)', 'NULL'],
-            ['DataArchiveURL', 'VARCHAR(300)', 'NULL'],
-            ['DataArchiveVersion', 'VARCHAR(20)', 'NULL'],
-            ['DataCenterCode', 'VARCHAR(2)', 'NULL'],
-            ['DataCenterName', 'VARCHAR(40)', 'NULL'],
-            ['DataCenterType', 'VARCHAR(4)', 'NULL'],
-            ['DataCGHubID', 'VARCHAR(36)', 'NULL'],
-            ['DatafileMD5', 'VARCHAR(32)', 'NULL'],
-            ['DatafileName', 'VARCHAR(250)', 'NOT NULL'],
-            ['DatafileNameKey', 'VARCHAR(200)', 'NOT NULL'],
-            ['DatafileUploaded', 'VARCHAR(5)', 'NOT NULL'],
-            ['DataLevel', 'VARCHAR(7)', 'NOT NULL'],
-            ['Datatype', 'VARCHAR(50)', 'NULL'],
-            ['GenomeReference', 'VARCHAR(32)', 'NULL'],
-            ['IncludeForAnalysis', 'VARCHAR(3)', 'NULL'],
-            ['MAGETabArchiveName', 'VARCHAR(250)', 'NULL'],
-            ['MAGETabArchiveURL', 'VARCHAR(300)', 'NULL'],
-            ['Pipeline', 'VARCHAR(45)', 'NOT NULL'],
-            ['Platform', 'VARCHAR(40)', 'NOT NULL'],
-            ['Project', 'VARCHAR(40)', 'NOT NULL'],
-            ['Repository', 'VARCHAR(15)', 'NULL'],
-            ['SampleType', 'VARCHAR(55)', 'NULL'],
-            ['SampleTypeCode', 'VARCHAR(2)', 'NULL'],
-            ['SDRFFileName', 'VARCHAR(75)', 'NULL'],
-            ['SDRFFileNameKey', 'VARCHAR(200)', 'NULL'],
-            ['SecurityProtocol', 'VARCHAR(30)', 'NOT NULL'],
-            ['Species', 'VARCHAR(25)', 'NOT NULL'],
-            ['Study', 'VARCHAR(40)', 'NOT NULL'],
-            ['wasDerivedFrom', 'VARCHAR(1000)', 'NULL'],
-            ['library_strategy', 'VARCHAR(25)', 'NULL'],
-            ['state', 'VARCHAR(25)', 'NULL'],
-            ['reason_for_state', 'VARCHAR(250)', 'NULL'],
-            ['analysis_id', 'VARCHAR(36)', 'NULL'],
-            ['analyte_code', 'VARCHAR(2)', 'NULL'],
-            ['last_modified', 'DATE', 'NULL'],
-            ['platform_full_name', 'VARCHAR(30)', 'NULL'],
-            ['GG_dataset_id', 'VARCHAR(30)', 'NULL'],
-            ['GG_readgroupset_id', 'VARCHAR(40)', 'NULL']
-        ],
-#         'natural_key_cols': [
-#             'AliquotBarcode',
-#             'DatafileName'
-#         ],
-        'indices_defs': [
-            ['ParticipantBarcode'],
-            ['SampleBarcode'],
-            ['AliquotBarcode'],
-            ['DataCenterCode'],
-            ['DataCenterName'],
-            ['DatafileName'],
-            ['DataCenterType'],
-            ['DatafileUploaded'],
-            ['Datatype'],
-            ['Pipeline'],
-            ['Platform'],
-            ['Project'],
-            ['SampleType'],
-            ['SampleTypeCode'],
-            ['SDRFFileName'],
-            ['Study'],
-            ['analyte_code']
-        ],
-#         'foreign_key': [
-#             'SampleBarcode',
-#             'metadata_biospecimen',
-#             'SampleBarcode'
-#         ]
-    }
 
-    metadata_samples = {
-        'table_name': 'metadata_samples',
-        'primary_key_name': 'metadata_samples_id',  # todo: define this?
-
-        'columns': [
-            ['age_at_initial_pathologic_diagnosis', 'INTEGER', 'NULL'],
-            ['anatomic_neoplasm_subdivision', 'VARCHAR(63)', 'NULL'],
-            ['batch_number', 'INTEGER', 'NULL'],
-            ['BMI', 'FLOAT(3,1)', 'NULL'],
-            ['bcr', 'VARCHAR(63)', 'NULL'],
-            ['clinical_M', 'VARCHAR(12)', 'NULL'],
-            ['clinical_N', 'VARCHAR(12)', 'NULL'],
-            ['clinical_stage', 'VARCHAR(12)', 'NULL'],
-            ['clinical_T', 'VARCHAR(12)', 'NULL'],
-            ['colorectal_cancer', 'VARCHAR(10)', 'NULL'],
-            ['country', 'VARCHAR(63)', 'NULL'],
-            ['days_to_birth', 'INTEGER', 'NULL'],
-            ['days_to_death', 'INTEGER', 'NULL'],
-            ['days_to_initial_pathologic_diagnosis', 'INTEGER', 'NULL'],
-            ['days_to_last_followup', 'INTEGER', 'NULL'],
-            ['days_to_last_known_alive', 'INTEGER', 'NULL'],
-            ['days_to_submitted_specimen_dx', 'INTEGER', 'NULL'],
-            ['ethnicity', 'VARCHAR(30)', 'NULL'],
-            ['frozen_specimen_anatomic_site', 'VARCHAR(63)', 'NULL'],
-            ['gender', 'VARCHAR(15)', 'NULL'],
-            ['gleason_score_combined', 'INTEGER', 'NULL'],
-            ['height', 'INTEGER', 'NULL'],
-            ['histological_type', 'VARCHAR(120)', 'NULL'],
-            ['history_of_colon_polyps', 'VARCHAR(8)', 'NULL'],
-            ['history_of_neoadjuvant_treatment', 'VARCHAR(63)', 'NULL'],
-            ['history_of_prior_malignancy', 'VARCHAR(25)', 'NULL'],
-            ['hpv_calls', 'VARCHAR(20)', 'NULL'],
-            ['hpv_status', 'VARCHAR(20)', 'NULL'],
-            ['icd_10', 'VARCHAR(8)', 'NULL'],
-            ['icd_o_3_histology', 'VARCHAR(10)', 'NULL'],
-            ['icd_o_3_site', 'VARCHAR(8)', 'NULL'],
-            ['lymphatic_invasion', 'VARCHAR(8)', 'NULL'],
-            ['lymphnodes_examined', 'VARCHAR(8)', 'NULL'],
-            ['lymphovascular_invasion_present', 'VARCHAR(63)', 'NULL'],
-            ['menopause_status', 'VARCHAR(100)', 'NULL'],
-            ['mononucleotide_and_dinucleotide_marker_panel_analysis_status', 'VARCHAR(20)', 'NULL'],
-            ['mononucleotide_marker_panel_analysis_status', 'VARCHAR(20)', 'NULL'],
-            ['neoplasm_histologic_grade', 'VARCHAR(15)', 'NULL'],
-            ['new_tumor_event_after_initial_treatment', 'VARCHAR(8)', 'NULL'],
-            ['number_of_lymphnodes_examined', 'INTEGER', 'NULL'],
-            ['number_of_lymphnodes_positive_by_he', 'INTEGER', 'NULL'],
-            ['number_pack_years_smoked', 'INTEGER', 'NULL'],
-            ['ParticipantBarcode', 'VARCHAR(35)', 'NOT NULL'],
-            ['pathologic_M', 'VARCHAR(12)', 'NULL'],
-            ['pathologic_N', 'VARCHAR(12)', 'NULL'],
-            ['pathologic_stage', 'VARCHAR(15)', 'NULL'],
-            ['pathologic_T', 'VARCHAR(12)', 'NULL'],
-            ['person_neoplasm_cancer_status', 'VARCHAR(15)', 'NULL'],
-            ['pregnancies', 'VARCHAR(35)', 'NULL'],
-            ['primary_neoplasm_melanoma_dx', 'VARCHAR(10)', 'NULL'],
-            ['primary_therapy_outcome_success', 'VARCHAR(70)', 'NULL'],
-            ['prior_dx', 'VARCHAR(100)', 'NULL'],
-            ['Project', 'VARCHAR(40)', 'NOT NULL'],
-            ['psa_value', 'FLOAT', 'NULL'],
-            ['race', 'VARCHAR(50)', 'NULL'],
-            ['residual_tumor', 'VARCHAR(5)', 'NULL'],
-            ['Study', 'VARCHAR(40)', 'NOT NULL'],
-            ['tobacco_smoking_history', 'VARCHAR(50)', 'NULL'],
-            ['TSSCode', 'VARCHAR(2)', 'NULL'],
-            ['tumor_tissue_site', 'VARCHAR(100)', 'NULL'],
-            ['tumor_type', 'VARCHAR(30)', 'NULL'],
-            ['venous_invasion', 'VARCHAR(40)', 'NULL'],
-            ['vital_status', 'VARCHAR(63)', 'NULL'],
-            ['weight', 'INTEGER', 'NULL'],
-            ['year_of_initial_pathologic_diagnosis', 'INTEGER', 'NULL'],
-            ['num_portions', 'INTEGER', 'NULL'],
-            ['num_samples', 'INTEGER', 'NULL'],
-            ['SampleBarcode', 'VARCHAR(45)', 'NOT NULL'],
-            ['SampleTypeCode', 'VARCHAR(2)', 'NULL'],
-            ['days_to_collection', 'INTEGER', 'NULL'],
-            ['avg_percent_lymphocyte_infiltration', 'FLOAT', 'NULL'],
-            ['avg_percent_monocyte_infiltration', 'FLOAT', 'NULL'],
-            ['avg_percent_necrosis', 'FLOAT', 'NULL'],
-            ['avg_percent_neutrophil_infiltration', 'FLOAT', 'NULL'],
-            ['avg_percent_normal_cells', 'FLOAT', 'NULL'],
-            ['avg_percent_stromal_cells', 'FLOAT', 'NULL'],
-            ['avg_percent_tumor_cells', 'FLOAT', 'NULL'],
-            ['avg_percent_tumor_nuclei', 'FLOAT', 'NULL'],
-            ['max_percent_lymphocyte_infiltration', 'FLOAT', 'NULL'],
-            ['max_percent_monocyte_infiltration', 'FLOAT', 'NULL'],
-            ['max_percent_necrosis', 'FLOAT', 'NULL'],
-            ['max_percent_neutrophil_infiltration', 'FLOAT', 'NULL'],
-            ['max_percent_normal_cells', 'FLOAT', 'NULL'],
-            ['max_percent_stromal_cells', 'FLOAT', 'NULL'],
-            ['max_percent_tumor_cells', 'FLOAT', 'NULL'],
-            ['max_percent_tumor_nuclei', 'FLOAT', 'NULL'],
-            ['min_percent_lymphocyte_infiltration', 'FLOAT', 'NULL'],
-            ['min_percent_monocyte_infiltration', 'FLOAT', 'NULL'],
-            ['min_percent_necrosis', 'FLOAT', 'NULL'],
-            ['min_percent_neutrophil_infiltration', 'FLOAT', 'NULL'],
-            ['min_percent_normal_cells', 'FLOAT', 'NULL'],
-            ['min_percent_stromal_cells', 'FLOAT', 'NULL'],
-            ['min_percent_tumor_cells', 'FLOAT', 'NULL'],
-            ['min_percent_tumor_nuclei', 'FLOAT', 'NULL'],
-            ['has_Illumina_DNASeq', 'tinyint(4)', 'NULL'],
-            ['has_BCGSC_HiSeq_RNASeq', 'tinyint(4)', 'NULL'],
-            ['has_UNC_HiSeq_RNASeq', 'tinyint(4)', 'NULL'],
-            ['has_BCGSC_GA_RNASeq', 'tinyint(4)', 'NULL'],
-            ['has_UNC_GA_RNASeq', 'tinyint(4)', 'NULL'],
-            ['has_HiSeq_miRnaSeq', 'tinyint(4)', 'NULL'],
-            ['has_GA_miRNASeq', 'tinyint(4)', 'NULL'],
-            ['has_RPPA', 'tinyint(4)', 'NULL'],
-            ['has_SNP6', 'tinyint(4)', 'NULL'],
-            ['has_27k', 'tinyint(4)', 'NULL'],
-            ['has_450k', 'tinyint(4)', 'NULL']
-        ],
-        'natural_key_cols': ['SampleBarcode'],
-#         'foreign_key': [
-#             'SampleBarcode',
-#         ]
-        'indices_defs': [
-            ['age_at_initial_pathologic_diagnosis'],
-            ['anatomic_neoplasm_subdivision'],
-            ['batch_number'],
-            ['BMI'],
-            ['bcr'],
-            ['country'],
-            ['days_to_birth'],
-            ['days_to_death'],
-            ['days_to_initial_pathologic_diagnosis'],
-            ['days_to_last_followup'],
-            ['ethnicity'],
-            ['gender'],
-            ['histological_type'],
-            ['history_of_neoadjuvant_treatment'],
-            ['history_of_prior_malignancy'],
-            ['icd_10'],
-            ['icd_o_3_histology'],
-            ['icd_o_3_site'],
-            ['lymphatic_invasion'],
-            ['lymphnodes_examined'],
-            ['lymphovascular_invasion_present'],
-            ['menopause_status'],
-            ['neoplasm_histologic_grade'],
-            ['new_tumor_event_after_initial_treatment'],
-            ['number_of_lymphnodes_examined'],
-            ['number_of_lymphnodes_positive_by_he'],
-            ['number_pack_years_smoked'],
-            ['ParticipantBarcode'],
-            ['pathologic_M'],
-            ['pathologic_N'],
-            ['pathologic_stage'],
-            ['pathologic_T'],
-            ['person_neoplasm_cancer_status'],
-            ['pregnancies'],
-            ['primary_neoplasm_melanoma_dx'],
-            ['primary_therapy_outcome_success'],
-            ['prior_dx'],
-            ['Project'],
-            ['psa_value'],
-            ['race'],
-            ['residual_tumor'],
-            ['Study'],
-            ['tobacco_smoking_history'],
-            ['vital_status'],
-            ['weight'],
-            ['SampleBarcode'],
-            ['SampleTypeCode']
-        ]
-    }
-    
-    metadata_tables = {
-        'metadata_clinical': metadata_clinical,
-        'metadata_biospecimen': metadata_biospecimen,
-        'metadata_data': metadata_data,
-        'metadata_samples': metadata_samples
-    }
-
-    self = None
-
-    ssl_dir = 'ssl/'
-    ssl = {
-#             'ca': ssl_dir + 'server-ca.pem',
-        'cert': ssl_dir + 'client-cert.pem',
-        'key': ssl_dir + 'client-key.pem' 
-    }
+    @classmethod
+    def log_warnings(cls, cursor, log):
+        for msg in cursor.messages:
+            if msg[0] == MySQLdb.Warning:
+                log.error('\t\tfound warning:\n\t\t\t%s' % (msg[1]))
 
     @classmethod
     def getDBConnection(cls, config, log):
         try:
-            db = MySQLdb.connect(host=config['cloudsql']['host'], db=config['cloudsql']['db'], user=config['cloudsql']['user'], passwd=config['cloudsql']['passwd'], ssl = cls.ssl)
+            ssl_dir = config['cloudsql']['ssl_dir']
+            ssl = {
+        #             'ca': ssl_dir + 'server-ca.pem',
+                'cert': ssl_dir + 'client-cert.pem',
+                'key': ssl_dir + 'client-key.pem' 
+            }
+            if config['cloudsql']['use_proxy']:
+                db = MySQLdb.connect(host="127.0.0.1", db=config['cloudsql']['db'], user=config['cloudsql']['user'], passwd=config['cloudsql']['passwd'])
+            else:
+                db = MySQLdb.connect(host=config['cloudsql']['host'], db=config['cloudsql']['db'], user=config['cloudsql']['user'], passwd=config['cloudsql']['passwd'], ssl = ssl)
         except Exception as e:
-            time.sleep(1)
-            log.warning('\n\n!!!!!!sleeping on error to reattempt db connection!!!!!!\n\n')
-            db = MySQLdb.connect(host=config['cloudsql']['host'], db=config['cloudsql']['db'], user=config['cloudsql']['user'], passwd=config['cloudsql']['passwd'], ssl = cls.ssl)
+            # if connection requests are made too close together over a period of time, the connection attempt might fail
+            count = 0
+            sleep = 3
+            while count < 6:
+                count += 1
+                time.sleep(sleep + count)
+                log.warning('\n\n!!!!!!sleeping on error to reattempt db connection!!!!!!\n')
+                try:
+                    if config['cloudsql']['use_proxy']:
+                        db = MySQLdb.connect(host="127.0.0.1", db=config['cloudsql']['db'], user=config['cloudsql']['user'], passwd=config['cloudsql']['passwd'])
+                    else:
+                        db = MySQLdb.connect(host=config['cloudsql']['host'], db=config['cloudsql']['db'], user=config['cloudsql']['user'], passwd=config['cloudsql']['passwd'], ssl = ssl)
+                    break
+                except Exception as e:
+                    if 6 == count:
+                        log.exception("failed to reconnect to database")
+                        raise e
             
         return db
 
-    def __init__(self, config, log):
+    @classmethod
+    def process_tables(cls, config, process_function, log):
         db = None
         cursor = None
         try:
-            if not config['process_bio']:
+            if not config['update_schema']:
                 return
-            db = self.getDBConnection(config, log)
+            db = cls.getDBConnection(config, log)
             cursor = db.cursor()
-            cursor.execute('select table_name from information_schema.tables where table_schema = "%s"' % (config['cloudsql']['db']))
-            not_found = dict(self.metadata_tables)
-            found = {}
-            for next_row in cursor:
-                print next_row[0]
-                if next_row[0] in self.metadata_tables:
-                    found[next_row[0]] = self.metadata_tables[next_row[0]]
-                    not_found.pop(next_row[0])
-            if 0 != len(found) and config['cloudsql']['update_schema']:
-                # need to delete in foreign key dependency order
-                found_list = []
-                for table_name in self.metadata_tables:
-                    if table_name in found:
-                        found_list += [found[table_name]]
-                self._drop_schema(cursor, config, found_list, log)
-                self._create_schema(cursor, config, self.metadata_tables.values(), log)
-            elif 0 != len(not_found):
-                log.info('\tcreating table(s) %s' % (', '.join(not_found)))
-                self._create_schema(cursor, config, not_found.values(), log)
-            else:
-                log.info('\tpreserving tables')
-            log.info('\tconnection successful')
+            process_function(cursor, config, cls.metadata_tables, log)
         finally:
             if cursor:
                 cursor.close()
@@ -508,33 +85,40 @@ class ISBCGC_database_helper():
                 db.close()
 
     @classmethod
-    def initialize(cls, config, log):
-        if cls.self:
-            log.warning('class has already been initialized')
-        else:
-            cls.self = ISBCGC_database_helper(config, log)
+    def drop_tables(cls, config, log):
+        cls.process_tables(config, cls._drop_schema, log)
     
-    def _drop_schema(self, cursor, config, tables, log):
-        drop_schema_template = 'DROP TABLE %s.%s'
+    @classmethod
+    def setup_tables(cls, config, log):
+        if config['update_schema']:
+            cls.drop_tables(config, log)
+        cls.process_tables(config, cls._create_schema, log)
+    
+    @classmethod
+    def _drop_schema(cls, cursor, config, tables, log):
+        drop_schema_template = 'DROP TABLE IF EXISTS %s.%s'
         
-        for table in tables:
-            drop_statement = drop_schema_template % (config['cloudsql']['db'], table['table_name'])
-            log.info('\tdropping table %s:\n%s' % (config['cloudsql']['db'], drop_statement))
+        for table in tables.keys()[::-1]:
+            drop_statement = drop_schema_template % (config['cloudsql']['db'], table)
+            log.info('\tdropping table %s:\n%s' % (table, drop_statement))
             try:
                 cursor.execute(drop_statement)
             except Exception as e:
-                log.exception('\tproblem dropping %s' % (table['table_name']))
+                log.exception('\tproblem dropping %s' % (table))
                 raise e
 
-    def _create_schema(self, cursor, config, tables, log):
+    @classmethod
+    def _create_schema(cls, cursor, config, tables, log):
         create_table_template = "CREATE TABLE IF NOT EXISTS %s.%s (\n\t%s\n)" 
         primary_key_template = '%s INTEGER NOT NULL AUTO_INCREMENT PRIMARY KEY,\n\t'
         create_col_template = '%s %s %s,\n\t'
         index_template = 'INDEX %s (%s),\n\t'
         foreign_key_template = 'CONSTRAINT %s FOREIGN KEY (%s) REFERENCES %s(%s),\n\t'
 
-        for table in tables:
-            columnDefinitions = primary_key_template % (table['primary_key_name'])
+        for table in tables.itervalues():
+            columnDefinitions = ''
+            if 'primary_key_name' in table:
+                columnDefinitions = primary_key_template % (table['primary_key_name'])
             columnDefinitions += ''.join([create_col_template % (column[0], column[1], column[2]) for column in table['columns']])
             if 'natural_key_cols' in table and 0 < table['natural_key_cols']:
                 index_cols = ','.join(table['natural_key_cols'])
@@ -545,12 +129,13 @@ class ISBCGC_database_helper():
                     index_cols = ','.join(index_def)
                     columnDefinitions += index_template % (table['table_name'] + str(count), index_cols)
                     count += 1
-            if 'foreign_key' in table:
-                columnDefinitions += foreign_key_template % ('fk_' + table['table_name'] + '_' + table['foreign_key'][1], 
-                                            table['foreign_key'][0], table['foreign_key'][1], table['foreign_key'][2])
+            if 'foreign_keys' in table:
+                for index in range(len(table['foreign_keys'])):
+                    columnDefinitions += foreign_key_template % (('fk_' + table['foreign_keys'][index][1] + '_' + table['table_name'])[:64], 
+                                                table['foreign_keys'][index][0], table['foreign_keys'][index][1], table['foreign_keys'][index][2])
             columnDefinitions = columnDefinitions[:-3]
             table_statement = create_table_template % (config['cloudsql']['db'], table['table_name'], columnDefinitions)
-            log.info('\tcreating table %s:\n%s' % (config['cloudsql']['db'], table_statement))
+            log.info('\tcreating table %s:\n%s' % (table['table_name'], table_statement))
             try:
                 cursor.execute(table_statement)
             except Exception as e:
@@ -563,7 +148,7 @@ class ISBCGC_database_helper():
         cursor = None
         try:
             if verbose:
-                log.info('\t\tstarting \'%s\'' % (stmt))
+                log.info('\t\tstarting \'%s:%s\'' % (stmt, params))
             db = cls.getDBConnection(config, log)
             cursor = db.cursor()
             # now execute the select
@@ -571,6 +156,36 @@ class ISBCGC_database_helper():
             if verbose:
                 log.info('\t\tcompleted select.  fetched %s rows', cursor.rowcount)
             retval = [row for row in cursor]
+            return retval
+        except Exception as e:
+            log.exception('\t\tselect failed: %s(%s)' % (stmt, params))
+            if cursor:
+                cursor.execute("ROLLBACK")
+            raise e
+        finally:
+            if cursor:
+                cursor.close()
+            if db:
+                db.close()
+        
+    @classmethod
+    def select_paged(cls, config, stmt, log, countper = 1000, verbose = True):
+        db = None
+        cursor = None
+        try:
+            if verbose:
+                log.info('\t\tstarting \'%s\'' % (stmt))
+            db = cls.getDBConnection(config, log)
+            cursor = db.cursor()
+            retval = []
+            # now execute the select
+            curcount = countper
+            while 0 < cursor.rowcount:
+                curstmt = stmt % (curcount)
+                cursor.execute(curstmt, [curcount])
+                retval += [row for row in cursor]
+                log.info('\t\tcompleted select.  fetched %s rows for %s', cursor.rowcount, curstmt)
+                curcount += countper
             return retval
         except Exception as e:
             log.exception('\t\tselect failed')
@@ -594,27 +209,48 @@ class ISBCGC_database_helper():
             cursor = db.cursor()
             # now execute the updates
             cursor.execute("START TRANSACTION")
-            count = 0
-            report = len(params) / 20
-            for paramset in params:
-                if 0 == count % report:
-                    log.info('\t\t\tupdated %s records' % (count))
-                count += 1
+            tries = 0
+            while True:
+                tries += 1
                 try:
-                    cursor.execute(stmt, paramset)
+                    cursor.executemany(stmt, params)
+                    break
                 except MySQLdb.OperationalError as oe:
-                    if oe.errno == 1205:
-                        log.warning('\t\t\tupdate had operation error (%s:%s) on %s, sleeping' % (stmt, count, paramset))
-                        time.sleep(1)
-                        cursor.execute(stmt, paramset)
-                    else:
-                        log.exception('\t\t\tupdate had operation error (%s:%s) on %s' % (stmt, count, paramset))
+                    try:
+                        if ('1213' in str(oe) or oe.errno == 1213) and 11 > tries:
+                            cursor, db = cls.processOEError(config, cursor, db, 'update had operation error params(%s), %s deadlocked, sleeping' % (oe, stmt), log)
+                        else:
+                            log.exception('\t\t\tupdate had multiple operation errors 1213 for %s' % (stmt))
+                            raise oe
+                    except Exception as e:
+                        log.exception('problem checking OperationalError: %s' % (oe))
+                        if 11 <= tries:
+                            raise oe
                 except Exception as e:
-                    log.exception('problem with update(%s): \n\t\t\t%s\n\t\t\t%s' % (count, stmt, paramset))
-                    raise e
-            cursor.execute("COMMIT")
+                    log.exception('problem with update for:\n%s\n\t%s\n%s' % (stmt, e, params))
+                    raise
+#             report = len(params) / 20
+#             for paramset in params:
+#                 if 0 == report or 0 == count % report:
+#                     log.info('\t\t\tupdated %s records' % (count))
+#                 count += 1
+#                 try:
+#                     cursor.execute(stmt, paramset)
+#                     cls.log_warnings(cursor, log)
+#                 except MySQLdb.OperationalError as oe:
+#                     log.warning('checking operation error: %s' % (oe))
+#                     if oe.errno == 1205:
+#                         log.warning('\t\t\tupdate had operation error (%s:%s) on %s, sleeping' % (stmt, count, paramset))
+#                         time.sleep(1)
+#                         cursor.execute(stmt, paramset)
+#                     else:
+#                         log.exception('\t\t\tupdate had operation error (%s:%s) on %s' % (stmt, count, paramset))
+#                 except Exception as e:
+#                     log.exception('problem with update(%s): \n\t\t\t%s\n\t\t\t%s' % (count, stmt, paramset))
+#                     raise e
             if verbose:
-                log.info('\t\tcompleted update.  updated %s record', count)
+                log.info('\t\tcompleted update.  updated %s record', cursor.rowcount)
+            cursor.execute("COMMIT")
         except Exception as e:
             log.exception('\t\tupdate failed')
             if cursor:
@@ -632,6 +268,20 @@ class ISBCGC_database_helper():
         field_names = cls.field_names(table)
         cls.column_insert(config, rows, table, field_names, log)
 
+    @classmethod
+    def processOEError(cls, config, cursor, db, msg, log):
+        log.warning('\n%s' % (msg))
+        time.sleep(1) # rollback any previous inserts
+        cursor.execute("ROLLBACK")
+
+        try:
+            db.close() # make sure connection is closed
+        except:
+            pass
+        db = cls.getDBConnection(config, log)
+        cursor = db.cursor()
+        cursor.execute("START TRANSACTION")
+        return cursor, db
 
     @classmethod
     def column_insert(cls, config, rows, table, field_names, log):
@@ -646,14 +296,54 @@ class ISBCGC_database_helper():
             # now save in batches
             batch = 1028
             inserts = []
-            for start in range(0, len(rows), batch):
-                for index in range(batch):
-                    if start + index == len(rows):
-                        break
-                    inserts += [rows[start + index]]
-                log.info('\t\t\tinsert rows %s to %s' % (start, index))
-                cursor.executemany(insert_stmt, inserts)
-                inserts = []
+            for tries in range(3):
+                retrying = False
+                for start in range(0, len(rows), batch):
+                    if retrying:
+                        retrying = False
+                        continue
+                    for index in range(batch):
+                        if start + index == len(rows):
+                            break
+                        inserts += [rows[start + index]]
+                    log.info('\t\t\tinsert rows %s to %s' % (start, start + index))
+                    try:
+                        cursor.executemany(insert_stmt, inserts)
+                        cls.log_warnings(cursor, log)
+                    except MySQLdb.OperationalError as oe:
+                        try:
+                            if oe.errno == 2006 and 3 > tries:
+                                cursor, db = cls.processOEError(config, cursor, db, 'update had operation error 2006(%s), lost connection for %s, sleeping' % (oe, insert_stmt), log)
+                            else:
+                                log.exception('\t\t\tupdate had multiple operation errors 2006 for %s' % (insert_stmt))
+                                raise oe
+                        except AttributeError:
+                            if 3 > tries:
+                                cursor, db = cls.processOEError(config, cursor, db, 'update had operation error(%s), lost connection for %s, sleeping' % (oe, insert_stmt), log)
+                            else:
+                                log.exception('\t\t\tupdate had multiple operation errors for %s' % (insert_stmt))
+                                raise oe
+                    except MySQLdb.DataError as de:
+                        try:
+                            if de.errno == 1406 and 3 > tries:
+                                errorrow = int(str(de).split(' '))
+                                cursor, db = cls.processOEError(config, cursor, db, 'update had data error 1406(%s), data too long for column: %s-' % (de, insert_stmt, inserts[errorrow]), log)
+#DataError: (1406, "Data too long for column 'file_name' at row 1")
+                            else:
+                                log.exception('\t\t\tupdate had multiple data errors 1406 for, data too long for column: %s' % (insert_stmt))
+                                raise
+                        except AttributeError:
+                            if 3 > tries:
+                                cursor, db = cls.processOEError(config, cursor, db, 'update had data error(%s), lost connection for %s, sleeping' % (de, insert_stmt), log)
+                            else:
+                                log.exception('\t\t\tupdate had multiple data errors for %s' % (insert_stmt))
+                                raise de
+                    except Exception as e:
+                        log.exception('problem with update for:\n%s\n\t%s\n\t%s' % (insert_stmt, e, '\n\t'.join((','.join(str(field) for field in insert) for insert in inserts))))
+                        raise
+                    inserts = []
+                # successfully looped through so stop trying
+                break
             
             cursor.execute("COMMIT")
             log.info('\t\tcompleted insert')
@@ -674,3 +364,4 @@ class ISBCGC_database_helper():
     @classmethod
     def field_names(cls, table):
         return [field_parts[0] for field_parts in cls.metadata_tables[table]['columns']]
+

@@ -5,12 +5,6 @@ import sys
 import time
 import pandas as pd
 import json
-from gcloud import storage
-from cStringIO import StringIO
-import re
-import os
-from os.path import basename
-import string
 import check_duplicates
 from bigquery_etl.utils import gcutils
 from bigquery_etl.extract.gcloud_wrapper import GcsConnector
@@ -18,10 +12,10 @@ from bigquery_etl.utils.logging_manager import configure_logging
 from bigquery_etl.extract.utils import convert_file_to_dataframe
 from bigquery_etl.transform.tools import cleanup_dataframe, remove_duplicates
 from bigquery_etl.execution import process_manager
-import logging
 
-log = logging.getLogger(__name__)
-
+log_filename = 'etl_maf_part2.log'
+log_name = 'etl_maf_part2.log'
+log = configure_logging(log_name, log_filename)
 #--------------------------------------
 # Format Oncotator output before merging
 #--------------------------------------
@@ -73,20 +67,20 @@ def add_columns(df, sample_code2letter, study):
     tumor_patient_id_bool = (df['Tumor_ParticipantBarcode'] == df['Normal_ParticipantBarcode'])
     df = df[tumor_patient_id_bool]
     if not df[~tumor_patient_id_bool].empty:
-       #print df[~tumor_patient_id_bool].to_dict()
-       raise 
+        log.error('ERROR: did not find all tumors paired with normal samples')
+        raise ValueError('ERROR: did not find all tumors paired with normal samples')
 
     # tumor barcode 14th character must be 0
     tumor_sample_codes = map(lambda x: x.split('-')[3][0], df['Tumor_AliquotBarcode'])
     if '0' not in tumor_sample_codes and len(tumor_sample_codes) > 0:
-       log.error('ERROR: tumor barcode 14th character must be 0')
-       raise 
+        log.error('ERROR: tumor barcode 14th character must be 0')
+        raise ValueError('ERROR: tumor barcode 14th character must be 0')
 
     # normal barcode 14th character must be 1
     norm_sample_codes = map(lambda x: x.split('-')[3][0], df['Normal_AliquotBarcode'])
     if '1' not in norm_sample_codes  and len(norm_sample_codes) > 0:
-       log.error('ERROR: normal barcode 14th character must be 1')
-       raise 
+        log.error('ERROR: normal barcode 14th character must be 1')
+        raise ValueError('ERROR: normal barcode 14th character must be 1')
 
     df['ParticipantBarcode'] = df['Tumor_ParticipantBarcode']
     del df['Tumor_ParticipantBarcode']
@@ -104,7 +98,7 @@ def add_columns(df, sample_code2letter, study):
 # 4. adds new columns
 # 5. removes any duplicate aliqouts
 #----------------------------------------
-def process_oncotator_output(project_id, bucket_name, data_library, bq_columns, sample_code2letter):
+def process_oncotator_output(project_id, bucket_name, data_library, bq_columns, sample_code2letter, oncotator_object_path, oncotator_object_output_path):
     study = data_library['Study'].iloc[0]
 
     # this needed to stop pandas from converting them to FLOAT
@@ -132,17 +126,21 @@ def process_oncotator_output(project_id, bucket_name, data_library, bq_columns, 
         log.info('-'*10 + "{0}: Processing file {1}".format(file_count, oncotator_file) + '-'*10)
 
         try:
-           gcs = GcsConnector(project_id, bucket_name)
-           # covert the file to a dataframe
-           filename = 'tcga/intermediary/MAF/oncotator_output_files/' + oncotator_file
-           df = gcutils.convert_blob_to_dataframe(gcs, project_id, bucket_name, filename)
+            # covert the file to a dataframe
+            filename = oncotator_object_path + oncotator_file
+            gcs = GcsConnector(project_id, bucket_name)
+            log.info('%s: converting %s to dataframe' % (study, filename))
+            df = gcutils.convert_blob_to_dataframe(gcs, project_id, bucket_name, filename, log = log)
+            log.info('%s: done converting %s to dataframe' % (study, filename))
+        except RuntimeError as re:
+            log.warning('%s: problem cleaning dataframe for %s: %s' % (study, filename, re))
         except Exception as e:
-           print e
-           raise
+            log.exception('%s: problem converting to dataframe for %s: %s' % (study, filename, e))
+            raise e
            
         if df.empty:
-           log.debug('empty dataframe for file: ' + str(oncotator_file))
-           continue
+            log.warning('%s: empty dataframe for file: %s' % (study, oncotator_file))
+            continue
 
         #------------------------------
         # different operations on the frame
@@ -158,37 +156,61 @@ def process_oncotator_output(project_id, bucket_name, data_library, bq_columns, 
 
         disease_bigdata_df = disease_bigdata_df.append(df, ignore_index = True)
             
+        log.info('-'*10 + "{0}: Finished file({3}) {1}. rows: {2}".format(file_count, oncotator_file, len(df), study) + '-'*10)
 
     # this is a merged dataframe
     if not disease_bigdata_df.empty:
-        
         # remove duplicates; various rules; see check duplicates)
-        df = check_duplicates.remove_maf_duplicates(df, sample_code2letter)
+        
+        log.info('\tcalling check_duplicates to collapse aliquots with %s rows' % (len(disease_bigdata_df)))
+        disease_bigdata_df = check_duplicates.remove_maf_duplicates(disease_bigdata_df, sample_code2letter, log)
+        log.info('\tfinished check_duplicates to collapse aliquots with %s rows' % (len(disease_bigdata_df)))
 
+        # enforce unique mutation--previous
+        # unique_mutation = ['Chromosome', 'Start_Position', 'End_Position', 'Tumor_Seq_Allele1', 'Tumor_Seq_Allele2', 'Tumor_AliquotBarcode']
         # enforce unique mutation
-        unique_mutation = ['Chromosome', 'Start_Position', 'End_Position', 'Tumor_Seq_Allele1', 'Tumor_Seq_Allele2', 'Tumor_AliquotBarcode']
-
+        unique_mutation = ['Hugo_Symbol', 'Entrez_Gene_Id', 'Chromosome', 'Start_Position', 'End_Position', 'Reference_Allele', 'Tumor_Seq_Allele1', 'Tumor_Seq_Allele2',
+                  'Tumor_AliquotBarcode']
         # merge mutations from multiple centers
-        concat_df = []
-        for idx, df_group in df.groupby(unique_mutation):
+        log.info('\tconsolidate the centers for duplicate mutations into list for %s' % (study))
+        seencenters = set()
+        def concatcenters(df_group):
             if len(df_group) > 1:
-                # tolist; unique list; sort; concat
-                df_group.loc[:,'Center'] = ";".join(map(str,sorted(list(set(df_group['Center'].tolist())))))
-            concat_df.append(df_group)
-        df = pd.concat(concat_df)
+                centers = list(set(df_group['Center'].tolist()))
+                uniquecenters = set()
+                delim = config['maf']['center_delim']
+                for center in centers:
+                    fields = center.split(delim)
+                    for field in fields:
+                        uniquecenters.add(field)
+                sortedunique = delim.join(sorted(list(uniquecenters)))
+                df_group.loc[:,'Center'] = sortedunique
+                if sortedunique not in seencenters:
+                    log.info('unique centers: %s' % sortedunique)
+                    seencenters.add(sortedunique)
+            return df_group
+
+        disease_bigdata_df = disease_bigdata_df.groupby(unique_mutation).apply(concatcenters)
+        log.info('\tfinished consolidating centers for duplicate mutations for %s' % (study))
 
         # enforce unique mutation
-        df = remove_duplicates(df, unique_mutation)
+        log.info('\tcalling remove_duplicates to collapse mutations with %s rows for %s' % (len(disease_bigdata_df), study))
+        disease_bigdata_df = remove_duplicates(disease_bigdata_df, unique_mutation)
+        log.info('\tfinished remove_duplicates to collapse mutations with %s rows for %s' % (len(disease_bigdata_df), study))
 
-        # convert the df to new-line JSON and the upload the file
-        gcs.convert_df_to_njson_and_upload(disease_bigdata_df, "tcga/intermediary/MAF/bigquery_data_files/{0}.json".format(study))
+        # convert the disease_bigdata_df to new-line JSON and upload the file
+        uploadpath = oncotator_object_output_path + "{0}.json".format(study)
+        log.info('%s: uploading %s to GCS' % (study, uploadpath))
+        gcs.convert_df_to_njson_and_upload(disease_bigdata_df, uploadpath)
+        log.info('%s: done uploading %s to GCS' % (study, uploadpath))
 
     else:
-        raise Exception('Empty dataframe!')
+        log.warning('Empty dataframe for %s in %s!' % (oncotator_file, study))
     return True
 
 if __name__ == '__main__':
 
+    log.info('start maf part2 pipeline')
     config = json.load(open(sys.argv[1]))
   
     project_id = config['project_id']
@@ -209,9 +231,11 @@ if __name__ == '__main__':
     bq_columns = transposed.columns.values
 
     # submit threads by disease  code
-    pm = process_manager.ProcessManager(max_workers=33, db='maf.db', table='task_queue_status')
+    pm = process_manager.ProcessManager(max_workers=33, db='maf.db', table='task_queue_status', log=log)
     for idx, df_group in df.groupby(['Study']):
-        future = pm.submit(process_oncotator_output, project_id, bucket_name, df_group, bq_columns, sample_code2letter)
+        future = pm.submit(process_oncotator_output, project_id, bucket_name, df_group, bq_columns, sample_code2letter, config['maf']['oncotator_object_path'], config['maf']['oncotator_object_output_path'])
         #process_oncotator_output( project_id, bucket_name, df_group, bq_columns, sample_code2letter)
         time.sleep(0.2)
     pm.start()
+    log.info('finished maf part2 pipeline')
+

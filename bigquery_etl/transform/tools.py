@@ -24,48 +24,45 @@ import chardet
 
 log = logging.getLogger(__name__)
 
+
 #--------------------------------------
 # Clean up the dataframe
 #--------------------------------------
-def cleanup_dataframe(df):
+def cleanup_dataframe(df, caller_log = None):
     """Cleans the dataframe
         - strips new lines, double, single quotes; None -> nan, etc
         - formats the column names for Bigquery input
     """
+    if caller_log:
+        log = caller_log
+        
     log.info("Cleaning up the dataframe")
 
     if df.empty:
-        raise Exception("Empty dataframe passed to clean_up_dataframe fuction")
+        raise RuntimeError("Empty dataframe passed to clean_up_dataframe function")
 
     # why again, we are doing it in convert_to_dataframe, right?
-    # because we can call this function separately
-    na_values = ['none', 'None', 'NONE', 'null', 'Null', 'NULL', ' ', 'NA', '__UNKNOWN__', '?']
-    for rep in na_values:
-        df = df.replace(rep, np.nan)
+    # because we can call this function separately.  but this takes time, so commenting it out
+#     log.info('\tconsolidate na values')
+#     na_values = ['none', 'None', 'NONE', 'null', 'Null', 'NULL', ' ', 'NA', '__UNKNOWN__', '?']
+#     for rep in na_values:
+#         df = df.replace(rep, np.nan)
 
-    # remove empty spaces(this removes more than 1 space)
+    log.info('\tremove empty spaces(this removes more than 1 space)')
     df = df.applymap(lambda x: np.nan if isinstance(x, basestring) and x.isspace() else x)
 
-    #we dont want to play with nan(numpy.nan) or empty values
-    df = df.fillna("__missing__value__")
+    log.info('\tprevent problems with nan(numpy.nan) in the convert and strip step by replacing with \'_mv_\'')
+    df = df.fillna("_mv_")
 
-    # convert to utf-8
-    df = df.applymap(lambda x: convert_encoding(x))
+# this can also be specified on load of df from file
+#    log.info('\tconvert to utf-8')
+#     [df[column].str.encode('utf-8') for column in df.columns]
 
-    # strip every value(this should get rid of ^M too)
-    df = df.applymap(lambda x: str(x).strip())
-
-    # strip every value of single quotes
-    df = df.applymap(lambda x: str(x).strip("'"))
-
-    # strip every value of double quotes
-    df = df.applymap(lambda x: str(x).strip('"'))
-
-    # strip column names too
-    df.columns = df.columns.map(lambda x: x.strip())
-
-    # replace back with np.nan
-    df = df.replace(r'__missing__value__', np.nan)
+    log.info('\tstrip spaces (including ^M) and quotes')
+    df.replace(r'((^[\s"\'])|([\s"\']$))', '', regex=True)
+    
+    log.info('\treplace back the np.nan')
+    df = df.replace(r'_mv_', np.nan)
 
     #------------
     # Fix columns
@@ -81,12 +78,14 @@ def cleanup_dataframe(df):
     )
     replace_column_strings = OrderedDict(replace_column_strings)
 
-    # strip column names too
+    log.info('\tstrip column names')
     df.columns = df.columns.map(lambda x: x.strip())
 
-    # replace all patterns from above
+    log.info('\treplace all non-desired characters(space, dash, etc.) in column names with underscore')
     for repl in replace_column_strings:
         df.columns = df.columns.map(lambda x: x.replace(repl, replace_column_strings[repl]))
+    
+    log.info("Finished cleaning up the dataframe")
     return df
 
 #----------------------------------------
@@ -117,9 +116,6 @@ def remove_duplicates(df, unique_key):
     df['duplicated'] = df.duplicated(unique_key)
     if not df[df.duplicated(unique_key)].empty:
         log.debug("Found duplicate rows")
-        log.debug(df[df.duplicated(unique_key)].to_csv(sep="\t", index=False))
-        df['duplicated'] = df.duplicated(unique_key)
-        # drop duplicates
         df = df.drop_duplicates(unique_key)
         log.debug("Deleted")
     return df

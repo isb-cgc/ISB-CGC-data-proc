@@ -20,15 +20,20 @@ import sys
 import json
 import re
 
+from bigquery_etl.utils.logging_manager import configure_logging
+
 def identify_data(config):
     """Gets the metadata info from database
     """
+    log = configure_logging('mirna.mirna', 'logs/mirna_mirna_extract_.log')
+    log.info('start mirna mirna extract')
     # cloudSql connection params
     host = config['cloudsql']['host']
     database = config['cloudsql']['db']
     user = config['cloudsql']['user']
     passwd = config['cloudsql']['passwd']
 
+    log.info("\tselect file names from db")
     sqlquery = """
         SELECT ParticipantBarcode, SampleBarcode, AliquotBarcode, Pipeline, Platform,
               SampleType, SampleTypeCode, Study, DatafileName, DatafileNameKey, Datatype,
@@ -36,7 +41,7 @@ def identify_data(config):
         FROM metadata_data
         WHERE DataType='Expression-miRNA'
         AND DatafileUploaded='true'
-        AND DatafileNameKey LIKE '%.mirna.quantification.txt'
+        AND DatafileNameKey LIKE '%hg19.mirbase20.mirna.quantification.txt'
         AND IncludeForAnalysis='yes'
         """
     # connect to db and get results in a dataframe
@@ -67,15 +72,16 @@ def identify_data(config):
     metadata_df['is_tumor'] = (metadata_df['SampleTypeLetterCode'] != "CELLC")
     metadata_df['transform_function'] = 'mirna.mirna.transform.parse_mirna'
 
-    print "Found {0} rows, columns." .format(str(metadata_df.shape))
+    log.info("\tFound {0} rows, columns." .format(str(metadata_df.shape)))
 
     # Filter - check all "is_" fields - remember all 'is_' fields must be boolean
     all_flag_columns = [key for key in metadata_df.columns.values if key.startswith("is_")]
     flag_df = metadata_df[all_flag_columns]
     metadata_df = metadata_df[flag_df.all(axis=1)]
 
-    print "After filtering: Found {0} rows, columns." .format(str(metadata_df.shape))
+    log.info("\tAfter filtering: Found {0} rows, columns." .format(str(metadata_df.shape)))
 
+    log.info('finished mirna mirna extract')
     return metadata_df
 
 if __name__ == '__main__':

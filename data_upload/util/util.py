@@ -21,7 +21,9 @@ limitations under the License.
 '''
 # import boto
 import base64
+from copy import deepcopy
 from cStringIO import StringIO
+import importlib
 import json
 import logging
 from multiprocessing import Lock
@@ -33,7 +35,7 @@ import time
 import traceback
 import urllib2
 
-import gcs_wrapper
+gcs_wrapper = None 
 
 backoff = 0
 lock = Lock()
@@ -53,7 +55,7 @@ def log_exception(log, msg):
         print msg
         traceback.print_exc()
 
-def getURLData(url, name, log):
+def getURLData(url, name, log, text=True):
     # see preston's archive_parse script for alternative way to fetch
     try:
         log_info(log, '\tstart get %s' % (name))
@@ -61,7 +63,10 @@ def getURLData(url, name, log):
         log_info(log, '\tfinish get %s' % (name))
     
         log_info(log, '\tstart read %s' % (name))
-        data = response.text
+        if text:
+            data = response.text
+        else:
+            data = response.content
         log_info(log, '\tfinish read %s' % (name))
         if 200 > len(data):
             # unusually small so log more info
@@ -71,6 +76,35 @@ def getURLData(url, name, log):
         raise e
     
     return data
+
+def post_run_file(path, file_name, contents):
+    if not os.path.isdir(path):
+        os.makedirs(path)
+    with open(path + file_name, 'w') as outfile:
+        outfile.write(contents)
+
+def upload_run_files(config, path, log):
+    if path.endswith('/'):
+        path = path[:-1]
+    log.info('start upload of run files')
+    bucket_name = config['buckets']['controlled']
+    if config['upload_open']:
+        bucket_name = config['buckets']['open']
+    for (dirpath, _, filenames) in os.walk(path):
+        for filename in filenames:
+            if config['upload_etl_files'] or config['upload_files']:
+                filepath = '%s/%s' % (dirpath, filename)
+                upload_file(config, filepath, bucket_name, config['base_run_upload_folder'] + filepath, log)
+            else:
+                log.info('\t\tfolder: %s path: %s/%s' % (config['base_run_upload_folder'], dirpath, filename))
+    log.info('finished upload of run files')
+
+
+def upload_file(config, file_path, bucket_name, key_name, log):
+    global gcs_wrapper
+    if None == gcs_wrapper:
+        gcs_wrapper = import_module(config['gcs_wrapper'])
+    gcs_wrapper.upload_file(file_path, bucket_name, key_name, log)
 
 def upload_etl_file(config, key_name, barcode2field2value, log, type_bio, remove_keys=[]):
     log.info('\tstart upload_etl_file(%s)' % (key_name))
@@ -92,7 +126,7 @@ def upload_etl_file(config, key_name, barcode2field2value, log, type_bio, remove
         output_file.close()
     bucket_name = config['buckets']['open']
     if config['upload_etl_files']:
-        gcs_wrapper.upload_file(file_path, bucket_name, key_name, log)
+        upload_file(config, file_path, bucket_name, key_name, log)
         log.info('\tuploaded etl file')
     else:
         log.info('\tnot uploading etl file')
@@ -108,7 +142,7 @@ def is_upload_archive(archive_name, upload_archives, archive2metadata):
             break
     return upload
 
-def setup_archive(archive_fields, log, user = None, password = None):
+def setup_archive(config, archive_fields, log, user = None, password = None):
     tmp_dir_parent = os.environ.get('ISB_TMP', '/tmp/')
     archive_path = os.path.join(tmp_dir_parent, archive_fields[0] + '/')
     if not os.path.isdir(archive_path):
@@ -118,7 +152,16 @@ def setup_archive(archive_fields, log, user = None, password = None):
         while True:
             try:
                 log.info('\t\tstart download of %s' % (archive_fields[0]))
-                _download_file(archive_fields[2], archive_path + archive_fields[0] + '.tar.gz', log, user, password)
+                if config['use_gcs_processing']:
+                    global gcs_wrapper
+                    if None == gcs_wrapper:
+                        gcs_wrapper = import_module(config['gcs_wrapper'])
+                    fields = archive_fields[2].split('/')
+                    bucket_name = fields[6]
+                    key_name = '/'.join(fields[8:])
+                    gcs_wrapper.download_file(archive_path + archive_fields[0] + '.tar.gz', bucket_name, key_name, log)
+                else:
+                    _download_file(archive_fields[2], archive_path + archive_fields[0] + '.tar.gz', log, user, password)
                 log.info('\t\tfinished download of %s' % (archive_fields[0]))
                 break
             except (requests.exceptions.ConnectionError, urllib2.URLError) as ce:
@@ -190,24 +233,25 @@ def _download_file(url, file_path, log, user, password):
     decrease_backoff()
 
 # def upload_files(archive_path, key_path):
-#     
+#    
 def create_log(log_dir, log_name):
     try:
         # creates the logs for the run
-        if not os.path.isdir(log_dir):
-            os.makedirs(log_dir)
-        logger = logging.getLogger(log_name)
-        logger.setLevel(logging.DEBUG)
-        log = logging.FileHandler(log_dir + log_name + '.txt', 'w')
-        log.setLevel(logging.DEBUG)
-        slog = logging.StreamHandler()
-        slog.setLevel(logging.DEBUG)
-        formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(threadName)s - %(message)s')
-        log.setFormatter(formatter)
-        slog.setFormatter(formatter)
-        logger.addHandler(log)
-        logger.addHandler(slog)
-        return log_name
+        with lock:
+            if not os.path.isdir(log_dir):
+                os.makedirs(log_dir)
+            logger = logging.getLogger(log_name)
+            logger.setLevel(logging.DEBUG)
+            log = logging.FileHandler(log_dir + log_name + '.txt', 'w')
+            log.setLevel(logging.DEBUG)
+            slog = logging.StreamHandler()
+            slog.setLevel(logging.DEBUG)
+            formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(threadName)s - %(message)s')
+            log.setFormatter(formatter)
+            slog.setFormatter(formatter)
+            logger.addHandler(log)
+            logger.addHandler(slog)
+            return log_name
     except:
         print 'ERROR: couldn\'t create log %s in %s' % (log_name, log_dir)
 
@@ -254,7 +298,7 @@ def merge_metadata(master_metadata, current_metadata, platform, log):
     log.info('\t\tmerge_metadata(%s): found %s matching aliquots and %s additional aliquots.  total of %s files' % (platform, count_exist, count_new, len(total_files)))
     
 def import_module(metadata_module):
-    mod = __import__(metadata_module)
+    mod = importlib.import_module(metadata_module)
     return mod
 
 def getTumorTypes(config, log):
@@ -270,3 +314,155 @@ def getTumorTypes(config, log):
     else:
         log.info('\tprocessing %s tumor types' % (', '.join(process)))
     return processAll, process
+
+def print_list_synopsis(fulllist, label, log, count = 2):
+    if (count * 2) + 1 > len(fulllist):
+        log.info("%s\n%s" % (label, json.dumps (fulllist, indent=4)))
+    else:
+        log.info("%s: size %d\n%s\n\t...\n%s\n\n" % (label, len(fulllist), json.dumps (fulllist[:count], indent=4), json.dumps (fulllist[-count:], indent=4)))
+
+def __recurse_filter_map(retmap, origmap, thefilter):
+    if 'value' in thefilter:
+        for value in thefilter['value']:
+            if value in origmap:
+                newlabel = thefilter['value'][value]
+                retmap[newlabel] = origmap[value]
+    
+    # TODO: map might have a list might have nested fields so might return multiple rows
+    if 'list' in thefilter:
+        for value in thefilter['list']:
+            if value in origmap:
+                newlabel = thefilter['list'][value]
+                retmap[newlabel] = deepcopy(origmap[value])
+    
+    if 'map' in thefilter:
+        for value in thefilter['map']:
+            if value in origmap:
+                newlabel = thefilter['map'][value][value]
+                retmap[newlabel] = __recurse_filter_map({}, origmap[value], thefilter['map'][value])
+    
+    if 'map_list' in thefilter:
+        for value in thefilter['map_list']:
+            if value in origmap:
+                newfilter = thefilter['map_list'][value]
+                newlabel = newfilter[value]
+                retmap[newlabel] = []
+                for nextmap in origmap[value]:
+                    retmap[newlabel] += [__recurse_filter_map({}, nextmap, newfilter)]
+
+    return retmap
+
+def filter_map(origmap, thefilter):
+    return __recurse_filter_map({}, origmap, thefilter)
+
+def __recurse_flatten_map(origmap, thefilter):
+    initmap = {}
+    if 'value' in thefilter:
+        for value in thefilter['value']:
+            if value in origmap:
+                fields = thefilter['value'][value].split(',')
+                if 1 == len(fields):
+                    newlabel = thefilter['value'][value]
+                    initmap[newlabel] = origmap[value]
+                elif 'substr' == fields[0]:
+                    if origmap[value] is not None:
+                        substr = origmap[value][int(fields[1]):int(fields[2])]
+                        initmap[fields[3]] = substr
+                    else:
+                        initmap[fields[3]] = None
+                elif 'list2str' == fields[0]:
+                    string = ','.join(origmap[value])
+                    initmap[fields[1]] = string
+                else:
+                    raise ValueError('unknown operation specification: %s %s' % (origmap[value], thefilter['value'][value]))
+    
+    # TODO: map might have a list might have nested fields so might return multiple rows
+    # maplists = []
+    if 'map_list_first' in thefilter:
+        for value in thefilter['map_list_first']:
+            if value in origmap:
+                # flatten the key/values from the nested map with the top level key/values
+                if len(origmap[value]) > 1:
+                    print 'found more than one %s for %s' % (value, origmap['file_id'])
+                initmap.update(__recurse_flatten_map(origmap[value][0], thefilter['map_list_first'][value])[0])
+    
+    # TODO: map might have a list or have nested fields so might return multiple rows
+    # maplists = []
+    if 'map' in thefilter:
+        for value in thefilter['map']:
+            if value in origmap:
+                # flatten the key/values from the nested map with the top level key/values
+                initmap.update(__recurse_flatten_map(origmap[value], thefilter['map'][value])[0])
+    
+    # for every value on the list, a new row needs to be created in the returned list
+    # TODO: currently finding lists with one value so for now just concatenating, need cross product?
+    if 'list' in thefilter:
+        for label in thefilter['list']:
+            newlabel = thefilter['list'][label]
+            # flatten the key/values from the nested map with the top level key/values
+            initmap[newlabel] = ', '.join(origmap[label])
+                
+    # for every map on the list, each row needs to be merged in the returned list
+    # TODO: if creating lists above is ever implemented, must implement here
+    if 'map_list' in thefilter:
+        retlist = []
+        for value in thefilter['map_list']:
+            newfilter = thefilter['map_list'][value]
+            if value in origmap:
+                for nextmap in origmap[value]:
+                    newmaps = __recurse_flatten_map(nextmap, newfilter)
+                    for nextmap in newmaps:
+                        newmap = dict(initmap)
+                        newmap.update(nextmap)
+                        retlist += [newmap]
+        if 0 == len(retlist):
+            retlist += [initmap]
+    else:
+        retlist = [initmap]
+    
+    return retlist
+
+def flatten_map(origmap, thefilter):
+    return __recurse_flatten_map(origmap, thefilter)
+
+def order4insert(curorder, dborder, rows):
+    if len(curorder) != len(dborder):
+        raise ValueError('lengths of lists must be the same: %s vs. %s' % (curorder, dborder))
+    mapping = {}
+    for curindex, cur in enumerate(curorder):
+        mapping[curindex] = dborder.index(cur)
+    dbrows = []
+    for row in rows:
+        dbrow = [None] * len(curorder)
+        dbrows += [dbrow]
+        for curindex, dbindex in mapping.iteritems():
+            dbrow[dbindex] = row[curindex]
+    return dbrows
+
+def delete_objects(config, bucket, path, log):
+    global gcs_wrapper
+    if None == gcs_wrapper:
+        gcs_wrapper = import_module(config['gcs_wrapper'])
+    contents = gcs_wrapper.get_bucket_contents(bucket, path, log)
+    gcs_wrapper.delete_objects(bucket, contents, log)
+    
+def delete_dir_contents(folder, delete_dir = False):
+    files = os.listdir(folder)
+    if '/' != folder[-1]:
+        folder += '/'
+    for curfile in files:
+        path = folder + curfile
+        if os.path.isfile(path):
+            os.remove(path)
+        elif os.path.isdir(path):
+            delete_dir_contents(path, True)
+        else:
+            raise RuntimeError('unexpected problem removing %s from %s' % (curfile, folder))
+    if delete_dir:
+        os.rmdir(folder)
+
+def close_log(log):
+    handlers = log.handlers[:]
+    for handler in handlers:
+        handler.close()
+        log.removeHandler(handler)

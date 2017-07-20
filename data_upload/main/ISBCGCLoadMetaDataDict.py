@@ -24,7 +24,7 @@ import json
 import logging
 import sys
 
-from isbcgc_metadata_cloudsql_model import ISBCGC_metadata_database_helper
+from isbcgc_cloudsql_metadata_model import ISBCGC_database_helper
 from util import create_log
 
 def main(configFileName):
@@ -38,7 +38,7 @@ def main(configFileName):
         log.info('begin create metadata data dictionary')
         
         listlist = []
-        with open('MetadataDataDictionary_v3.txt', 'r') as datadict:
+        with open('MetadataDataDictionary_v5.txt', 'r') as datadict:
             #read the header line and discard
             datadict.readline()
             for line in datadict:
@@ -46,8 +46,8 @@ def main(configFileName):
                 if 10 != len(fields):
                     raise ValueError('line wrong length: %s' % fields)
                 listlist += [fields]
-        ISBCGC_metadata_database_helper.initialize(config, log)
-        ISBCGC_metadata_database_helper.insert(config, listlist, 'metadata_datadictionary', log)
+        ISBCGC_database_helper.initialize(config, log)
+        ISBCGC_database_helper.insert(config, listlist, 'metadata_datadictionary', log)
 
         log.info('end create metadata data dictionary')
     except Exception as e:

@@ -1,12 +1,12 @@
 {
-    "mode": "production",
+    "mode": "test",
     "threads": 40,
-    "process_cghub": true,
+    "process_cghub": false,
     "process_annotations": true,
-    "process_bio": true,
-    "download_archives": true,
-    "upload_files": true,
-    "upload_etl_files": true,
+    "process_bio": false,
+    "download_archives": false,
+    "upload_files": false,
+    "upload_etl_files": false,
     "upload_open": true,
     "upload_controlled": false,
     "metadata_modules": [
@@ -14,68 +14,110 @@
     ],
     "database_module": "isbcgc_cloudsql_mock_model",
     "cghub_module": "import_cghub_manifest",
+    "gcs_wrapper": "gcs_wrapper_gcloud",
     "tumor_types": [
-        "all"
     ],
     "platforms": [
-        "all"
     ],
-
     "skip_tumor_types": [
         "cntl",
         "fppp"
     ],
     "user_info": {
-        "user": "<user>",
-        "password": "<info>"
+        "user": "<user eRA Commons name>",
+        "password": "<user eRA Commons password"
     },
     "access_tags": {
         "open": "dbGap open-access",
         "controlled": "dbGap controlled-access"
     },
     "cloud_projects": {
-        "open": "<isb-cgc open project>",
-        "controlled": "<isb-cgc controlled project>"
+        "open": "<open project>",
+        "controlled": "<controlled project>"
     },
     "buckets": {
         "open": "<open bucket>",
-        "controlled": "<controlled bucket>",
+        "controlled": "<controoled bucket",
         "key_prefix": {
-            "tcga": "<tcga key prefix>",
-            "resources": "<resource prefix>"
-        }
+            "tcga": "tcga",
+            "resources": "genomic-reference"
+        },
+        "update_uploaded": [
+            "<bucket to update>",
+            "<second bucket to update>"
+        ],
+        "upload_exts": [
+            "bam",
+            "tar.gz",
+            "CEL",
+            "maf",
+            "vcf",
+            "vcf.gz"
+        ]
     },
-    "latestarchive_folder": "<latest archive folders>",
-    "latest_log_folder": "<latest log folders>",
+    "use_gcs_processing": false,
+    "log_dir_tag": "run",
+    "base_run_upload_folder": "tcga-runs/",
     "downloads": {
         "latestarchive": "http://tcga-data.nci.nih.gov/datareports/resources/latestarchive",
         "metadata_current": "https://tcga-data.nci.nih.gov/tcgafiles/ftp_auth/distro_ftpusers/anonymous/other/metadata/metadata.current.txt",
         "annotations": "https://tcga-data.nci.nih.gov/annotations/resources/searchannotations/json?"
     },
+    "datastore": {
+        "parent_kind": "ISBCGC",
+        "parent_name": "isbcgc",
+        "metadata_kind": "ISBCGCmetadata",
+        "key_fields": [
+            "AliquotBarcode",
+            "DatafileName"
+        ],
+        "key_sep": "^"
+    },
     "cloudsql": {
-        "host": "<host IP>",
-        "db": "<db name>",
+        "host": "173.194.225.46",
+        "db": "2016_07_09_dev",
         "user": "<user>",
         "passwd": "<password>",
-        "update_schema": true
+        "update_schema": true,
+        "ssl_dir": "ssl/"
     },
-    "log_dir_tag": "logs",
     "patterns": {
         "key_template": "<%s>/<%s>/<%s>/<%s>/<%s>",
         "key_terms": [
-            "<key term one>",
-            "<key term two>",
-            "<key term three>",
-            "<key term four>"
+            "Project",
+            "Study",
+            "Platform",
+            "Pipeline",
+            "DataLevel"
         ]
     },
     "bio_etl_keys": {
-        "clinical": "<clinical etl key>",
-        "biospecimen": "<biospecimen etl key>",
-        "data": "<data etl key>"
+        "clinical": "tcga-runs/intermediary/Clinical/bq_data_files/Clinical.json",
+        "biospecimen": "tcga-runs/intermediary/Biospecimen/bq_data_files/Biospecimen.json",
+        "data": "tcga-runs/intermediary/Data/bq_data_files/Data.json"
+    },
+    "exclude_annotation_catagories": [1,2,3,4,5,27,37,241,242],
+    "annotation_mapping": {
+        "annotationId" : ["id"],
+        "annotationCategoryId": ["annotationCategory", "categoryId"],
+        "annotationCategoryName": ["annotationCategory", "categoryName"],
+        "annotationClassificationId": ["annotationCategory", "annotationClassification", "annotationClassificationId"],
+        "annotationClassification": ["annotationCategory", "annotationClassification", "annotationClassificationName"],
+        "annotationNoteText": ["optional", "notes", 0, "noteText"],
+        "Study": ["items", 0, "disease", "abbreviation"],
+        "itemTypeId": ["items", 0, "itemType", "itemTypeId"],
+        "itemTypeName": ["items", 0, "itemType", "itemTypeName"],
+        "itemBarcode": ["items", 0, "item"],
+        "AliquotBarcode": ["derived", 7, "items", 0, "item"],
+        "ParticipantBarcode": ["derived", 3, "items", 0, "item"],
+        "SampleBarcode": ["derived", 4, "items", 0, "item"],
+        "dateAdded": ["optional", "notes", 0, "dateAdded"],
+        "dateCreated": ["dateCreated"],
+        "dateEdited": ["optional", "notes", 0, "dateEdited"]
     },
     "metadata_locations": {
         "clinical": {
+            "analyte_code": "analyte_code",
             "age_at_initial_pathologic_diagnosis": "age_at_initial_pathologic_diagnosis",
             "anatomic_neoplasm_subdivision": "anatomic_neoplasm_subdivision",
             "bcr_patient_barcode": "ParticipantBarcode",
@@ -93,9 +135,7 @@
             "days_to_last_known_alive": "days_to_last_known_alive",
             "days_to_submitted_specimen_dx": "days_to_submitted_specimen_dx",
             "ethnicity": "ethnicity",
-            "frozen_specimen_anatomic_site": "frozen_specimen_anatomic_site",
             "gender": "gender",
-            "gleason_score_combined": "gleason_score_combined",
             "height": "height",
             "histological_type": "histological_type",
             "history_of_colon_polyps": "history_of_colon_polyps",
@@ -120,7 +160,6 @@
             "pregnancies": "pregnancies",
             "primary_neoplasm_melanoma_dx": "primary_neoplasm_melanoma_dx",
             "primary_therapy_outcome_success": "primary_therapy_outcome_success",
-            "prior_dx": "prior_dx",
             "project_code": "Project",
             "psa_value": "psa_value",
             "race": "race",
@@ -133,6 +172,11 @@
             "vital_status": "vital_status",
             "weight": "weight",
             "year_of_initial_pathologic_diagnosis": "year_of_initial_pathologic_diagnosis",
+            "h_pylori_infection": "h_pylori_infection",
+            "age_began_smoking_in_years": "age_began_smoking_in_years",
+            "number_pack_years_smoked": "number_pack_years_smoked",
+            "stopped_smoking_year": "stopped_smoking_year",
+            "year_of_tobacco_smoking_onset": "year_of_tobacco_smoking_onset",
             "calculate": {
                 "calculateBMI:weight:height:%.1f": "BMI",
                 "enforce_vitalstatus_rules:filtered_dict": ""
@@ -145,8 +189,20 @@
             "bcr_patient_barcode": "ParticipantBarcode",
             "hpv_calls": "hpv_calls",
             "hpv_status": "hpv_status",
-            "mononucleotide_and_dinucleotide_marker_panel_analysis_status": "mononucleotide_and_dinucleotide_marker_panel_analysis_status",
-            "mononucleotide_marker_panel_analysis_status": "mononucleotide_marker_panel_analysis_status"
+            "mononucleotide_and_dinucleotide_marker_panel_analysis_status": "mononucleotide_and_dinucleotide_marker_panel_analysis_status"
+        },
+        "omf": {
+            "omf:malignancy_type": "other_malignancy_malignancy_type",
+            "omf:other_malignancy_anatomic_site": "other_malignancy_anatomic_site",
+            "omf:other_malignancy_histological_type": "other_malignancy_histological_type"
+        },
+        "ssf_clinical": {
+            "clinical:histological_type": "histological_type",
+            "clinical:country": "country",
+            "clinical:other_dx": "other_dx",
+            "clinical:tobacco_smoking_history": "tobacco_smoking_history",
+            "clinical:gleason_score_combined": "gleason_score_combined",
+            "clinical:history_of_neoadjuvant_treatment": "history_of_neoadjuvant_treatment"
         },
         "biospecimen": {
             "admin:batch_number": "batch_number",
@@ -157,7 +213,6 @@
             "sample:bcr_sample_barcode": "SampleBarcode",
             "sample:bcr_sample_uuid": "SampleUUID",
             "sample:days_to_collection": "days_to_collection",
-            "cqcf:days_to_sample_procurement": "days_to_sample_procurement",
             "sample:is_ffpe": "is_ffpe",
             "sample:num_portions": "num_portions",
             "sample:num_slides": "num_slides",
@@ -189,6 +244,13 @@
             "slide:min_percent_tumor_cells": "min_percent_tumor_cells",
             "slide:min_percent_tumor_nuclei": "min_percent_tumor_nuclei"
         },
+        "ssf_biospecimen": {
+            "sample:days_to_sample_procurement": "days_to_sample_procurement",
+            "sample:days_to_normal_sample_procurement": "days_to_sample_procurement",
+            "sample:site_of_disease": "tissue_anatomic_site",
+            "sample:site_of_disease_description": "tissue_anatomic_site_description",
+            "sample:normal_tissue_anatomic_site": "tissue_anatomic_site"
+        },
         "sdrf": {
             "add": {
                 "Species": "literal:Homo sapiens",
@@ -204,7 +266,6 @@
               "TCGA Include for Analysis": "IncludeForAnalysis",
               "TCGA MD5": "DatafileMD5",
               "md5": "DatafileMD5",
-              "TCGA CGHub ID": "DataCGHubID",
               "Genome reference": "GenomeReference",
               "disease_code": "Study"
             },
@@ -228,7 +289,8 @@
                 "DatafileUploaded": ["literal:false"],
                 "IncludeForAnalysis": ["match:state:Live:yes:no"],
                 "SecurityProtocol": ["literal:dbGap controlled-access"],
-                "project_accession": ["literal:phs000178"]
+                "project_accession": ["literal:phs000178"],
+                "DataCenterName": ["map:shortname2centername:center_name"]
             },
             "map": {
                 "participant_id": ["ParticipantUUID"],
@@ -341,49 +403,49 @@
             },
             "analyte2strategy2moltype" : {
                 "D": {
-                    "": "None",
-                    "VALIDATION": "None",
-                    "OTHER": "None",
-                    "AMPLICON": "None",
+                    "": "DNASeq",
+                    "VALIDATION": "DNASeq",
+                    "OTHER": "DNASeq",
+                    "AMPLICON": "DNASeq",
                     "WGS": "DNASeq",
                     "WXS": "DNASeq",
                     "Bisulfite-Seq": "DNASeq"
                 },
                 "W": {
-                    "": "None",
-                    "VALIDATION": "None",
-                    "OTHER": "None",
-                    "AMPLICON": "None",
+                    "": "DNASeq",
+                    "VALIDATION": "DNASeq",
+                    "OTHER": "DNASeq",
+                    "AMPLICON": "DNASeq",
                     "WGS": "DNASeq",
                     "WXS": "DNASeq",
                     "Bisulfite-Seq": "DNASeq"
                 },
                 "X": {
-                    "": "None",
-                    "VALIDATION": "None",
-                    "AMPLICON": "None",
-                    "OTHER": "None",
+                    "": "DNASeq",
+                    "VALIDATION": "DNASeq",
+                    "AMPLICON": "DNASeq",
+                    "OTHER": "DNASeq",
                     "WGS": "DNASeq",
                     "WXS": "DNASeq"
                 },
                 "H": {
-                    "": "None",
-                    "VALIDATION": "None",
-                    "OTHER": "None",
+                    "": "RNASeq",
+                    "VALIDATION": "RNASeq",
+                    "OTHER": "RNASeq",
                     "RNA-Seq": "RNASeq",
                     "miRNA-Seq": "miRNASeq"
                 },
                 "R": {
-                    "": "None",
-                    "VALIDATION": "None",
-                    "OTHER": "None",
+                    "": "RNASeq",
+                    "VALIDATION": "RNASeq",
+                    "OTHER": "RNASeq",
                     "RNA-Seq": "RNASeq",
                     "miRNA-Seq": "miRNASeq"
                 },
                 "T": {
-                    "": "None",
-                    "VALIDATION": "None",
-                    "OTHER": "None",
+                    "": "RNASeq",
+                    "VALIDATION": "RNASeq",
+                    "OTHER": "RNASeq",
                     "RNA-Seq": "RNASeq",
                     "miRNA-Seq": "miRNASeq"
                 },
@@ -392,10 +454,10 @@
                     "VALIDATION": "None",
                     "OTHER": "None",
                     "AMPLICON": "None",
-                    "WGS": "None",
-                    "WXS": "None",
-                    "RNA-Seq": "None",
-                    "miRNA-Seq": "None"
+                    "WGS": "DNASeq",
+                    "WXS": "DNASeq",
+                    "RNA-Seq": "RNASeq",
+                    "miRNA-Seq": "miRNASeq"
                 }
             },
             "upload_platforms": [
@@ -416,8 +478,11 @@
             "CENTER_CODE": "DataCenterCode",
             "UUID": "AliquotUUID"
         },
-        "latestarchive": {
+        "latestarchive_dcc_processing": {
             "ARCHIVE_URL": "DataArchiveURL#split:/:9:DataCenterType#split:/:10:DataCenterName#split:.:-7:Platform#pattern:DataArchiveVersion:^.+([0-9]{1,3}\\.[0-9]{1,4}\\.[0-9]{1,3}).tar.gz$"
+        },
+        "latestarchive_gcs_processing": {
+            "ARCHIVE_URL": "DataArchiveURL#split:/:12:DataCenterType#split:/:13:DataCenterName#split:.:-7:Platform#pattern:DataArchiveVersion:^.+([0-9]{1,3}\\.[0-9]{1,4}\\.[0-9]{1,3}).tar.gz$"
         },
         "annotations": {
             "uuid": "list:0:Annotation Category,list:1:Annotation Classification"
@@ -433,6 +498,11 @@
         "bed.bz2",
         "tar.gz",
         "*hg18*"
+    ],
+    "maf_upload_files": [
+        "maf",
+        "vcf",
+        "vcf.gz"
     ],
     "upload_archives": {
         "Level_1": {
@@ -739,5 +809,80 @@
         "AnnotationCategory",
         "AnnotationClassification",
         "wasDerivedFrom"
-    ]
+    ],
+    "field2datatype": {
+        "AliquotBarcode": "str",
+        "AliquotUUID": "str",
+        "AnnotationCategory": "list:str",
+        "AnnotationClassification": "list:str",
+        "BiospecimenfileName": "str",
+        "ClinicalArchiveName": "str",
+        "ClinicalArchiveURL": "str",
+        "ClinicalDataLevel": "str",
+        "ClinicalfileName": "str",
+        "DataArchiveName": "str",
+        "DataArchiveURL": "str",
+        "DataArchiveVersion": "str",
+        "DataCenterCode": "str",
+        "DataCenterName": "str",
+        "DataCenterType": "str",
+        "DataLevel": "str",
+        "DatafileMD5": "str",
+        "DatafileName": "str",
+        "Datatype": "str",
+        "IncludeForAnalysis": "bool",
+        "MAGETabArchiveName": "str",
+        "MAGETabArchiveURL": "str",
+        "ParticipantBarcode": "str",
+        "ParticipantUUID": "str",
+        "Pipeline": "str",
+        "Platform": "str",
+        "Project": "str",
+        "Repository": "str",
+        "SDRFFileName": "str",
+        "SampleBarcode": "str",
+        "SampleTypeCode": "str",
+        "SampleUUID": "str",
+        "SecurityProtocol": "str",
+        "Study": "str",
+        "TSSCode": "str",
+        "TissueSourceSite": "str",
+        "TumorType": "str",
+        "age_at_initial_pathologic_diagnosis": "int",
+        "batch_number": "str",
+        "bcr": "str",
+        "center_id": "str",
+        "clinical_M": "str",
+        "clinical_N": "str",
+        "clinical_T": "str",
+        "clinical_stage": "str",
+        "days_to_birth": "int",
+        "days_to_last_followup": "int",
+        "disease_code": "str",
+        "ethnicity": "str",
+        "gender": "str",
+        "height": "float",
+        "histological_type": "str",
+        "icd_10": "str",
+        "icd_o_3_histology": "str",
+        "icd_o_3_site": "str",
+        "is_ffpe": "bool",
+        "neoplasm_histologic_grade": "str",
+        "new_tumor_event_after_initial_treatment": "bool",
+        "number_of_lymphnodes_positive_by_he": "int",
+        "pathologic_M": "str",
+        "pathologic_N": "str",
+        "pathologic_T": "str",
+        "pathologic_stage": "str",
+        "person_neoplasm_cancer_status": "str",
+        "prior_dx": "bool",
+        "race": "str",
+        "residual_tumor": "str",
+        "sample_type": "str",
+        "tobacco_smoking_history": "str",
+        "tumor_tissue_site": "str",
+        "vital_status": "str",
+        "wasDerivedFrom": "list:str",
+        "weight": "float"
+    }
 }

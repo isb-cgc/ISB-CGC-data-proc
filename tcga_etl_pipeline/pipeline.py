@@ -99,6 +99,7 @@ def main(datatype, config_file, max_workers, dry_run, create_new, debug):
     log_filename = 'etl_{0}.log'.format(datatype)
     log_name = 'etl_{0}'.format(datatype)
 
+    log.info('start pipeline for %s' % (datatype))
     # check if the table exists and issue warning
     if os.path.exists(db_filename):
        log.warning('Using the already available database file - {0}'.format(db_filename))
@@ -134,13 +135,14 @@ def main(datatype, config_file, max_workers, dry_run, create_new, debug):
         queue_df = queue_df.head(30)
 
     if dry_run:
+        log.info('finished dry run for %s' % (datatype))
         sys.exit()
 
 
     #--------------------------------------------
     # Execution
     #------------------------------------------------------
-    pmr = process_manager.ProcessManager(max_workers=max_workers, db=db_filename, table=table_task_queue_status)
+    pmr = process_manager.ProcessManager(max_workers=max_workers, db=db_filename, table=table_task_queue_status, log=log)
     for index, row in queue_df.iterrows():
         metadata = row.to_dict()
         inputfilename = metadata['DatafileNameKey']
@@ -156,6 +158,7 @@ def main(datatype, config_file, max_workers, dry_run, create_new, debug):
             time.sleep(5)
 
     pmr.start()
+    log.info('finished pipeline for %s' % (datatype))
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
