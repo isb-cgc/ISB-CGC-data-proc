@@ -24,7 +24,7 @@ import json
 import logging
 import sys
 
-from isbcgc_metadata_cloudsql_model import ISBCGC_database_helper
+from isbcgc_cloudsql_metadata_model import ISBCGC_database_helper
 from util import create_log
 
 def main(configFileName):

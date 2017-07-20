@@ -1,0 +1,70 @@
+[
+    {
+        "type": "STRING",
+        "name": "Ensembl_gene_ID"
+    },
+    {
+        "type": "STRING",
+        "name": "Ensembl_versioned_gene_ID"
+    },
+    {
+        "type": "FLOAT",
+        "name": "HTSeq__FPKM_UQ"
+    },
+    {
+        "type": "FLOAT",
+        "name": "HTSeq__FPKM"
+    },
+    {
+        "type": "INTEGER",
+        "name": "HTSeq__Counts"
+    },
+    {
+        "type": "STRING",
+        "name": "FileID"
+    },
+    {
+        "type": "STRING",
+        "name": "AliquotsAliquotID"
+    },
+    {
+        "type": "STRING",
+        "name": "AliquotsSubmitterID"
+    },
+    {
+        "type": "STRING",
+        "name": "SampleID"
+    },
+    {
+        "type": "STRING",
+        "name": "SamplesSubmitterID"
+    },
+    {
+        "type": "STRING",
+        "name": "CaseID"
+    },
+    {
+        "type": "STRING",
+        "name": "CasesSubmitterID"
+    },
+    {
+        "type": "STRING",
+        "name": "ProgramName"
+    },
+    {
+        "type": "STRING",
+        "name": "ProjectID"
+    },
+    {
+        "type": "STRING",
+        "name": "SampleTypeLetterCode"
+    },
+    {
+        "type": "STRING",
+        "name": "DataType"
+    },
+    {
+        "type": "STRING",
+        "name": "ExperimentalStrategy"
+    }
+]

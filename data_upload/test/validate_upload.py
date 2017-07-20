@@ -412,7 +412,7 @@ def validate_database(config, log, log_dir):
         columns[table2column[row[1]]][row[0]] = row[2]
     
 # create a summary table of statistics
-    summary = 'column name\ttable name\tstudies\tvalid values\tdistinct values\tsstats\n'
+    summary = 'column name\ttable name\tstudies\tvalid values(empty)\tdistinct values\tsstats\n'
     for table_name in table2column:
         log.info('validating table %s\n' % (table_name))
         dd_columns2type = columns[table2column[table_name]]
@@ -477,8 +477,9 @@ def validate_database(config, log, log_dir):
         column_print = '\t\t%s(%s):\n'
         study_stmt = 'select study, count(*) from {1} where {0} is not null and {0} <> "" group by study'
         study_print = '\t\t\tstudies:\n\t\t\t\t%s\n'
-        basic_stmt = 'select "VALUE", count(*) from {0} where {1} is not null and {1} <> "" union select "NULL", count(*) from {0} where {1} is null or {1} = ""'
-        basic_print = '\t\t\tvalid values %s out of %s\n'
+        basic_stmt = 'select "VALUE", count(*) from {0} where {1} is not null and {1} <> "" union select "NULL", count(*) from {0} where {1} is null ' + \
+             'union select "EMPTY", count(*) from {0} where {1} = ""'
+        basic_print = '\t\t\tvalid values %s out of %s with %s empty\n'
         distinct_stmt = 'select {0}, count(*) from {1} where {0} is not null and {0} <> "" group by {0} limit 1000'
         distinct_print = '\t\t\tdistinct values:\n\t\t\t\t%s\n'
         numeric_stmt = 'select min({0}), max({0}), avg({0}), std({0}), variance({0}) from {1}'
@@ -511,13 +512,29 @@ def validate_database(config, log, log_dir):
             for row in cursor:
                 results += [row]
             
-            total = results[0][1] + results[1][1]
-            if 'VALUE' == results[0][0]:
-                stats += basic_print % (results[0][1], total)
-                summary += '%s/%s\t' % (results[0][1], total)
-            else:
-                stats += basic_print % (results[1][1], total)
-                summary += '%s/%s\t' % (results[1][1], total)
+            total = results[0][1] + results[1][1] + results[2][1]
+            if 'VALUE' == results[0][0]: 
+                if 'EMPTY' == results[1][0]:
+                    stats += basic_print % (results[0][1], total, results[1][1])
+                    summary += '%s/%s(%s)\t' % (results[0][1], total, results[1][1])
+                else:
+                    stats += basic_print % (results[0][1], total, results[2][1])
+                    summary += '%s/%s(%s)\t' % (results[0][1], total, results[2][1])
+            elif 'VALUE' == results[1][0]: 
+                if 'EMPTY' == results[0][0]:
+                    stats += basic_print % (results[0][1], total, results[0][1])
+                    summary += '%s/%s(%s)\t' % (results[0][1], total, results[0][1])
+                else:
+                    stats += basic_print % (results[0][1], total, results[2][1])
+                    summary += '%s/%s(%s)\t' % (results[0][1], total, results[2][1])
+            elif 'VALUE' == results[2][0]: 
+                if 'EMPTY' == results[0][0]:
+                    stats += basic_print % (results[0][1], total, results[0][1])
+                    summary += '%s/%s(%s)\t' % (results[0][1], total, results[0][1])
+                else:
+                    stats += basic_print % (results[0][1], total, results[1][1])
+                    summary += '%s/%s(%s)\t' % (results[0][1], total, results[1][1])
+
             cursor = helper.select(config, distinct_stmt.format(colname, table_name), log)
             if 50 < len(cursor):
                 if 1000 == len(cursor):

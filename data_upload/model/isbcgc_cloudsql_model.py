@@ -22,99 +22,100 @@ limitations under the License.
 '''
 import MySQLdb
 import time
-from collections import OrderedDict
 
-class ISBCGC_database_helper():
+class ISBCGC_database_helper(object):
     """
     this class is the base class to manage subclass the CloudSQL  uploads
     """
-    ssl_dir = 'ssl/'
-    ssl = {
-#             'ca': ssl_dir + 'server-ca.pem',
-        'cert': ssl_dir + 'client-cert.pem',
-        'key': ssl_dir + 'client-key.pem' 
-    }
 
-    metadata_tables = None
+    @classmethod
+    def log_warnings(cls, cursor, log):
+        for msg in cursor.messages:
+            if msg[0] == MySQLdb.Warning:
+                log.error('\t\tfound warning:\n\t\t\t%s' % (msg[1]))
 
     @classmethod
     def getDBConnection(cls, config, log):
         try:
-            db = MySQLdb.connect(host=config['cloudsql']['host'], db=config['cloudsql']['db'], user=config['cloudsql']['user'], passwd=config['cloudsql']['passwd'], ssl = cls.ssl)
+            ssl_dir = config['cloudsql']['ssl_dir']
+            ssl = {
+        #             'ca': ssl_dir + 'server-ca.pem',
+                'cert': ssl_dir + 'client-cert.pem',
+                'key': ssl_dir + 'client-key.pem' 
+            }
+            if config['cloudsql']['use_proxy']:
+                db = MySQLdb.connect(host="127.0.0.1", db=config['cloudsql']['db'], user=config['cloudsql']['user'], passwd=config['cloudsql']['passwd'])
+            else:
+                db = MySQLdb.connect(host=config['cloudsql']['host'], db=config['cloudsql']['db'], user=config['cloudsql']['user'], passwd=config['cloudsql']['passwd'], ssl = ssl)
         except Exception as e:
             # if connection requests are made too close together over a period of time, the connection attempt might fail
-            count = 4
-            while count > 0:
-                count -= 1
-                time.sleep(1)
+            count = 0
+            sleep = 3
+            while count < 6:
+                count += 1
+                time.sleep(sleep + count)
                 log.warning('\n\n!!!!!!sleeping on error to reattempt db connection!!!!!!\n')
                 try:
-                    db = MySQLdb.connect(host=config['cloudsql']['host'], db=config['cloudsql']['db'], user=config['cloudsql']['user'], passwd=config['cloudsql']['passwd'], ssl = cls.ssl)
+                    if config['cloudsql']['use_proxy']:
+                        db = MySQLdb.connect(host="127.0.0.1", db=config['cloudsql']['db'], user=config['cloudsql']['user'], passwd=config['cloudsql']['passwd'])
+                    else:
+                        db = MySQLdb.connect(host=config['cloudsql']['host'], db=config['cloudsql']['db'], user=config['cloudsql']['user'], passwd=config['cloudsql']['passwd'], ssl = ssl)
                     break
                 except Exception as e:
-                    if 1 == count:
+                    if 6 == count:
                         log.exception("failed to reconnect to database")
                         raise e
             
         return db
 
-    def __init__(self, config, log):
+    @classmethod
+    def process_tables(cls, config, process_function, log):
         db = None
         cursor = None
         try:
-            if not config['process_bio']:
-                log.warning('process_bio must be true for initialization to proceed')
+            if not config['update_schema']:
                 return
-            db = self.getDBConnection(config, log)
+            db = cls.getDBConnection(config, log)
             cursor = db.cursor()
-            cursor.execute('select table_name from information_schema.tables where table_schema = "%s"' % (config['cloudsql']['db']))
-            not_found = OrderedDict(self.metadata_tables)
-            found = OrderedDict()
-            for next_row in cursor:
-                print next_row[0]
-                if next_row[0] in self.metadata_tables:
-                    found[next_row[0]] = self.metadata_tables[next_row[0]]
-                    not_found.pop(next_row[0])
-            if 0 != len(found) and config['cloudsql']['update_schema']:
-                # need to delete in foreign key dependency order
-                found_list = []
-                for table_name in reversed(self.metadata_tables):
-                    if table_name in found:
-                        found_list += [found[table_name]]
-                self._drop_schema(cursor, config, found_list, log)
-                self._create_schema(cursor, config, self.metadata_tables.values(), log)
-            if 0 != len(not_found):
-                log.info('\tcreating table(s) %s' % (', '.join(not_found)))
-                self._create_schema(cursor, config, not_found.values(), log)
-            else:
-                log.info('\tpreserving tables')
-            log.info('\tconnection successful')
+            process_function(cursor, config, cls.metadata_tables, log)
         finally:
             if cursor:
                 cursor.close()
             if db:
                 db.close()
 
-    def _drop_schema(self, cursor, config, tables, log):
-        drop_schema_template = 'DROP TABLE %s.%s'
+    @classmethod
+    def drop_tables(cls, config, log):
+        cls.process_tables(config, cls._drop_schema, log)
+    
+    @classmethod
+    def setup_tables(cls, config, log):
+        if config['update_schema']:
+            cls.drop_tables(config, log)
+        cls.process_tables(config, cls._create_schema, log)
+    
+    @classmethod
+    def _drop_schema(cls, cursor, config, tables, log):
+        drop_schema_template = 'DROP TABLE IF EXISTS %s.%s'
         
-        for table in tables:
-            drop_statement = drop_schema_template % (config['cloudsql']['db'], table['table_name'])
-            log.info('\tdropping table %s:\n%s' % (config['cloudsql']['db'], drop_statement))
+        for table in tables.keys()[::-1]:
+            drop_statement = drop_schema_template % (config['cloudsql']['db'], table)
+            log.info('\tdropping table %s:\n%s' % (table, drop_statement))
             try:
                 cursor.execute(drop_statement)
             except Exception as e:
-                log.exception('\tproblem dropping %s' % (table['table_name']))
+                log.exception('\tproblem dropping %s' % (table))
                 raise e
 
-    def _create_schema(self, cursor, config, tables, log):
+    @classmethod
+    def _create_schema(cls, cursor, config, tables, log):
         create_table_template = "CREATE TABLE IF NOT EXISTS %s.%s (\n\t%s\n)" 
         primary_key_template = '%s INTEGER NOT NULL AUTO_INCREMENT PRIMARY KEY,\n\t'
         create_col_template = '%s %s %s,\n\t'
         index_template = 'INDEX %s (%s),\n\t'
         foreign_key_template = 'CONSTRAINT %s FOREIGN KEY (%s) REFERENCES %s(%s),\n\t'
 
-        for table in tables:
+        for table in tables.itervalues():
             columnDefinitions = ''
             if 'primary_key_name' in table:
                 columnDefinitions = primary_key_template % (table['primary_key_name'])
@@ -130,11 +131,11 @@ class ISBCGC_database_helper():
                     count += 1
             if 'foreign_keys' in table:
                 for index in range(len(table['foreign_keys'])):
-                    columnDefinitions += foreign_key_template % ('fk_' + table['table_name'] + '_' + table['foreign_keys'][index][1], 
+                    columnDefinitions += foreign_key_template % (('fk_' + table['foreign_keys'][index][1] + '_' + table['table_name'])[:64], 
                                                 table['foreign_keys'][index][0], table['foreign_keys'][index][1], table['foreign_keys'][index][2])
             columnDefinitions = columnDefinitions[:-3]
             table_statement = create_table_template % (config['cloudsql']['db'], table['table_name'], columnDefinitions)
-            log.info('\tcreating table %s:\n%s' % (config['cloudsql']['db'], table_statement))
+            log.info('\tcreating table %s:\n%s' % (table['table_name'], table_statement))
             try:
                 cursor.execute(table_statement)
             except Exception as e:
@@ -208,27 +209,47 @@ class ISBCGC_database_helper():
             cursor = db.cursor()
             # now execute the updates
             cursor.execute("START TRANSACTION")
-            count = 0
-            report = len(params) / 20
-            for paramset in params:
-                if 0 == report or 0 == count % report:
-                    log.info('\t\t\tupdated %s records' % (count))
-                count += 1
+            tries = 0
+            while True:
+                tries += 1
                 try:
-                    cursor.execute(stmt, paramset)
+                    cursor.executemany(stmt, params)
+                    break
                 except MySQLdb.OperationalError as oe:
-                    log.warning('checking operation error: %s' % (oe))
-                    if oe.errno == 1205:
-                        log.warning('\t\t\tupdate had operation error (%s:%s) on %s, sleeping' % (stmt, count, paramset))
-                        time.sleep(1)
-                        cursor.execute(stmt, paramset)
-                    else:
-                        log.exception('\t\t\tupdate had operation error (%s:%s) on %s' % (stmt, count, paramset))
+                    try:
+                        if ('1213' in str(oe) or oe.errno == 1213) and 11 > tries:
+                            cursor, db = cls.processOEError(config, cursor, db, 'update had operation error params(%s), %s deadlocked, sleeping' % (oe, stmt), log)
+                        else:
+                            log.exception('\t\t\tupdate had multiple operation errors 1213 for %s' % (stmt))
+                            raise oe
+                    except Exception as e:
+                        log.exception('problem checking OperationalError: %s' % (oe))
+                        if 11 <= tries:
+                            raise oe
                 except Exception as e:
-                    log.exception('problem with update(%s): \n\t\t\t%s\n\t\t\t%s' % (count, stmt, paramset))
-                    raise e
+                    log.exception('problem with update for:\n%s\n\t%s\n%s' % (stmt, e, params))
+                    raise
+#             report = len(params) / 20
+#             for paramset in params:
+#                 if 0 == report or 0 == count % report:
+#                     log.info('\t\t\tupdated %s records' % (count))
+#                 count += 1
+#                 try:
+#                     cursor.execute(stmt, paramset)
+#                     cls.log_warnings(cursor, log)
+#                 except MySQLdb.OperationalError as oe:
+#                     log.warning('checking operation error: %s' % (oe))
+#                     if oe.errno == 1205:
+#                         log.warning('\t\t\tupdate had operation error (%s:%s) on %s, sleeping' % (stmt, count, paramset))
+#                         time.sleep(1)
+#                         cursor.execute(stmt, paramset)
+#                     else:
+#                         log.exception('\t\t\tupdate had operation error (%s:%s) on %s' % (stmt, count, paramset))
+#                 except Exception as e:
+#                     log.exception('problem with update(%s): \n\t\t\t%s\n\t\t\t%s' % (count, stmt, paramset))
+#                     raise e
             if verbose:
-                log.info('\t\tcompleted update.  updated %s:%s record', count, cursor.rowcount)
+                log.info('\t\tcompleted update.  updated %s record', cursor.rowcount)
             cursor.execute("COMMIT")
         except Exception as e:
             log.exception('\t\tupdate failed')
@@ -247,6 +268,20 @@ class ISBCGC_database_helper():
         field_names = cls.field_names(table)
         cls.column_insert(config, rows, table, field_names, log)
 
+    @classmethod
+    def processOEError(cls, config, cursor, db, msg, log):
+        log.warning('\n%s' % (msg))
+        time.sleep(1) # rollback any previous inserts
+        cursor.execute("ROLLBACK")
+
+        try:
+            db.close() # make sure connection is closed
+        except:
+            pass
+        db = cls.getDBConnection(config, log)
+        cursor = db.cursor()
+        cursor.execute("START TRANSACTION")
+        return cursor, db
 
     @classmethod
     def column_insert(cls, config, rows, table, field_names, log):
@@ -271,32 +306,41 @@ class ISBCGC_database_helper():
                         if start + index == len(rows):
                             break
                         inserts += [rows[start + index]]
-                    log.info('\t\t\tinsert rows %s to %s' % (start, index))
+                    log.info('\t\t\tinsert rows %s to %s' % (start, start + index))
                     try:
                         cursor.executemany(insert_stmt, inserts)
+                        cls.log_warnings(cursor, log)
                     except MySQLdb.OperationalError as oe:
-                        if oe.errno == 2006 and 2 > tries:
-                            log.warning('\t\t\tupdate had operation error 2006, lost connection for %s, sleeping' % (insert_stmt))
-                            time.sleep(1)
-                            # rollback any previous inserts
-                            cursor.execute("ROLLBACK")
-
-                            # and setup to retry
-                            retrying = True
-                            try:
-                                # make sure connection is closed
-                                db.close()
-                            except:
-                                pass
-                            db = cls.getDBConnection(config, log)
-                            cursor = db.cursor()
-                            cursor.execute("START TRANSACTION")
-                        else:
-                            log.exception('\t\t\tupdate had multiple operation errors 2006 for %s' % (insert_stmt))
-                            raise oe
+                        try:
+                            if oe.errno == 2006 and 3 > tries:
+                                cursor, db = cls.processOEError(config, cursor, db, 'update had operation error 2006(%s), lost connection for %s, sleeping' % (oe, insert_stmt), log)
+                            else:
+                                log.exception('\t\t\tupdate had multiple operation errors 2006 for %s' % (insert_stmt))
+                                raise oe
+                        except AttributeError:
+                            if 3 > tries:
+                                cursor, db = cls.processOEError(config, cursor, db, 'update had operation error(%s), lost connection for %s, sleeping' % (oe, insert_stmt), log)
+                            else:
+                                log.exception('\t\t\tupdate had multiple operation errors for %s' % (insert_stmt))
+                                raise oe
+                    except MySQLdb.DataError as de:
+                        try:
+                            if de.errno == 1406 and 3 > tries:
+                                errorrow = int(str(de).split(' '))
+                                cursor, db = cls.processOEError(config, cursor, db, 'update had data error 1406(%s), data too long for column: %s-' % (de, insert_stmt, inserts[errorrow]), log)
+#DataError: (1406, "Data too long for column 'file_name' at row 1")
+                            else:
+                                log.exception('\t\t\tupdate had multiple data errors 1406 for, data too long for column: %s' % (insert_stmt))
+                                raise
+                        except AttributeError:
+                            if 3 > tries:
+                                cursor, db = cls.processOEError(config, cursor, db, 'update had data error(%s), lost connection for %s, sleeping' % (de, insert_stmt), log)
+                            else:
+                                log.exception('\t\t\tupdate had multiple data errors for %s' % (insert_stmt))
+                                raise de
                     except Exception as e:
-                        log.exception('problem with update for %s: %s' % (insert_stmt, e))
-                        raise e
+                        log.exception('problem with update for:\n%s\n\t%s\n\t%s' % (insert_stmt, e, '\n\t'.join((','.join(str(field) for field in insert) for insert in inserts))))
+                        raise
                     inserts = []
                 # successfully looped through so stop trying
                 break

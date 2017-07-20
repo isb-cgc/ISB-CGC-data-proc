@@ -24,25 +24,29 @@ import chardet
 
 log = logging.getLogger(__name__)
 
+
 #--------------------------------------
 # Clean up the dataframe
 #--------------------------------------
-def cleanup_dataframe(df):
+def cleanup_dataframe(df, caller_log = None):
     """Cleans the dataframe
         - strips new lines, double, single quotes; None -> nan, etc
         - formats the column names for Bigquery input
     """
+    if caller_log:
+        log = caller_log
+        
     log.info("Cleaning up the dataframe")
 
     if df.empty:
         raise RuntimeError("Empty dataframe passed to clean_up_dataframe function")
 
     # why again, we are doing it in convert_to_dataframe, right?
-    # because we can call this function separately
-    log.info('\tconsolidate na values')
-    na_values = ['none', 'None', 'NONE', 'null', 'Null', 'NULL', ' ', 'NA', '__UNKNOWN__', '?']
-    for rep in na_values:
-        df = df.replace(rep, np.nan)
+    # because we can call this function separately.  but this takes time, so commenting it out
+#     log.info('\tconsolidate na values')
+#     na_values = ['none', 'None', 'NONE', 'null', 'Null', 'NULL', ' ', 'NA', '__UNKNOWN__', '?']
+#     for rep in na_values:
+#         df = df.replace(rep, np.nan)
 
     log.info('\tremove empty spaces(this removes more than 1 space)')
     df = df.applymap(lambda x: np.nan if isinstance(x, basestring) and x.isspace() else x)
@@ -50,10 +54,14 @@ def cleanup_dataframe(df):
     log.info('\tprevent problems with nan(numpy.nan) in the convert and strip step by replacing with \'_mv_\'')
     df = df.fillna("_mv_")
 
-    log.info('\tconvert to utf-8, strip spaces (including ^M) and quotes')
-    df = df.applymap(lambda x: convert_encoding(x).strip().strip("'").strip('"'))
+# this can also be specified on load of df from file
+#    log.info('\tconvert to utf-8')
+#     [df[column].str.encode('utf-8') for column in df.columns]
 
-    log.info('replace back the np.nan')
+    log.info('\tstrip spaces (including ^M) and quotes')
+    df.replace(r'((^[\s"\'])|([\s"\']$))', '', regex=True)
+    
+    log.info('\treplace back the np.nan')
     df = df.replace(r'_mv_', np.nan)
 
     #------------
@@ -76,6 +84,7 @@ def cleanup_dataframe(df):
     log.info('\treplace all non-desired characters(space, dash, etc.) in column names with underscore')
     for repl in replace_column_strings:
         df.columns = df.columns.map(lambda x: x.replace(repl, replace_column_strings[repl]))
+    
     log.info("Finished cleaning up the dataframe")
     return df
 

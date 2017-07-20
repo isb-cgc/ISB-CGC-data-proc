@@ -1,0 +1,82 @@
+[
+    {
+        "type": "STRING",
+        "name": "sample_barcode"
+    },
+    {
+        "type": "STRING",
+        "name": "miRNA_ID"
+    },
+    {
+        "type": "INTEGER",
+        "name": "read_count"
+    },
+    {
+        "type": "FLOAT",
+        "name": "reads_per_million_miRNA_mapped"
+    },
+    {
+        "type": "STRING",
+        "name": "cross_mapped"
+    },
+    {
+        "type": "STRING",
+        "name": "chromosome"
+    },
+    {
+        "type": "INTEGER",
+        "name": "start_pos"
+    },
+    {
+        "type": "INTEGER",
+        "name": "end_pos"
+    },
+    {
+        "type": "STRING",
+        "name": "strand"
+    },
+    {
+        "type": "STRING",
+        "name": "mirna_accession"
+    },
+    {
+        "type": "STRING",
+        "name": "mirna_transcript"
+    },
+    {
+        "type": "STRING",
+        "name": "project_short_name"
+    },
+    {
+        "type": "STRING",
+        "name": "program_name"
+    },
+    {
+        "type": "STRING",
+        "name": "sample_type_code"
+    },
+    {
+        "type": "STRING",
+        "name": "file_gdc_id"
+    },
+    {
+        "type": "STRING",
+        "name": "aliquot_barcode"
+    },
+    {
+        "type": "STRING",
+        "name": "case_barcode"
+    },
+    {
+        "type": "STRING",
+        "name": "case_gdc_id"
+    },
+    {
+        "type": "STRING",
+        "name": "sample_gdc_id"
+    },
+    {
+        "type": "STRING",
+        "name": "aliquot_gdc_id"
+    }
+]

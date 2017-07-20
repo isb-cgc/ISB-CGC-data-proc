@@ -168,29 +168,33 @@ class GcsConnector(object):
     # works only in a single bucket
     # set the object metadata
     #----------------------------------------
-    def convert_df_to_njson_and_upload(self, df, destination_blobname, metadata={}):
+    def convert_df_to_njson_and_upload(self, df, destination_blobname, metadata={}, logparam = None):
+        if logparam:
+            log = logparam
+        log.info("\t\tConverting dataframe into a new-line delimited JSON file to save as %s" % (destination_blobname))
 
-        log.info("Converting dataframe into a new-line delimited JSON file to save as %s" % (destination_blobname))
-
-        log.info('\tstart conversion of %s' % (destination_blobname))
+        log.info('\t\t\tstart conversion of %s' % (destination_blobname))
         file_to_upload = StringIO()
-        modcount = len(df) / 20
-        count = 0
-
-        for _, rec in df.iterrows():
-            if 0 == count % modcount:
-                log.info('\t\tconverted %s rows' % (count))
-            count += 1
-            file_to_upload.write(rec.convert_objects(convert_numeric=False).to_json() + "\n")
-        file_to_upload.seek(0)
-        log.info('\tcompleted conversion.  converted %s total rows for %s' % (count, destination_blobname))
-
+        
+        # look for datetime columns and convert them to string
+        for column in df.columns:
+            if df[column].dtype == 'datetime64[ns]':
+                df[column] = df[column].apply(str)
+        
+        try:
+            log.info('\t\t\t\tconverting dataframe as a whole')
+            df_json = df.convert_objects(convert_numeric=False).to_json(orient = 'records', lines = True) + '\n'
+            log.info('\t\t\t\tconverted dataframe as a whole')
+        except:
+            log.exception('failed to convert dataframe!')
+            raise
+        
         upload_blob = storage.blob.Blob(destination_blobname, bucket=self.bucket)
         retry = 0
-        log.info('\tstart upload of %s' % (destination_blobname))
+        log.info('\t\t\tstart upload of %s' % (destination_blobname))
         while True:
             try:
-                upload_blob.upload_from_string(file_to_upload.getvalue())
+                upload_blob.upload_from_string(df_json)
                 break
             except Exception as e:
                 if 3 == retry:
@@ -198,21 +202,21 @@ class GcsConnector(object):
                     raise e
                 retry += 1
                 log.exception('problem with upload to %s, retry %s' % (destination_blobname, retry))
-        log.info('\tfinished upload of %s' % (destination_blobname))
+        log.info('\t\t\tfinished upload of %s' % (destination_blobname))
 
         # set blob metadata
         if metadata:
-            log.info("Setting object metadata")
+            log.info("\t\t\tSetting object metadata")
             upload_blob.metadata = metadata
             upload_blob.patch()
         file_to_upload.close()
 
         # check if the uploaded blob exists. Just a sanity check
         if upload_blob.exists():
-            log.info("The uploaded file {0} has size {1} bytes.".format(destination_blobname, upload_blob.size))
+            log.info("\t\tThe uploaded file {0} has size {1} bytes.".format(destination_blobname, upload_blob.size))
             return True
         else:
-            raise Exception('File upload failed - {0}.'.format(destination_blobname)) 
+            raise Exception('\t\tFile upload failed - {0}.'.format(destination_blobname)) 
      
     def check_blob_exists(self, blob):
         """

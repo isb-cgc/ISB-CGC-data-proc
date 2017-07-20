@@ -11,6 +11,7 @@ http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
+
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
@@ -114,26 +115,79 @@ import logging
 import pprint
 import urllib
 
-from isbcgc_cloudsql_annotation_model import ISBCGC_database_helper
+import isbcgc_cloudsql_annotation_model
+import isbcgc_cloudsql_annotation_association_model
 from util import post_run_file
 
 def associate_metadata2annotation(config, log):
+    # now save the associations
     associate_statements = [
-        "insert into metadata_annotation2data " \
-            "(metadata_annotation_id, metadata_data_id) " \
-        "select a.metadata_annotation_id, s.metadata_data_id " \
-        "from metadata_annotation a join metadata_data s on " \
-            "0 < instr(s.aliquotbarcode, a.itembarcode) ",
+        "insert into metadata_annotation2data" \
+            "(metadata_annotation_id, metadata_data_id)" \
+        "select a.metadata_annotation_id, s.metadata_data_id" \
+        "from metadata_annotation a join metadata_data s on" \
+            "s.aliquotbarcode = a.itembarcode",
+
+        "insert into metadata_annotation2data" \
+            "(metadata_annotation_id, metadata_data_id)" \
+        "select a.metadata_annotation_id, s.metadata_data_id" \
+        "from metadata_annotation a join metadata_data s on" \
+            "left(s.aliquotbarcode, 15) = a.itembarcode",
+
+        "insert into metadata_annotation2data" \
+            "(metadata_annotation_id, metadata_data_id)" \
+        "select a.metadata_annotation_id, s.metadata_data_id" \
+        "from metadata_annotation a join metadata_data s on" \
+            "left(s.aliquotbarcode, 19) = a.itembarcode",
+
+        "insert into metadata_annotation2data" \
+            "(metadata_annotation_id, metadata_data_id)" \
+        "select a.metadata_annotation_id, s.metadata_data_id" \
+        "from metadata_annotation a join metadata_data s on" \
+            "left(s.aliquotbarcode, 20) = a.itembarcode",
+
+        "insert into metadata_annotation2data" \
+            "(metadata_annotation_id, metadata_data_id)" \
+        "select a.metadata_annotation_id, s.metadata_data_id" \
+        "from metadata_annotation a join metadata_data s on" \
+            "left(s.aliquotbarcode, 23) = a.itembarcode",
+
+        "insert into metadata_annotation2data" \
+            "(metadata_annotation_id, metadata_data_id)" \
+        "select a.metadata_annotation_id, s.metadata_data_id" \
+        "from metadata_annotation a join metadata_data s on" \
+            "left(s.aliquotbarcode, 24) = a.itembarcode",
+
+        "insert into metadata_annotation2data" \
+            "(metadata_annotation_id, metadata_data_id)" \
+        "select a.metadata_annotation_id, s.metadata_data_id" \
+        "from metadata_annotation a join metadata_data s on" \
+            "left(s.aliquotbarcode, 27) = a.itembarcode",
+
+        "insert into metadata_annotation2data" \
+            "(metadata_annotation_id, metadata_data_id)" \
+        "select a.metadata_annotation_id, s.metadata_data_id" \
+        "from metadata_annotation a join metadata_data s on" \
+            "s.samplebarcode = a.itembarcode",
+
+        "insert into metadata_annotation2data" \
+            "(metadata_annotation_id, metadata_data_id)" \
+        "select a.metadata_annotation_id, s.metadata_data_id" \
+        "from metadata_annotation a join metadata_data s on" \
+            "s.participantbarcode = a.itembarcode",
+
         "insert into metadata_annotation2clinical " \
             "(metadata_annotation_id, metadata_clinical_id) " \
         "select a.metadata_annotation_id, s.metadata_clinical_id " \
         "from metadata_annotation a join metadata_clinical s on " \
             "s.participantbarcode = a.itembarcode ",
+
         "insert into metadata_annotation2biospecimen "  \
             "(metadata_annotation_id, metadata_biospecimen_id) " \
         "select a.metadata_annotation_id, s.metadata_biospecimen_id " \
         "from metadata_annotation a join metadata_biospecimen s on " \
             "0 < instr(s.samplebarcode, a.itembarcode) ",
+
         "insert into metadata_annotation2samples " \
             "(metadata_annotation_id, metadata_samples_id) " \
         "select a.metadata_annotation_id, s.metadata_samples_id " \
@@ -142,7 +196,10 @@ def associate_metadata2annotation(config, log):
     ]
     
     for statement in associate_statements:
-        ISBCGC_database_helper.update(config, statement, log, [[]], True)
+        try:
+            isbcgc_cloudsql_annotation_association_model.ISBCGC_database_helper.update(config, statement, log, [[]], True)
+        except:
+            log.exception('problem executing:\n\t%s' % (statement))
 
 def parse_derived(annotation, derived_keys, length, log):
     derived = parse_item(annotation, derived_keys, log)
@@ -260,10 +317,8 @@ def process_annotations(config, run_dir, log_name):
             log.exception('exception occurred on line %s for %s' % (count, annotation))
             raise e
 
-    # now create the annotation related tables and save to the cloudsql annotation table
-    ISBCGC_database_helper.initialize(config, log)
-    ISBCGC_database_helper.column_insert(config, annotation_lists, "metadata_annotation", sorted(ann_config.keys()), log)
-
+    # now save the rows to the cloudsql annotation table
+    isbcgc_cloudsql_annotation_model.ISBCGC_database_helper.column_insert(config, annotation_lists, "metadata_annotation", sorted(ann_config.keys()), log)
 
     log.info('\tfinished processing annotations')
     return barcode2annotation

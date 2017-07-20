@@ -41,7 +41,7 @@ def identify_data(config):
         FROM metadata_data
         WHERE DataType='Expression-miRNA Isoform'
         AND DatafileUploaded='true'
-        AND DatafileNameKey LIKE '%.isoform.quantification.txt'
+        AND DatafileNameKey LIKE '%hg19.mirbase20.isoform.quantification.txt'
         AND IncludeForAnalysis='yes'
         """
 

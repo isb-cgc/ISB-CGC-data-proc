@@ -56,7 +56,7 @@ def load(config):
         'gs://' + config['buckets']['open'] + '/' +\
             config['mirna_isoform_matrix']['IlluminaGA']['output_dir'] + '*',
         'NEWLINE_DELIMITED_JSON',
-        'WRITE_EMPTY'
+        'WRITE_APPEND'
     )
 
     log.info('done load of mirna isoform matrix into bigquery')
