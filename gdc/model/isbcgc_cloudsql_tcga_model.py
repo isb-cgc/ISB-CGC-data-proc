@@ -576,16 +576,6 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
                 'metadata_data_type_availability_id',
                 'TCGA_metadata_data_type_availability',
                 'metadata_data_type_availability_id'
-            ],
-            [
-                'sample_barcode',
-                'TCGA_metadata_biospecimen',
-                'sample_barcode'
-            ],
-            [
-                'sample_barcode',
-                'TCGA_metadata_samples',
-                'sample_barcode'
             ]
         ]
     }

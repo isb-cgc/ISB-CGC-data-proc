@@ -299,13 +299,15 @@ def process_clinical_image_records(config, program, image_config, image_type, ro
         for barcode in new_barcodes:
             row = barcode2row[barcode]
             if 'Radiology' == image_type:
+                case_barcode = row[0]
                 project_short_name = row[1].split('/')[5]
             else:
+                case_barcode = row[2]
                 project_short_name = row[4].split('/')[6]
             if 'NA' == project_short_name:
                 continue
-            rows += [['legacy', row[2], program, project_short_name.split('-')[1], project_short_name]]
-            rows += [['current', row[2], program, project_short_name.split('-')[1], project_short_name]]
+            rows += [['legacy', case_barcode, program, project_short_name.split('-')[1], project_short_name]]
+            rows += [['current', case_barcode, program, project_short_name.split('-')[1], project_short_name]]
         ISBCGC_database_helper.column_insert(config, rows, image_config['clinical_table'], image_config['clinical_columns'], log)
 
     else:
