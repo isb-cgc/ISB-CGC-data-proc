@@ -36,9 +36,8 @@ def query_bq_table(query, use_legacy, project, log):
 
 def fetch_paged_results(query_results, fetch_count, project_name, page_token, log):
     log.info('\t\trequesting %d rows %s' % (fetch_count, (' for ' + project_name) if project_name else ''))
-    rows, total_rows, page_token = query_results.fetch_data(
+    rows = list(query_results.fetch_data(
         max_results=fetch_count, 
-        page_token=page_token)
-    log.info('\t\tfetched %d rows %s' % (len(rows), (' for ' + project_name) if project_name else ''))
-    return total_rows, rows, page_token
+        page_token=page_token))
+    return query_results.total_rows, rows, query_results.page_token
 
