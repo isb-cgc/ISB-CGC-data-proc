@@ -354,7 +354,7 @@ class GDCTestCloudSQLBQBarcodes(GDCTestSetup):
                 sql = 'select {}, {} from {}'.format(case, sample, table[0])
             
             self.log.info('\tstart select for {} from bq{}'.format(table[0], ' where {}'.format(where) if where else ''))
-            results = query_bq_table(sql, True, None, self.log)
+            results = query_bq_table(sql, True, 'isb-cgc', self.log)
             count = 0
             page_token = None
             cases = set()
@@ -374,21 +374,35 @@ class GDCTestCloudSQLBQBarcodes(GDCTestSetup):
             bq2samples[table[0]] = samples if 1 < len(samples) else set()
         return bq2cases, bq2samples
 
-    def diff_barcodes(self, barcodes1, tag1, barcodes2, tag2):
+    def diff_barcodes(self, barcodes1, tag1, barcodes2, tag2, log):
         diffs = ''
         one_vs_two = barcodes1 - barcodes2
         if 0 < len(barcodes2) and 0 < len(one_vs_two):
-            diffs += '\t\t{} barcodes in {} than in {}\n'.format(len(one_vs_two), tag1, tag2)
+            if 10 >= len(one_vs_two):
+                barcodes = ', '.join(sorted(one_vs_two))
+            else:
+                diff = sorted(one_vs_two)
+                barcodes = '{}...{}'.format(', '.join(diff[:5]), ', '.join(diff[-5:]))
+            diffs += '\t\t{} barcodes in {} than in {}--{}\n'.format(len(one_vs_two), tag1, tag2, barcodes)
         two_vs_one = barcodes2 - barcodes1
-        if 0 < len(barcodes2) and 0 < len(two_vs_one):
-            diffs += '\t\t{} barcodes in {} than in {}\n'.format(len(two_vs_one), tag2, tag1)
+        if 0 < len(barcodes1) and 0 < len(two_vs_one):
+            if 10 >= len(two_vs_one):
+                try:
+                    barcodes = ', '.join(sorted(two_vs_one))
+                except:
+                    log.exception('problem printing barcode diff:\n\t{}'.format(two_vs_one))
+                    barcodes = two_vs_one
+            else:
+                diff = sorted(two_vs_one)
+                barcodes = '{}...{}'.format(', '.join(diff[:5]), ', '.join(diff[-5:]))
+            diffs += '\t\t{} barcodes in {} than in {}--{}\n'.format(len(two_vs_one), tag2, tag1, barcodes)
         return diffs
 
     def compare_barcodes(self, program_name, table, barcode_type, api, sql, label1, bq, label2, log):
         diffs = ''
-        diffs += self.diff_barcodes(api, 'api', sql, label1)
-        diffs += self.diff_barcodes(api, 'api', bq, label2)
-        diffs += self.diff_barcodes(sql, label1, bq, label2)
+        diffs += self.diff_barcodes(api, 'api', sql, label1, log)
+        diffs += self.diff_barcodes(api, 'api', bq, label2, log)
+        diffs += self.diff_barcodes(sql, label1, bq, label2, log)
 
         if 0 < len(diffs):
             retval = 'found {} differences for {}-{}:\n{}'.format(barcode_type, program_name, table, diffs)
@@ -469,7 +483,7 @@ class GDCTestCloudSQLBQBarcodes(GDCTestSetup):
             }), 
             'sort':'file_id:asc', 
             'from':1, 
-            'size':100
+            'size':70
         }
         curstart = 1
         project2cases = {}
@@ -687,7 +701,7 @@ class GDCTestCloudSQLBQBarcodes(GDCTestSetup):
             project2cases = {}
             project2samples = {}
             project2files = {}
-            results = query_bq_table(stmt, True, None, self.log)
+            results = query_bq_table(stmt, True, 'isb-cgc', self.log)
             count = 0
             page_token = None
             while True:
@@ -817,8 +831,8 @@ class GDCTestCloudSQLBQBarcodes(GDCTestSetup):
                 for bq_source in sources:
                     barcodes = bio_storage2source2barcodes['bq'][bq_source]
                     bqcases, bqsamples = barcodes
-                    output_bio_compare += self.compare_barcodes(program_name, '{}:{}'.format(sql_source, bq_source), 'case', cases, sqlcases, 'sql', bqcases, 'bq', log) + '\n'
-                    output_bio_compare += self.compare_barcodes(program_name, '{}:{}'.format(sql_source, bq_source), 'sample', samples, sqlsamples, 'sql', bqsamples, 'bq', log) + '\n{}\n'
+                    output_bio_compare += self.compare_barcodes(program_name, 'sql-{}:bq-{}'.format(sql_source, bq_source), 'case', cases, sqlcases, 'sql', bqcases, 'bq', log) + '\n'
+                    output_bio_compare += self.compare_barcodes(program_name, 'sql-{}:bq-{}'.format(sql_source, bq_source), 'sample', samples, sqlsamples, 'sql', bqsamples, 'bq', log) + '\n{}\n'
 
             output_bio_counts = 'Case and Sample compares for {} clinical and biospecimen\n\nGDC Case API:\ncases\tsamples\n{}\t{}\n\nCloud SQL\n'.format(program_name, len(cases), len(samples))
             for source, barcodes in bio_storage2source2barcodes['sql'].iteritems():
@@ -833,31 +847,31 @@ class GDCTestCloudSQLBQBarcodes(GDCTestSetup):
     
             gcs_results = {}
             self.process_gcs(program_name, program, gcs_results, log_dir)
-            output_gcs_compare = 'case, sample and file compare:\n'
+            output_gcs_compare = 'case, sample and file compare for gcs vs. isb_label:\n'
             output_gcs_counts = ''
             for isb_label in gcs_results:
                 for project, barcodes in gcs_results[isb_label].iteritems():
-                    output_gcs_compare += self.compare_barcodes(program_name, '{0}:{1}:{2}'.format(program_name, project, isb_label), 'case', barcodes[0], barcodes[1], 'gcs', barcodes[2], 'label', log) + '\n'
-                    output_gcs_compare += self.compare_barcodes(program_name, '{0}:{1}:{2}'.format(program_name, project, isb_label), 'sample', barcodes[3], barcodes[4], 'gcs', barcodes[5], 'label', log) + '\n'
-                    output_gcs_compare += self.compare_barcodes(program_name, '{0}:{1}:{2}'.format(program_name, project, isb_label), 'file', barcodes[6], barcodes[7], 'gcs', set(), 'label', log) + '\n{}\n'
+                    output_gcs_compare += self.compare_barcodes(program_name, '{0}:project-{1}:label-{2}'.format(program_name, project, isb_label), 'case', barcodes[0], barcodes[1], 'gcs', barcodes[2], 'label', log) + '\n'
+                    output_gcs_compare += self.compare_barcodes(program_name, '{0}:project-{1}:label-{2}'.format(program_name, project, isb_label), 'sample', barcodes[3], barcodes[4], 'gcs', barcodes[5], 'label', log) + '\n'
+                    output_gcs_compare += self.compare_barcodes(program_name, '{0}:project-{1}:label-{2}'.format(program_name, project, isb_label), 'file', barcodes[6], barcodes[7], 'gcs', set(), 'label', log) + '\n{}\n'
                     if 'all' == project:
                         output_gcs_counts = '{}Case and Sample compares for {} Google Cloud Storage\n\nTotals:\ncases\napi\tgcs\tisb_label\n{}\t{}\t{}\nsamples\napi\tgcs\tisb_label\n{}\t{}\t{}\nfiles\napi\tgcs\n{}\t{}\n\n' \
                             .format('{}\n'.format('*' * 20), program_name, len(barcodes[0]), len(barcodes[1]), len(barcodes[2]), len(barcodes[3]), len(barcodes[4]), len(barcodes[5]), len(barcodes[6]), len(barcodes[7]))
  
             bq_results = {}
             self.process_bq(program_name, program, bq_results, log_dir)
-            output_bq_compare = 'case, sample and file compare:\n'
+            output_bq_compare = 'case, sample and file compare for bq vs. isb_label:\n'
             output_bq_counts = ''
             for isb_label in bq_results:
                 for project, barcodes in bq_results[isb_label].iteritems():
-                    output_bq_compare += self.compare_barcodes(program_name, '{0}:{1}:{2}'.format(program_name, project, isb_label), 'case', barcodes[0], barcodes[1], 'bq', barcodes[2], 'label', log) + '\n'
-                    output_bq_compare += self.compare_barcodes(program_name, '{0}:{1}:{2}'.format(program_name, project, isb_label), 'sample', barcodes[3], barcodes[4], 'bq', barcodes[5], 'label', log) + '\n'
-                    output_bq_compare += self.compare_barcodes(program_name, '{0}:{1}:{2}'.format(program_name, project, isb_label), 'file', barcodes[6], barcodes[7], 'bq', set(), 'label', log) + '\n'
+                    output_bq_compare += self.compare_barcodes(program_name, '{0}:project-{1}:label-{2}'.format(program_name, project, isb_label), 'case', barcodes[0], barcodes[1], 'bq', barcodes[2], 'label', log) + '\n'
+                    output_bq_compare += self.compare_barcodes(program_name, '{0}:project-{1}:label-{2}'.format(program_name, project, isb_label), 'sample', barcodes[3], barcodes[4], 'bq', barcodes[5], 'label', log) + '\n'
+                    output_bq_compare += self.compare_barcodes(program_name, '{0}:project-{1}:label-{2}'.format(program_name, project, isb_label), 'file', barcodes[6], barcodes[7], 'bq', set(), 'label', log) + '\n'
                     if 'all' == project:
                         output_bq_counts = '{}Case and Sample compares for {} Google BigQuery\n\nTotals:\ncases\napi\tbq\tisb_label\n{}\t{}\t{}\nsamples\napi\tbq\tisb_label\n{}\t{}\t{}\nfiles\napi\tbq\n{}\t{}\n\n' \
                             .format('{}\n'.format('*' * 20), program_name, len(barcodes[0]), len(barcodes[1]), len(barcodes[2]), len(barcodes[3]), len(barcodes[4]), len(barcodes[5]), len(barcodes[6]), len(barcodes[7]))
             
-            with open(str(date.today()).replace('-', '_') + '_{}_validate_bq_gcs_label.txt'.format(program_name), 'w') as out:
+            with open('gdc/doc/' + str(date.today()).replace('-', '_') + '_{}_validate_bq_gcs_label.txt'.format(program_name), 'w') as out:
                 out.writelines(['Validity Report\n\n', output_bio_counts, output_bio_compare, output_gcs_counts, output_gcs_counts, output_bq_counts, output_bq_compare])
                 out.write('Differences:\n\tapi\tgcs\tisb_label\tbq\t\napi\t{}\n')
             
@@ -877,8 +891,8 @@ class GDCTestCloudSQLBQBarcodes(GDCTestSetup):
             'validity': {
                 'params': [
                     ['CCLE', CCLE_datasets, log_dir],
-                    ['TARGET', TARGET_datasets, log_dir],
-                    ['TCGA', TCGA_datasets, log_dir]
+#                     ['TARGET', TARGET_datasets, log_dir],
+#                     ['TCGA', TCGA_datasets, log_dir]
                 ]
             }
         }
