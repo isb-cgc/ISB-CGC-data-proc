@@ -145,7 +145,7 @@ def save2db(config, endpt_type, table, endpt2info, table_mapping, log):
 def __get_filtered_map_rows(url, idname, filt, mapfilter, activity, log, size = 100, timeout = None):
     count = 0
     id2map = {}
-    curstart = 1
+    curstart = 0
     while True:
         params = {
             'filters':json.dumps(filt), 
