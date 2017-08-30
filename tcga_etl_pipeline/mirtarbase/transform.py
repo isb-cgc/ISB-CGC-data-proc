@@ -56,7 +56,7 @@ def parse_mirtarbase(config):
     #-------
     # upload
     #-------
-    # connect to gcloud wrapper
+    # connect to google.cloud wrapper
     project_id = config['project_id']
     bucket_name = config['buckets']['open']
     # connect to google storage

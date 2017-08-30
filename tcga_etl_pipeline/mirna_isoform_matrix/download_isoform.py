@@ -16,7 +16,7 @@
 # -*- coding: utf-8 -*-
 import sys
 import re
-from gcloud import storage
+from google.cloud import storage
 import traceback
 import json
 import pandas as pd

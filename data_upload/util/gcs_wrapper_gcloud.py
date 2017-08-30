@@ -22,7 +22,7 @@ from multiprocessing import Lock
 import requests
 import time
 
-from gcloud import storage
+from google.cloud import storage
 from gcloud_requests.connection import storage_http
 
 # value to delay resubmitting

@@ -20,7 +20,7 @@ limitations under the License.
 
 @author: michael
 '''
-# from gcloud import datastore
+# from google.cloud import datastore
 
 def prepare_upload(tumor_type2platform2archive_types2archives, log):
     """

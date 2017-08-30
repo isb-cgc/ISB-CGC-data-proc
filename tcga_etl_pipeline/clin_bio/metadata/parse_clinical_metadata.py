@@ -1,6 +1,5 @@
 import os
 import sys
-import gcloud.storage
 import re
 import hashlib
 import json
@@ -10,7 +9,7 @@ import logging
 from HTMLParser import HTMLParser
 import datetime
 import os.path
-from gcloud import storage
+from google.cloud import storage
 from lxml import etree
 from collections import Counter
 
