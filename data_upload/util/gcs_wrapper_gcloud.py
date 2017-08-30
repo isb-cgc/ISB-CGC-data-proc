@@ -23,7 +23,7 @@ import requests
 import time
 
 from google.cloud import storage
-from gcloud.auth import compute_engine
+from google.auth import compute_engine
 
 # value to delay resubmitting
 backoff = 0
