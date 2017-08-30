@@ -23,7 +23,7 @@ import requests
 import time
 
 from google.cloud import storage
-from gcloud_requests.connection import storage_http
+from gcloud.auth import compute_engine
 
 # value to delay resubmitting
 backoff = 0
@@ -37,7 +37,7 @@ def open_connection(config = None, log = None):
         raise ValueError('storage has already been initialized')
     log.info('opening GCS service')
     
-    storage_service = storage.Client(project = config['cloud_projects']['open'], http = storage_http)
+    storage_service = storage.Client(project = config['cloud_projects']['open'], credentials = compute_engine.Credentials())
     
 def close_connection():
     pass
