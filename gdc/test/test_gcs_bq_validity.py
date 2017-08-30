@@ -384,6 +384,9 @@ class GDCTestCloudSQLBQBarcodes(GDCTestSetup):
                 diff = sorted(one_vs_two)
                 barcodes = '{}...{}'.format(', '.join(diff[:5]), ', '.join(diff[-5:]))
             diffs += '\t\t{} barcodes in {} than in {}--{}\n'.format(len(one_vs_two), tag1, tag2, barcodes)
+        else:
+            diffs += '\t\tall {} barcodes in {}\n'.format(tag1, tag2)
+ 
         two_vs_one = barcodes2 - barcodes1
         if 0 < len(barcodes1) and 0 < len(two_vs_one):
             if 10 >= len(two_vs_one):
@@ -396,6 +399,8 @@ class GDCTestCloudSQLBQBarcodes(GDCTestSetup):
                 diff = sorted(two_vs_one)
                 barcodes = '{}...{}'.format(', '.join(diff[:5]), ', '.join(diff[-5:]))
             diffs += '\t\t{} barcodes in {} than in {}--{}\n'.format(len(two_vs_one), tag2, tag1, barcodes)
+        else:
+            diffs += '\t\tall {} barcodes in {}\n'.format(tag2, tag1)
         return diffs
 
     def compare_barcodes(self, program_name, table, barcode_type, api, sql, label1, bq, label2, log):
@@ -404,19 +409,9 @@ class GDCTestCloudSQLBQBarcodes(GDCTestSetup):
         diffs += self.diff_barcodes(api, 'api', bq, label2, log)
         diffs += self.diff_barcodes(sql, label1, bq, label2, log)
 
-        if 0 < len(diffs):
-            retval = 'found {} differences for {}-{}:\n{}'.format(barcode_type, program_name, table, diffs)
-            log.info(retval)
-        else:
-            if 0 == len(sql):
-                retval = '{} barcodes matched between api, {} for {}-{}'.format(barcode_type, label2, program_name, table)
-                self.log.info(retval)
-            elif 0 == len(bq):
-                retval = '{} barcodes matched between api, {} for {}-{}'.format(barcode_type, label1, program_name, table)
-                self.log.info(retval)
-            else:
-                retval = '{} barcodes matched between api, {}, {} for {}-{}'.format(barcode_type, label1, label2, program_name, table)
-                self.log.info(retval)
+        retval = '{} compares for {}-{}:\n{}'.format(barcode_type, program_name, table, diffs)
+        log.info(retval)
+
         return retval
 
     def process_bio(self, program_name, program, log_dir):
@@ -891,8 +886,8 @@ class GDCTestCloudSQLBQBarcodes(GDCTestSetup):
             'validity': {
                 'params': [
                     ['CCLE', CCLE_datasets, log_dir],
-#                     ['TARGET', TARGET_datasets, log_dir],
-#                     ['TCGA', TCGA_datasets, log_dir]
+                    ['TARGET', TARGET_datasets, log_dir],
+                    ['TCGA', TCGA_datasets, log_dir]
                 ]
             }
         }
