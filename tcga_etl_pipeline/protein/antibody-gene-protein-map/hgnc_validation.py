@@ -5,7 +5,7 @@ from lxml import etree
 import re
 import json
 import os
-import gcloud.storage
+import google.cloud.storage
 import hashlib
 from StringIO import StringIO
 import pandas as pd

@@ -30,7 +30,7 @@ def parse_annotations(config):
     Download using annotation file using urllib2.Request
     Convert the file into a dataframe
     """
-   # connect to gcloud wrapper
+   # connect to google.cloud wrapper
     project_id = config['project_id']
     bucket_name = config['buckets']['open']
     gcs = GcsConnector(project_id, bucket_name)

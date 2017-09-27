@@ -16,7 +16,7 @@
 # -*- coding: utf-8 -*-
 import re
 import json
-from gcloud import storage
+from google.cloud import storage
 from collections import defaultdict
 import pandas as pd
 import numpy as np
@@ -52,8 +52,7 @@ class GcsConnector(object):
 
     #--------------------------------------
     # uploads a file to the bucket
-    # this is just a wrapper around the main gcloud package
-    # deprecated : gcloud 7 now has a direct function to create the blob
+    # this is just a wrapper around the main google.cloud package
     # Note this is different from upload_from_file, which accepts a file-like object
     # Check if the blob exits
     #--------------------------------------

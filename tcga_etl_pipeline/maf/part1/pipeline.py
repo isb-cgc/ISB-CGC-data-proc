@@ -19,7 +19,7 @@ from bigquery_etl.extract.utils import convert_file_to_dataframe
 from bigquery_etl.extract.gcloud_wrapper import GcsConnector
 from bigquery_etl.transform.tools import *
 import json
-from gcloud import storage
+from google.cloud import storage
 from bigquery_etl.execution import process_manager
 import os.path
 from pandas import ExcelWriter

@@ -1,7 +1,6 @@
 import numpy as np
 import os
 import sys
-import gcloud.storage
 import re
 import hashlib
 import json
@@ -9,7 +8,7 @@ from cStringIO import StringIO
 import pandas as pd
 import datetime
 import os.path
-from gcloud import storage
+from google.cloud import storage
 from collections import Counter
 
 def frange(start, stop, step):

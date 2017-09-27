@@ -15,9 +15,8 @@
 
 from bigquery_etl.extract.utils import convert_file_to_dataframe
 from bigquery_etl.extract.gcloud_wrapper import GcsConnector
-from bigquery_etl.transform.tools import *
-import json
-from gcloud import storage
+from bigquery_etl.transform.tools import cleanup_dataframe, pd
+from google.cloud import storage
  
 #------------------------------------------
 # parse SDRF

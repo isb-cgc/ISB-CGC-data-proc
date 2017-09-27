@@ -18,7 +18,7 @@ import pandas as pd
 import numpy as np
 import json
 from pandas.io import gbq
-from gcloud import storage
+from google.cloud import storage
 from cStringIO import StringIO
 
 #------------------------------------------

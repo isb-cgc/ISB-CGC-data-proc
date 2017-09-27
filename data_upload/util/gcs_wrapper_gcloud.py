@@ -22,8 +22,8 @@ from multiprocessing import Lock
 import requests
 import time
 
-from gcloud import storage
-from gcloud_requests.connection import storage_http
+from google.cloud import storage
+from gdc.util.isb_auth import get_credentials
 
 # value to delay resubmitting
 backoff = 0
@@ -37,10 +37,11 @@ def open_connection(config = None, log = None):
         raise ValueError('storage has already been initialized')
     log.info('opening GCS service')
     
-    storage_service = storage.Client(project = config['cloud_projects']['open'], http = storage_http)
+    storage_service = storage.Client(project = config['cloud_projects']['open'])
     
 def close_connection():
-    pass
+    global storage_service
+    storage_service = None
     
 def __get_bucket(bucket_name):
     if bucket_name in name2bucket:
