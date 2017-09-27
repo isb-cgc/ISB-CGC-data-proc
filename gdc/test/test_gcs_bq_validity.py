@@ -61,24 +61,36 @@ class TARGET_datasets:
     # isb_label, bq table, sample_barcode
     def bq_datasets(self):
         return {
+#             "miRNA Expression Quantification": [
+#                 "miRNA_Gene_Quantification",
+#                 "[isb-cgc:TARGET_hg38_data_v0.miRNAseq_Expression]",
+#                 "sample_barcode",
+#                 True
+#             ],
+#             "Isoform Expression Quantification": [
+#                 "miRNA_Isoform_Quantification",
+#                 "[isb-cgc:TARGET_hg38_data_v0.miRNAseq_Isoform_Expression]",
+#                 "sample_barcode",
+#                 True
+#             ],
             "miRNA Expression Quantification": [
                 "miRNA_Gene_Quantification",
-                "[isb-cgc:TARGET_hg38_data_v0.miRNAseq_Expression]",
+                "[isb-cgc:test.TARGET_miRNAExpressionQuantification_HG38_170828]",
                 "sample_barcode",
                 True
             ],
             "Isoform Expression Quantification": [
                 "miRNA_Isoform_Quantification",
-                "[isb-cgc:TARGET_hg38_data_v0.miRNAseq_Isoform_Expression]",
+                "[isb-cgc:test.TARGET_miRNAIsoformQuantification_HG38_170828]",
                 "sample_barcode",
                 True
             ],
-            "Gene Expression Quantification": [
-                "mRNA_Gene_Quantification",
-                "[isb-cgc:TARGET_hg38_data_v0.RNAseq_Gene_Expression]",
-                "sample_barcode",
-                True
-            ]
+#             "Gene Expression Quantification": [
+#                 "mRNA_Gene_Quantification",
+#                 "[isb-cgc:TARGET_hg38_data_v0.RNAseq_Gene_Expression]",
+#                 "sample_barcode",
+#                 True
+#             ]
         }
         
     
@@ -100,90 +112,102 @@ class TCGA_datasets:
 
     def bq_datasets(self):
         return {
-            "Copy number segmentation": [
-                "Copy_Number_Segment_Masked",
-                "[isb-cgc:TCGA_hg19_data_v0.Copy_Number_Segment_Masked]",
-                "sample_barcode",
-                False
-            ],
-            "Methylation beta value": [
-                "DNA_Methylation_Beta",
-                "[isb-cgc:TCGA_hg19_data_v0.DNA_Methylation]",
-                "sample_barcode",
-                False
-            ],
+#             "Copy number segmentation": [
+#                 "Copy_Number_Segment_Masked",
+#                 "[isb-cgc:TCGA_hg19_data_v0.Copy_Number_Segment_Masked]",
+#                 "sample_barcode",
+#                 False
+#             ],
+#             "Methylation beta value": [
+#                 "DNA_Methylation_Beta",
+#                 "[isb-cgc:TCGA_hg19_data_v0.DNA_Methylation]",
+#                 "sample_barcode",
+#                 False
+#             ],
+#             "miRNA gene quantification": [
+#                 "miRNA_Gene_Quantification",
+#                 "[isb-cgc:TCGA_hg19_data_v0.miRNAseq_Expression]",
+#                 "sample_barcode",
+#                 True
+#             ],
+#             "miRNA isoform quantification": [
+#                 "miRNA_Isoform_Quantification",
+#                 "[isb-cgc:TCGA_hg19_data_v0.miRNAseq_Isoform_Expression]",
+#                 "sample_barcode",
+#                 True
+#             ],
             "miRNA gene quantification": [
                 "miRNA_Gene_Quantification",
-                "[isb-cgc:TCGA_hg19_data_v0.miRNAseq_Expression]",
+                "[isb-cgc:test.TCGA_miRNAExpressionQuantification_HG38_170828]",
                 "sample_barcode",
                 True
             ],
             "miRNA isoform quantification": [
                 "miRNA_Isoform_Quantification",
-                "[isb-cgc:TCGA_hg19_data_v0.miRNAseq_Isoform_Expression]",
+                "[isb-cgc:test.TCGA_miRNAIsoformQuantification_HG38_170828]",
                 "sample_barcode",
                 True
             ],
-            "Gene expression quantification": [
-                "mRNA_Gene_Quantification",
-                "[isb-cgc:TCGA_hg19_data_v0.RNAseq_Gene_Expression_UNC_RSEM]",
-                "sample_barcode",
-                False
-            ],
-            "Protein expression quantification": [
-                "Protein_Quantification",
-                "[isb-cgc:TCGA_hg19_data_v0.Protein_Expression]",
-                "sample_barcode",
-                False
-            ],
-            "Simple somatic mutation": [
-                "Somatic_Mutation",
-                ["[isb-cgc:TCGA_hg19_data_v0.Somatic_Mutation_DCC]", "[isb-cgc:TCGA_hg19_data_v0.Somatic_Mutation_MC3]"],
-                ["sample_barcode_tumor", "sample_barcode_normal"],
-                False
-            ],
-            "Masked Copy Number Segment": [
-                "Copy_Number_Segment_Masked",
-                "[isb-cgc:TCGA_hg38_data_v0.Copy_Number_Segment_Masked]",
-                "sample_barcode",
-                True
-            ],
-            "Methylation Beta Value": [
-                "DNA_Methylation_Beta",
-                "[isb-cgc:TCGA_hg38_data_v0.DNA_Methylation]",
-                "sample_barcode",
-                True
-            ],
-            "miRNA Expression Quantification": [
-                "miRNA_Gene_Quantification",
-                "[isb-cgc:TCGA_hg38_data_v0.miRNAseq_Expression]",
-                "sample_barcode",
-                True
-            ],
-            "Isoform Expression Quantification": [
-                "miRNA_Isoform_Quantification",
-                "[isb-cgc:TCGA_hg38_data_v0.miRNAseq_Isoform_Expression]",
-                "sample_barcode",
-                True
-            ],
-            "Gene Expression Quantification": [
-                "mRNA_Gene_Quantification",
-                "[isb-cgc:TCGA_hg38_data_v0.RNAseq_Gene_Expression]",
-                "sample_barcode",
-                True
-            ],
-            "Protein expression quantification": [
-                "Protein_Quantification",
-                "[isb-cgc:TCGA_hg38_data_v0.Protein_Expression]",
-                "sample_barcode",
-                False
-            ],
-            "Masked Somatic Mutation": [
-                "Somatic_Mutation",
-                "[isb-cgc:TCGA_hg38_data_v0.Somatic_Mutation]",
-                ["sample_barcode_tumor", "sample_barcode_normal"],
-                False
-            ],
+#             "Gene expression quantification": [
+#                 "mRNA_Gene_Quantification",
+#                 "[isb-cgc:TCGA_hg19_data_v0.RNAseq_Gene_Expression_UNC_RSEM]",
+#                 "sample_barcode",
+#                 False
+#             ],
+#             "Protein expression quantification": [
+#                 "Protein_Quantification",
+#                 "[isb-cgc:TCGA_hg19_data_v0.Protein_Expression]",
+#                 "sample_barcode",
+#                 False
+#             ],
+#             "Simple somatic mutation": [
+#                 "Somatic_Mutation",
+#                 ["[isb-cgc:TCGA_hg19_data_v0.Somatic_Mutation_DCC]", "[isb-cgc:TCGA_hg19_data_v0.Somatic_Mutation_MC3]"],
+#                 ["sample_barcode_tumor", "sample_barcode_normal"],
+#                 False
+#             ],
+#             "Masked Copy Number Segment": [
+#                 "Copy_Number_Segment_Masked",
+#                 "[isb-cgc:TCGA_hg38_data_v0.Copy_Number_Segment_Masked]",
+#                 "sample_barcode",
+#                 True
+#             ],
+#             "Methylation Beta Value": [
+#                 "DNA_Methylation_Beta",
+#                 "[isb-cgc:TCGA_hg38_data_v0.DNA_Methylation]",
+#                 "sample_barcode",
+#                 True
+#             ],
+#             "miRNA Expression Quantification": [
+#                 "miRNA_Gene_Quantification",
+#                 "[isb-cgc:TCGA_hg38_data_v0.miRNAseq_Expression]",
+#                 "sample_barcode",
+#                 True
+#             ],
+#             "Isoform Expression Quantification": [
+#                 "miRNA_Isoform_Quantification",
+#                 "[isb-cgc:TCGA_hg38_data_v0.miRNAseq_Isoform_Expression]",
+#                 "sample_barcode",
+#                 True
+#             ],
+#             "Gene Expression Quantification": [
+#                 "mRNA_Gene_Quantification",
+#                 "[isb-cgc:TCGA_hg38_data_v0.RNAseq_Gene_Expression]",
+#                 "sample_barcode",
+#                 True
+#             ],
+#             "Protein expression quantification": [
+#                 "Protein_Quantification",
+#                 "[isb-cgc:TCGA_hg38_data_v0.Protein_Expression]",
+#                 "sample_barcode",
+#                 False
+#             ],
+#             "Masked Somatic Mutation": [
+#                 "Somatic_Mutation",
+#                 "[isb-cgc:TCGA_hg38_data_v0.Somatic_Mutation]",
+#                 ["sample_barcode_tumor", "sample_barcode_normal"],
+#                 False
+#             ],
         }
         
 class GDCTestCloudSQLBQBarcodes(GDCTestSetup):
@@ -377,8 +401,10 @@ class GDCTestCloudSQLBQBarcodes(GDCTestSetup):
     def diff_barcodes(self, barcodes1, tag1, barcodes2, tag2, log):
         diffs = ''
         one_vs_two = barcodes1 - barcodes2
+        one_vs_two.discard(None)
         if 0 < len(barcodes2) and 0 < len(one_vs_two):
-            if 10 >= len(one_vs_two):
+#             if 10 >= len(one_vs_two):
+            if 500 >= len(one_vs_two):
                 barcodes = ', '.join(sorted(one_vs_two))
             else:
                 diff = sorted(one_vs_two)
@@ -388,6 +414,7 @@ class GDCTestCloudSQLBQBarcodes(GDCTestSetup):
             diffs += '\t\tall {} barcodes in {}\n'.format(tag1, tag2)
  
         two_vs_one = barcodes2 - barcodes1
+        two_vs_one.discard(None)
         if 0 < len(barcodes1) and 0 < len(two_vs_one):
             if 10 >= len(two_vs_one):
                 try:
@@ -398,7 +425,7 @@ class GDCTestCloudSQLBQBarcodes(GDCTestSetup):
             else:
                 diff = sorted(two_vs_one)
                 barcodes = '{}...{}'.format(', '.join(diff[:5]), ', '.join(diff[-5:]))
-            diffs += '\t\t{} barcodes in {} than in {}--{}\n'.format(len(two_vs_one), tag2, tag1, barcodes)
+            diffs += '\t\t!!!{} barcodes in {} than in {}--{}!!!\n'.format(len(two_vs_one), tag2, tag1, barcodes)
         else:
             diffs += '\t\tall {} barcodes in {}\n'.format(tag2, tag1)
         return diffs
@@ -880,12 +907,34 @@ class GDCTestCloudSQLBQBarcodes(GDCTestSetup):
 #         self.get_api_data_type_barcodes("CCLE", "Aligned reads")
 #         
     def test_gcs_bq_validity(self):
+        endpt = 'https://gdc-api.nci.nih.gov/legacy/files?expand=index_files'
+        params = {
+            'filters': dumps(
+                    {
+                        "op":"=",
+                        "content":{ 
+                            "field":"file_name",
+                            "value": "A42785_1_lane_dupsFlagged.bam"
+                        }
+                    }
+            ), 
+            'sort':'file_id:asc', 
+            'from':0, 
+            'size':200
+        }
+        msg = '\t\tproblem getting filtered map for cases'
+        rj = self.request_response(endpt, params, msg)
+        import pprint
+        pprint.pprint(rj)
+
+
+        
         log_dir = str(date.today()).replace('-', '_') + '_validate/'
         calls = {
             'fn': self.process_program,
             'validity': {
                 'params': [
-                    ['CCLE', CCLE_datasets, log_dir],
+#                     ['CCLE', CCLE_datasets, log_dir],
                     ['TARGET', TARGET_datasets, log_dir],
                     ['TCGA', TCGA_datasets, log_dir]
                 ]
