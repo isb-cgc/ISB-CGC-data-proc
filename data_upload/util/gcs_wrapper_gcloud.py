@@ -23,7 +23,6 @@ import requests
 import time
 
 from google.cloud import storage
-from gdc.util.isb_auth import get_credentials
 
 # value to delay resubmitting
 backoff = 0
