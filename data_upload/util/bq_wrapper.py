@@ -20,7 +20,7 @@ limitations under the License.
 from google.cloud import bigquery
 
 def query_bq_table(query, use_legacy, project, log):
-    log.info('\t\tquerying bq: %s' % query)
+    log.info('\t\tquerying bq for %s: %s' % (project, query))
     client = bigquery.Client(project=project)
     query_results = client.run_sync_query(query)
 # Use standard SQL syntax for queries.
