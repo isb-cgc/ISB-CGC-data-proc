@@ -32,8 +32,8 @@ from math import ceil
 import time
 import uuid
 
-from gcloud import storage
-from gcloud_requests.connection import storage_http
+from google.cloud import storage
+from google.auth import compute_engine
 from googleapiclient import discovery
 from oauth2client.client import GoogleCredentials
 
@@ -119,7 +119,7 @@ def poll_job(bigquery, job):
 
 def __check_contents(data_path, project_id, batch_count):
     # wait for all the etl json files to be visible in cloud storage
-    storage_service = storage.Client(project=project_id, http=storage_http)
+    storage_service = storage.Client(project=project_id, credentials=compute_engine.Credentials())
     cur_count = 0
     check_count = 0
     bucket_name = data_path.split('/')[2]

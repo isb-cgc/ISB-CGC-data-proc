@@ -38,7 +38,10 @@ class GDCCloudSQLTest(GDCTestSetup):
             for row in rows:
                 results += '%s\n' % ('\t'.join(str(item) for item in row))
             if verbose:
-                self.log.info('%d rows for query:%s\n%s\n' % (len(rows), self.process_header(query), results))
+                if 0 < len(rows):
+                    self.log.info('%d rows for query:%s\n%s\n' % (len(rows), self.process_header(query), results))
+                else:
+                    self.log.info('no rows returned')
             return rows
         except:
             self.log.exception()
@@ -1274,4 +1277,4 @@ class GDCCloudSQLTest(GDCTestSetup):
             query = query.strip()
             if 0 == len(query) or '#' == query[0]:
                 continue
-            self.run_query(query, False)
+            self.run_query(query)
