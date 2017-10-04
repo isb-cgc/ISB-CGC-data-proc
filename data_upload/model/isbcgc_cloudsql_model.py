@@ -51,7 +51,7 @@ class ISBCGC_database_helper(object):
             # if connection requests are made too close together over a period of time, the connection attempt might fail
             count = 0
             sleep = 3
-            while count < 6:
+            while count < 1:
                 count += 1
                 time.sleep(sleep + count)
                 log.warning('\n\n!!!!!!sleeping on error to reattempt db connection!!!!!!\n')
@@ -62,7 +62,7 @@ class ISBCGC_database_helper(object):
                         db = MySQLdb.connect(host=config['cloudsql']['host'], db=config['cloudsql']['db'], user=config['cloudsql']['user'], passwd=config['cloudsql']['passwd'], ssl = ssl)
                     break
                 except Exception as e:
-                    if 6 == count:
+                    if 1 == count:
                         log.exception("failed to reconnect to database")
                         raise e
             
@@ -364,4 +364,3 @@ class ISBCGC_database_helper(object):
     @classmethod
     def field_names(cls, table):
         return [field_parts[0] for field_parts in cls.metadata_tables[table]['columns']]
-
