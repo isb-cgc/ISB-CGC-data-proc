@@ -1,676 +1,200 @@
 {
     "mode": "test",
-    "threads": 40,
-    "process_cghub": false,
-    "process_annotations": true,
-    "process_bio": false,
-    "download_archives": false,
+    "processes": 6,
+    "program_threads": 5,
+    "project_threads": 5,
+    "process_annotation": true,
+    "process_program": true,
+    "process_project": true,
+    "process_case": true,
+    "process_data_type": true,
+    "process_data_availability": true,
+    "process_images": true,
+    "process_metadata_attrs": true,
+    "process_paths": true,
     "upload_files": false,
     "upload_etl_files": false,
-    "upload_open": true,
+    "upload_open": false,
     "upload_controlled": false,
-    "metadata_modules": [
-        "store_metadata_cloudsql"
+    "update_cloudsql": true,
+    "update_schema": true,
+    "delete_dir_contents": true,
+    
+    "program_name_restrict": [
+        
     ],
-    "database_module": "isbcgc_cloudsql_mock_model",
-    "cghub_module": "import_cghub_manifest",
-    "gcs_wrapper": "gcs_wrapper_gcloud",
-    "tumor_types": [
+    "project_name_restrict": [
+        
     ],
-    "platforms": [
+    "data_type_restrict": [
+        
     ],
-    "skip_tumor_types": [
+    "data_type2isb_label": {
+        "Aligned reads": "Aligned_Reads",
+        "Copy number segmentation": "Copy_Number_Segment_Masked",
+        "Gene expression quantification": "mRNA_Gene_Quantification",
+        "miRNA gene quantification": "miRNA_Gene_Quantification",
+        "miRNA isoform quantification": "miRNA_Isoform_Quantification",
+        "Isoform expression quantification": "mRNA_Isoform_Quantification",
+        "Tissue slide image": "Pathology_Image",
+        "Methylation beta value": "DNA_Methylation_Beta",
+        "Diagnostic image": "Pathology_Image",
+        "Protein expression quantification": "Protein_Quantification",
+        "Simple somatic mutation": "Somatic_Mutation",
+        "Simple nucleotide variation": "DNA_Variation_VCF",
+        "Gene Expression Quantification": "mRNA_Gene_Quantification",
+        "Masked Copy Number Segment": "Copy_Number_Segment_Masked",
+        "Methylation Beta Value": "DNA_Methylation_Beta",
+        "miRNA Expression Quantification": "miRNA_Gene_Quantification",
+        "Isoform Expression Quantification": "miRNA_Isoform_Quantification",
+        "Masked Somatic Mutation": "Somatic_Mutation",
+        "Genotypes": "Genotypes",
+        "Aligned Reads": "Aligned_Reads"
+    },
+    "data_type_gcs": [
+        "Biospecimen Supplement",
+        "Clinical Supplement",
+        "Aligned Reads",
+        "Diagnostic image",
+        "Tissue slide image",
+        "Genotypes",
+        "Aligned reads",
+        "Simple nucleotide variation"
+    ],
+    "program_names_for_annotation": [
+        "TCGA"
+    ],
+    "program_names_for_images": [
+        "TCGA"
+    ],
+    "genomic_builds": [
+        "HG19",
+        "HG38"
+    ],
+    "endpt_types": [
+        "current",
+        "legacy"
+    ],
+    
+    "process_adjustments": false,
+
+    "program_names": [
+        "TCGA",
+        "TARGET",
+        "CCLE"
+    ],
+    "skip_projects": [
         "cntl",
-        "fppp"
+        "fppp",
+        "_missing"
     ],
-    "user_info": {
-        "user": "<user eRA Commons name>",
-        "password": "<user eRA Commons password"
+    "tcga_project_names_all": [
+        "TCGA-PCPG",
+        "TCGA-SARC",
+        "TCGA-UVM",
+        "TCGA-LAML",
+        "TCGA-SKCM",
+        "TCGA-KIRP",
+        "TCGA-UCS",
+        "TCGA-PAAD",
+        "TCGA-LUSC",
+        "TCGA-READ",
+        "TCGA-COAD",
+        "TCGA-MESO",
+        "TCGA-GBM",
+        "TCGA-LGG",
+        "TCGA-TGCT",
+        "TCGA-UCEC",
+        "TCGA-BLCA",
+        "TCGA-HNSC",
+        "TCGA-ACC",
+        "TCGA-LIHC",
+        "TCGA-THCA",
+        "TCGA-BRCA",
+        "TCGA-OV",
+        "TCGA-ESCA",
+        "TCGA-CESC",
+        "TCGA-PRAD",
+        "TCGA-STAD",
+        "TCGA-THYM",
+        "TCGA-DLBC",
+        "TCGA-LUAD",
+        "TCGA-KICH",
+        "TCGA-KIRC",
+        "TCGA-CHOL"
+    ],
+    "data_types_legacy2use_project": {
+        "Copy number segmentation": true, 
+        "Raw intensities": true, 
+        "Aligned reads": true, 
+        "Copy number estimate": true, 
+        "Simple nucleotide variation": true, 
+        "Gene expression quantification": true, 
+        "Coverage WIG": true, 
+        "miRNA gene quantification": true, 
+        "Genotypes": true, 
+        "miRNA isoform quantification": true, 
+        "Normalized copy numbers": true, 
+        "Isoform expression quantification": true, 
+        "Normalized intensities": true, 
+        "Tissue slide image": true, 
+        "Exon junction quantification": true, 
+        "Exon quantification": true, 
+        "Methylation beta value": true, 
+        "Diagnostic image": true, 
+        "Unaligned reads": true, 
+        "CGH array QC": true, 
+        "Biospecimen Supplement": true, 
+        "Pathology report": true, 
+        "Clinical Supplement": true, 
+        "Intensities": true, 
+        "Protein expression quantification": true, 
+        "Microsattelite instability": true, 
+        "Structural variation": true, 
+        "Auxiliary test": true, 
+        "Copy number QC metrics": true, 
+        "Intensities Log2Ratio": true, 
+        "Methylation array QC metrics": true, 
+        "Clinical data": true, 
+        "Copy number variation": true, 
+        "ABI sequence trace": true, 
+        "Biospecimen data": true, 
+        "Simple somatic mutation": true, 
+        "Bisulfite sequence alignment": true, 
+        "Methylation percentage": true, 
+        "Sequencing tag": true, 
+        "Sequencing tag counts": true, 
+        "LOH": true 
     },
-    "access_tags": {
-        "open": "dbGap open-access",
-        "controlled": "dbGap controlled-access"
+    "legacy_types_with_study": [
+        "Aligned reads",
+        "Simple somatic mutation"
+    ],
+    "data_categories": [
+        "Simple Nucleotide Variation",
+        "Transcriptome Profiling",
+        "Raw Sequencing Data",
+        "Copy Number Variation",
+        "Biospecimen",
+        "Clinical"
+    ],
+    "category2type": {
+        "Simple Nucleotide Variation": ["Annotated Somatic Mutation", "Raw Simple Somatic Mutation"],
+        "Transcriptome Profiling": ["miRNA Expression Quantification", "Isoform Expression Quantification", "Gene Expression Quantification"],
+        "Raw Sequencing Data": ["Aligned Reads"],
+        "Copy Number Variation": ["Copy Number Segment", "Masked Copy Number Segment"],
+        "Biospecimen": ["Biospecimen"],
+        "Clinical": ["Clinical"]
     },
-    "cloud_projects": {
-        "open": "<open project>",
-        "controlled": "<controlled project>"
-    },
-    "buckets": {
-        "open": "<open bucket>",
-        "controlled": "<controoled bucket",
-        "key_prefix": {
-            "tcga": "tcga",
-            "resources": "genomic-reference"
+    "sample_code_position" : {
+        "TCGA": {
+          "start": 13,
+          "end": 15
         },
-        "update_uploaded": [
-            "<bucket to update>",
-            "<second bucket to update>"
-        ],
-        "upload_exts": [
-            "bam",
-            "tar.gz",
-            "CEL",
-            "maf",
-            "vcf",
-            "vcf.gz"
-        ]
-    },
-    "use_gcs_processing": false,
-    "log_dir_tag": "run",
-    "base_run_upload_folder": "tcga-runs/",
-    "downloads": {
-        "latestarchive": "http://tcga-data.nci.nih.gov/datareports/resources/latestarchive",
-        "metadata_current": "https://tcga-data.nci.nih.gov/tcgafiles/ftp_auth/distro_ftpusers/anonymous/other/metadata/metadata.current.txt",
-        "annotations": "https://tcga-data.nci.nih.gov/annotations/resources/searchannotations/json?"
-    },
-    "datastore": {
-        "parent_kind": "ISBCGC",
-        "parent_name": "isbcgc",
-        "metadata_kind": "ISBCGCmetadata",
-        "key_fields": [
-            "AliquotBarcode",
-            "DatafileName"
-        ],
-        "key_sep": "^"
-    },
-    "cloudsql": {
-        "host": "173.194.225.46",
-        "db": "2016_07_09_dev",
-        "user": "<user>",
-        "passwd": "<password>",
-        "update_schema": true,
-        "ssl_dir": "ssl/"
-    },
-    "patterns": {
-        "key_template": "<%s>/<%s>/<%s>/<%s>/<%s>",
-        "key_terms": [
-            "Project",
-            "Study",
-            "Platform",
-            "Pipeline",
-            "DataLevel"
-        ]
-    },
-    "bio_etl_keys": {
-        "clinical": "tcga-runs/intermediary/Clinical/bq_data_files/Clinical.json",
-        "biospecimen": "tcga-runs/intermediary/Biospecimen/bq_data_files/Biospecimen.json",
-        "data": "tcga-runs/intermediary/Data/bq_data_files/Data.json"
-    },
-    "exclude_annotation_catagories": [1,2,3,4,5,27,37,241,242],
-    "annotation_mapping": {
-        "annotationId" : ["id"],
-        "annotationCategoryId": ["annotationCategory", "categoryId"],
-        "annotationCategoryName": ["annotationCategory", "categoryName"],
-        "annotationClassificationId": ["annotationCategory", "annotationClassification", "annotationClassificationId"],
-        "annotationClassification": ["annotationCategory", "annotationClassification", "annotationClassificationName"],
-        "annotationNoteText": ["optional", "notes", 0, "noteText"],
-        "Study": ["items", 0, "disease", "abbreviation"],
-        "itemTypeId": ["items", 0, "itemType", "itemTypeId"],
-        "itemTypeName": ["items", 0, "itemType", "itemTypeName"],
-        "itemBarcode": ["items", 0, "item"],
-        "AliquotBarcode": ["derived", 7, "items", 0, "item"],
-        "ParticipantBarcode": ["derived", 3, "items", 0, "item"],
-        "SampleBarcode": ["derived", 4, "items", 0, "item"],
-        "dateAdded": ["optional", "notes", 0, "dateAdded"],
-        "dateCreated": ["dateCreated"],
-        "dateEdited": ["optional", "notes", 0, "dateEdited"]
-    },
-    "metadata_locations": {
-        "clinical": {
-            "analyte_code": "analyte_code",
-            "age_at_initial_pathologic_diagnosis": "age_at_initial_pathologic_diagnosis",
-            "anatomic_neoplasm_subdivision": "anatomic_neoplasm_subdivision",
-            "bcr_patient_barcode": "ParticipantBarcode",
-            "bcr_patient_uuid": "ParticipantUUID",
-            "clinical_M": "clinical_M",
-            "clinical_N": "clinical_N",
-            "clinical_stage": "clinical_stage",
-            "clinical_T": "clinical_T",
-            "colorectal_cancer": "colorectal_cancer",
-            "country": "country",
-            "days_to_birth": "days_to_birth",
-            "days_to_death": "days_to_death",
-            "days_to_initial_pathologic_diagnosis": "days_to_initial_pathologic_diagnosis",
-            "days_to_last_followup": "days_to_last_followup",
-            "days_to_last_known_alive": "days_to_last_known_alive",
-            "days_to_submitted_specimen_dx": "days_to_submitted_specimen_dx",
-            "ethnicity": "ethnicity",
-            "gender": "gender",
-            "height": "height",
-            "histological_type": "histological_type",
-            "history_of_colon_polyps": "history_of_colon_polyps",
-            "history_of_neoadjuvant_treatment": "history_of_neoadjuvant_treatment",
-            "icd_10": "icd_10",
-            "icd_o_3_histology": "icd_o_3_histology",
-            "icd_o_3_site": "icd_o_3_site",
-            "lymphatic_invasion": "lymphatic_invasion",
-            "lymphnodes_examined": "lymphnodes_examined",
-            "lymphovascular_invasion_present": "lymphovascular_invasion_present",
-            "menopause_status": "menopause_status",
-            "neoplasm_histologic_grade": "neoplasm_histologic_grade",
-            "new_tumor_event_after_initial_treatment": "new_tumor_event_after_initial_treatment",
-            "number_of_lymphnodes_examined": "number_of_lymphnodes_examined",
-            "number_of_lymphnodes_positive_by_he": "number_of_lymphnodes_positive_by_he",
-            "number_pack_years_smoked": "number_pack_years_smoked",
-            "pathologic_M": "pathologic_M",
-            "pathologic_N": "pathologic_N",
-            "pathologic_stage": "pathologic_stage",
-            "pathologic_T": "pathologic_T",
-            "person_neoplasm_cancer_status": "person_neoplasm_cancer_status",
-            "pregnancies": "pregnancies",
-            "primary_neoplasm_melanoma_dx": "primary_neoplasm_melanoma_dx",
-            "primary_therapy_outcome_success": "primary_therapy_outcome_success",
-            "project_code": "Project",
-            "psa_value": "psa_value",
-            "race": "race",
-            "residual_tumor": "residual_tumor",
-            "tissue_source_site": "TSSCode",
-            "tobacco_smoking_history": "tobacco_smoking_history",
-            "tumor_tissue_site": "tumor_tissue_site",
-            "tumor_type": "tumor_type",
-            "venous_invasion": "venous_invasion",
-            "vital_status": "vital_status",
-            "weight": "weight",
-            "year_of_initial_pathologic_diagnosis": "year_of_initial_pathologic_diagnosis",
-            "h_pylori_infection": "h_pylori_infection",
-            "age_began_smoking_in_years": "age_began_smoking_in_years",
-            "number_pack_years_smoked": "number_pack_years_smoked",
-            "stopped_smoking_year": "stopped_smoking_year",
-            "year_of_tobacco_smoking_onset": "year_of_tobacco_smoking_onset",
-            "calculate": {
-                "calculateBMI:weight:height:%.1f": "BMI",
-                "enforce_vitalstatus_rules:filtered_dict": ""
-            }
-        },
-        "auxiliary": {
-            "batch_number": "batch_number",
-            "bcr": "bcr",
-            "disease_code": "Study",
-            "bcr_patient_barcode": "ParticipantBarcode",
-            "hpv_calls": "hpv_calls",
-            "hpv_status": "hpv_status",
-            "mononucleotide_and_dinucleotide_marker_panel_analysis_status": "mononucleotide_and_dinucleotide_marker_panel_analysis_status"
-        },
-        "omf": {
-            "omf:malignancy_type": "other_malignancy_malignancy_type",
-            "omf:other_malignancy_anatomic_site": "other_malignancy_anatomic_site",
-            "omf:other_malignancy_histological_type": "other_malignancy_histological_type"
-        },
-        "ssf_clinical": {
-            "clinical:histological_type": "histological_type",
-            "clinical:country": "country",
-            "clinical:other_dx": "other_dx",
-            "clinical:tobacco_smoking_history": "tobacco_smoking_history",
-            "clinical:gleason_score_combined": "gleason_score_combined",
-            "clinical:history_of_neoadjuvant_treatment": "history_of_neoadjuvant_treatment"
-        },
-        "biospecimen": {
-            "admin:batch_number": "batch_number",
-            "admin:bcr": "bcr",
-            "admin:disease_code": "Study",
-            "admin:project_code": "Project",
-            "patient:bcr_patient_barcode": "ParticipantBarcode",
-            "sample:bcr_sample_barcode": "SampleBarcode",
-            "sample:bcr_sample_uuid": "SampleUUID",
-            "sample:days_to_collection": "days_to_collection",
-            "sample:is_ffpe": "is_ffpe",
-            "sample:num_portions": "num_portions",
-            "sample:num_slides": "num_slides",
-            "sample:SampleTypeCode": "SampleTypeCode",
-            "sample:SampleType": "SampleType",
-            "sample:SampleTypeLetterCode": "SampleTypeLetterCode",
-            "slide:avg_percent_lymphocyte_infiltration": "avg_percent_lymphocyte_infiltration",
-            "slide:avg_percent_monocyte_infiltration": "avg_percent_monocyte_infiltration",
-            "slide:avg_percent_necrosis": "avg_percent_necrosis",
-            "slide:avg_percent_neutrophil_infiltration": "avg_percent_neutrophil_infiltration",
-            "slide:avg_percent_normal_cells": "avg_percent_normal_cells",
-            "slide:avg_percent_stromal_cells": "avg_percent_stromal_cells",
-            "slide:avg_percent_tumor_cells": "avg_percent_tumor_cells",
-            "slide:avg_percent_tumor_nuclei": "avg_percent_tumor_nuclei",
-            "slide:max_percent_lymphocyte_infiltration": "max_percent_lymphocyte_infiltration",
-            "slide:max_percent_monocyte_infiltration": "max_percent_monocyte_infiltration",
-            "slide:max_percent_necrosis": "max_percent_necrosis",
-            "slide:max_percent_neutrophil_infiltration": "max_percent_neutrophil_infiltration",
-            "slide:max_percent_normal_cells": "max_percent_normal_cells",
-            "slide:max_percent_stromal_cells": "max_percent_stromal_cells",
-            "slide:max_percent_tumor_cells": "max_percent_tumor_cells",
-            "slide:max_percent_tumor_nuclei": "max_percent_tumor_nuclei",
-            "slide:min_percent_lymphocyte_infiltration": "min_percent_lymphocyte_infiltration",
-            "slide:min_percent_monocyte_infiltration": "min_percent_monocyte_infiltration",
-            "slide:min_percent_necrosis": "min_percent_necrosis",
-            "slide:min_percent_neutrophil_infiltration": "min_percent_neutrophil_infiltration",
-            "slide:min_percent_normal_cells": "min_percent_normal_cells",
-            "slide:min_percent_stromal_cells": "min_percent_stromal_cells",
-            "slide:min_percent_tumor_cells": "min_percent_tumor_cells",
-            "slide:min_percent_tumor_nuclei": "min_percent_tumor_nuclei"
-        },
-        "ssf_biospecimen": {
-            "sample:days_to_sample_procurement": "days_to_sample_procurement",
-            "sample:days_to_normal_sample_procurement": "days_to_sample_procurement",
-            "sample:site_of_disease": "tissue_anatomic_site",
-            "sample:site_of_disease_description": "tissue_anatomic_site_description",
-            "sample:normal_tissue_anatomic_site": "tissue_anatomic_site"
-        },
-        "sdrf": {
-            "add": {
-                "Species": "literal:Homo sapiens",
-                "Repository": "literal:DCC"
-            },
-            "Extract Name": {
-              "TCGA Barcode": "AliquotBarcode"
-            },
-            "Data": {
-              "TCGA Archive Name": "DataArchiveName!pattern#Study#.+_([A-Z]+)\\.",
-              "TCGA Data Level": "DataLevel",
-              "TCGA Data Type": "Datatype",
-              "TCGA Include for Analysis": "IncludeForAnalysis",
-              "TCGA MD5": "DatafileMD5",
-              "md5": "DatafileMD5",
-              "Genome reference": "GenomeReference",
-              "disease_code": "Study"
-            },
-            "Array Data File": "DatafileName",
-            "Array Data Matrix File": "DatafileName",
-            "Derived Array Data File": "DatafileName",
-            "Derived Array Data Matrix File": "DatafileName",
-            "Derived Data File": "DatafileName",
-            "Derived Data File REF": "DatafileName",
-            "function:getLeftNameColumn": "wasDerivedFrom"
-        },
-        "cghub": {
-            "study": "TCGA",
-            "add": {
-                "Species": ["literal:Homo sapiens"],
-                "Project": ["literal:TCGA"],
-                "Repository": ["literal:CGHub"],
-                "DataLevel": ["literal:Level 1"],
-                "ParticipantBarcode": ["substring:legacy_sample_id:0:12"],
-                "SampleBarcode": ["substring:legacy_sample_id:0:16"],
-                "DatafileUploaded": ["literal:false"],
-                "IncludeForAnalysis": ["match:state:Live:yes:no"],
-                "SecurityProtocol": ["literal:dbGap controlled-access"],
-                "project_accession": ["literal:phs000178"],
-                "DataCenterName": ["map:shortname2centername:center_name"]
-            },
-            "map": {
-                "participant_id": ["ParticipantUUID"],
-                "sample_id": ["SampleUUID"],
-                "aliquot_id": ["AliquotUUID"],
-                "legacy_sample_id": ["AliquotBarcode"],
-                "center_name": ["DataCenterCode"],
-                "filename": ["DatafileName"],
-                "disease_abbr": ["Study"],
-                "md5": ["DatafileMD5"],
-                "tss_id": ["TSSCode"],
-                "refassem_short_name": ["GenomeReference"],
-                "reason": ["reason_for_state"],
-                "platform": ["CGHubPlatform"],
-                "sample_type": ["SampleTypeCode"]
-            },
-            "minus": [
-                "filesize",
-                "CGHubPlatform",
-                "published_date",
-                "upload_date",
-                "sample_accession",
-                "study",
-                "analysis_submission_uri",
-                "analysis_full_uri",
-                "analysis_data_uri"
-            ],
-            "dccmap": [
-                "DataCenterType",
-                "Platform",
-                "Pipeline",
-                "TissueSourceSite"
-            ],
-            "shortname2centername": {
-                "BCGSC":"bcgsc.ca",
-                "BCCAGSC":"bcgsc.ca",
-                "BI":"broad.mit.edu",
-                "WUSM":"genome.wustl.edu",
-                "BCM":"hgsc.bcm.edu",
-                "HMS":"hms.harvard.edu",
-                "HMS-RK":"hms.harvard.edu",
-                "HAIB":"hudsonalpha.org",
-                "IGC":"intgen.org",
-                "JHU":"jhu.edu",
-                "JHU_USC":"jhu-usc.edu",
-                "USC-JHU":"jhu-usc.edu",
-                "LBL":"lbl.gov",
-                "MDA":"mdanderson.org",
-                "MSKCC":"mskcc.org",
-                "NCH":"nationwidechildrens.org",
-                "PNNL":"pnl.gov",
-                "RG":"rubicongenomics.com",
-                "SANGER":"sanger.ac.uk",
-                "ISB":"systemsbiology.org",
-                "UCSC":"ucsc.edu",
-                "UNC":"unc.edu",
-                "UNC-LCCC":"unc.edu",
-                "VUMC":"vanderbilt.edu",
-                "WUGSC":"genome.wustl.edu",
-                "CGHUB": "cghub.com"
-            },
-            "shortname2centercodes": {
-                "BCGSC": ["00", "13"],
-                "BCCAGSC": ["00", "13"],
-                "BCM": ["10", "12"],
-                "BI": ["08", "01"],
-                "HAIB": ["00", "06"],
-                "HMS": ["00", "02"],
-                "HMS-RK": ["00", "02"],
-                "IGC": ["00", "22"],
-                "JHU": ["00", "28"],
-                "JHU_USC": ["00", "05"],
-                "USC-JHU": ["00", "05"],
-                "LBL": ["00", "03"],
-                "MDA": ["00", "26"],
-                "MSKCC": ["00", "04"],
-                "NCH": ["00", "23"],
-                "PNNL": ["00", "29"],
-                "SANGER": ["32", "00"],
-                "UCSC": ["00", "25"],
-                "UNC": ["00", "07"],
-                "UNC-LCCC": ["00", "07"],
-                "VUMC": ["00", "27"],
-                "WUSM": ["09", "21"],
-                "WUGSC": ["09", "00"],
-                "CGHUB": ["00", "00"]
-            },
-            "uploadfullplatform2platform": {
-                "Illumina Genome Analyzer II": "IlluminaGA",
-                "Illumina Genome Analyzer IIx": "IlluminaGA",
-                "HiSeq X Ten": "IlluminaHiSeq",
-                "Illumina HiSeq 2000": "IlluminaHiSeq",
-                "Illumina HiSeq 2500": "IlluminaHiSeq",
-                "Illumina MiSeq": "IlluminaMiSeq",
-                "454 GS FLX Titanium": "RocheGSFLX",
-                "AB SOLiD 4 System": "ABSOLiD",
-                "AB SOLiD System 3.0": "ABSOLiD",
-                "AB SOLiD System 2.0": "ABSOLiD",
-                "Ion Torrent PGM": "LifeIonTorrentPGM",
-                "Ion Torrent Proton": "LifeIonTorrentProton",
-                "PacBio RS": "PacBioRS"
-            },
-            "analyte2center_type": {
-                "D": "gsc",
-                "W": "gsc",
-                "X": "gsc",
-                "H": "cgcc",
-                "R": "cgcc",
-                "T": "cgcc"
-            },
-            "analyte2strategy2moltype" : {
-                "D": {
-                    "": "DNASeq",
-                    "VALIDATION": "DNASeq",
-                    "OTHER": "DNASeq",
-                    "AMPLICON": "DNASeq",
-                    "WGS": "DNASeq",
-                    "WXS": "DNASeq",
-                    "Bisulfite-Seq": "DNASeq"
-                },
-                "W": {
-                    "": "DNASeq",
-                    "VALIDATION": "DNASeq",
-                    "OTHER": "DNASeq",
-                    "AMPLICON": "DNASeq",
-                    "WGS": "DNASeq",
-                    "WXS": "DNASeq",
-                    "Bisulfite-Seq": "DNASeq"
-                },
-                "X": {
-                    "": "DNASeq",
-                    "VALIDATION": "DNASeq",
-                    "AMPLICON": "DNASeq",
-                    "OTHER": "DNASeq",
-                    "WGS": "DNASeq",
-                    "WXS": "DNASeq"
-                },
-                "H": {
-                    "": "RNASeq",
-                    "VALIDATION": "RNASeq",
-                    "OTHER": "RNASeq",
-                    "RNA-Seq": "RNASeq",
-                    "miRNA-Seq": "miRNASeq"
-                },
-                "R": {
-                    "": "RNASeq",
-                    "VALIDATION": "RNASeq",
-                    "OTHER": "RNASeq",
-                    "RNA-Seq": "RNASeq",
-                    "miRNA-Seq": "miRNASeq"
-                },
-                "T": {
-                    "": "RNASeq",
-                    "VALIDATION": "RNASeq",
-                    "OTHER": "RNASeq",
-                    "RNA-Seq": "RNASeq",
-                    "miRNA-Seq": "miRNASeq"
-                },
-                "": {
-                    "": "None",
-                    "VALIDATION": "None",
-                    "OTHER": "None",
-                    "AMPLICON": "None",
-                    "WGS": "DNASeq",
-                    "WXS": "DNASeq",
-                    "RNA-Seq": "RNASeq",
-                    "miRNA-Seq": "miRNASeq"
-                }
-            },
-            "upload_platforms": [
-                "IlluminaGA",
-                "IlluminaHiSeq",
-                "IlluminaMiSeq"
-            ],
-            "deprecated_centers": [
-                "hms.harvard.edu",
-                "cghub.com"
-            ],
-            "deprecated_assemblies": [
-                "18",
-                "36"
-            ]
-        },
-        "metadata.current.txt": {
-            "CENTER_CODE": "DataCenterCode",
-            "UUID": "AliquotUUID"
-        },
-        "latestarchive_dcc_processing": {
-            "ARCHIVE_URL": "DataArchiveURL#split:/:9:DataCenterType#split:/:10:DataCenterName#split:.:-7:Platform#pattern:DataArchiveVersion:^.+([0-9]{1,3}\\.[0-9]{1,4}\\.[0-9]{1,3}).tar.gz$"
-        },
-        "latestarchive_gcs_processing": {
-            "ARCHIVE_URL": "DataArchiveURL#split:/:12:DataCenterType#split:/:13:DataCenterName#split:.:-7:Platform#pattern:DataArchiveVersion:^.+([0-9]{1,3}\\.[0-9]{1,4}\\.[0-9]{1,3}).tar.gz$"
-        },
-        "annotations": {
-            "uuid": "list:0:Annotation Category,list:1:Annotation Classification"
+        "TARGET": {
+          "start": 17,
+          "end": 19
         }
-    },
-    "nonupload_files": [
-        "segmented.dat",
-        "wig",
-        "wig.gz",
-        "wig.bz2",
-        "bed",
-        "bed.gz",
-        "bed.bz2",
-        "tar.gz",
-        "*hg18*"
-    ],
-    "maf_upload_files": [
-        "maf",
-        "vcf",
-        "vcf.gz"
-    ],
-    "upload_archives": {
-        "Level_1": {
-            "genome.wustl.edu": [
-                "bio",
-                "Genome_Wide_SNP_6"
-            ], 
-            "nationwidechildrens.org": [
-                "bio"
-            ],
-            "broad.mit.edu": [
-            	"Genome_Wide_SNP_6"
-            ]
-        }, 
-        "Level_2": {
-            "bcgsc.ca": [
-                "IlluminaHiSeq_DNASeq_automated",
-                "IlluminaHiSeq_DNASeq_Cont_automated"
-            ], 
-            "broad.mit.edu": [
-                "IlluminaGA_DNASeq", 
-                "IlluminaGA_DNASeq_automated", 
-                "IlluminaGA_DNASeq_curated",
-                "IlluminaGA_DNASeq_Cont",
-                "IlluminaGA_DNASeq_Cont_automated",
-                "IlluminaGA_DNASeq_Cont_curated"
-            ], 
-            "genome.wustl.edu": [
-                "IlluminaGA_DNASeq", 
-                "IlluminaGA_DNASeq_curated",
-                "IlluminaHiSeq_DNASeq_Cont",
-                "IlluminaHiSeq_DNASeq_Cont_automated"
-            ], 
-            "hgsc.bcm.edu": [
-                "IlluminaGA_DNASeq", 
-                "IlluminaGA_DNASeq_automated", 
-                "IlluminaGA_DNASeq_curated", 
-                "Mixed_DNASeq", 
-                "Mixed_DNASeq_automated", 
-                "Mixed_DNASeq_curated",
-                "IlluminaGA_DNASeq_Cont",
-                "IlluminaGA_DNASeq_Cont_automated",
-                "IlluminaGA_DNASeq_Cont_curated",
-                "Mixed_DNASeq_Cont",
-                "Mixed_DNASeq_Cont_automated",
-                "Mixed_DNASeq_Cont_curated"
-            ], 
-            "hms.harvard.edu": [
-                "IlluminaHiSeq_DNASeqC"
-            ],
-            "jhu-usc.edu": [
-                "IlluminaHiSeq_WGBS"
-            ],
-            "ucsc.edu": [
-                "IlluminaGA_DNASeq_automated",
-                "IlluminaGA_DNASeq_Cont",
-                "IlluminaGA_DNASeq_Cont_automated"
-            ],
-            "unc.edu": [
-                "Mixed_DNASeq_Cont_automated"
-            ]
-        }, 
-        "Level_3": {
-            "bcgsc.ca": [
-                "IlluminaGA_miRNASeq", 
-                "IlluminaGA_RNASeq", 
-                "IlluminaHiSeq_miRNASeq", 
-                "IlluminaHiSeq_RNASeq"
-            ], 
-            "broad.mit.edu": [
-                "Genome_Wide_SNP_6"
-            ], 
-            "genome.wustl.edu": [
-                "Genome_Wide_SNP_6"
-            ], 
-            "jhu-usc.edu": [
-                "HumanMethylation27", 
-                "HumanMethylation450"
-            ], 
-            "mdanderson.org": [
-                "MDA_RPPA_Core"
-            ], 
-            "unc.edu": [
-                "AgilentG4502A_07_1", 
-                "AgilentG4502A_07_2", 
-                "AgilentG4502A_07_3", 
-                "AgilentG4502a_07_1", 
-                "AgilentG4502a_07_2", 
-                "AgilentG4502a_07_3", 
-                "IlluminaGA_RNASeqV2", 
-                "IlluminaHiSeq_RNASeqV2", 
-                "IlluminaHiSeq_TotalRNASeqV2"
-            ]
-        }, 
-        "mage-tab": {
-            "bcgsc.ca": [
-                "IlluminaGA_miRNASeq", 
-                "IlluminaGA_RNASeq", 
-                "IlluminaHiSeq_DNASeq_automated", 
-                "IlluminaHiSeq_DNASeq_Cont_automated", 
-                "IlluminaHiSeq_miRNASeq", 
-                "IlluminaHiSeq_RNASeq"
-            ], 
-            "broad.mit.edu": [
-                "Genome_Wide_SNP_6", 
-                "IlluminaGA_DNASeq_automated", 
-                "IlluminaGA_DNASeq_Cont_automated", 
-                "IlluminaGA_DNASeq_curated"
-            ], 
-            "genome.wustl.edu": [
-                "Genome_Wide_SNP_6", 
-                "IlluminaHiSeq_DNASeq_Cont_automated"
-            ],
-            "hgsc.bcm.edu": [
-                "IlluminaGA_DNASeq_automated", 
-                "IlluminaGA_DNASeq_Cont_automated", 
-                "Mixed_DNASeq", 
-                "Mixed_DNASeq_Cont", 
-                "Mixed_DNASeq_Cont_curated", 
-                "Mixed_DNASeq_curated"
-            ],
-            "jhu-usc.edu": [
-                "HumanMethylation27", 
-                "HumanMethylation450"
-            ],
-            "mdanderson.org": [
-                "MDA_RPPA_Core"
-            ],
-            "nationwidechildrens.org": [
-                "microsat_i"
-            ],
-            "ucsc.edu": [
-                "IlluminaGA_DNASeq_automated", 
-                "IlluminaGA_DNASeq_Cont_automated"
-            ],
-            "unc.edu": [
-                "AgilentG4502A_07_1", 
-                "AgilentG4502A_07_2", 
-                "AgilentG4502A_07_3", 
-                "AgilentG4502a_07_1", 
-                "AgilentG4502a_07_2", 
-                "AgilentG4502a_07_3", 
-                "IlluminaGA_RNASeqV2", 
-                "IlluminaHiSeq_RNASeqV2", 
-                "IlluminaHiSeq_TotalRNASeqV2"
-            ]
-        }
-    },
-    "sample_code2type": {
-        "01": "Primary solid Tumor",
-        "02": "Recurrent Solid Tumor",
-        "03": "Primary Blood Derived Cancer - Peripheral Blood",
-        "04": "Recurrent Blood Derived Cancer - Bone Marrow",
-        "05": "Additional - New Primary",
-        "06": "Metastatic",
-        "07": "Additional Metastatic",
-        "08": "Human Tumor Original Cells",
-        "09": "Primary Blood Derived Cancer - Bone Marrow",
-        "10": "Blood Derived Normal",
-        "11": "Solid Tissue Normal",
-        "12": "Buccal Cell Normal",
-        "13": "EBV Immortalized Normal",
-        "14": "Bone Marrow Normal",
-        "20": "Control Analyte",
-        "40": "Recurrent Blood Derived Cancer - Peripheral Blood",
-        "50": "Cell Lines",
-        "60": "Primary Xenograft Tissue",
-        "61": "Cell Line Derived Xenograft Tissue"
     },
     "sample_code2letter": {
         "01": "TP",
@@ -693,196 +217,2269 @@
         "60": "XP",
         "61": "XCL"
     },
-    "platform2pipeline_tag": {
-        "bio": "bio_clin",
-        "Genome_Wide_SNP_6": "snp_cnv",
-        "HumanMethylation27": "methylation",
-        "HumanMethylation450": "methylation",
-        "IlluminaGA_DNASeq": "DNASeq",
-        "IlluminaGA_DNASeq_automated": "DNASeq_automated",
-        "IlluminaGA_DNASeq_Cont": "DNASeq_Cont",
-        "IlluminaGA_DNASeq_Cont_automated": "DNASeq_Cont_automated",
-        "IlluminaGA_DNASeq_Cont_curated": "DNASeq_Cont_curated",
-        "IlluminaGA_DNASeq_curated": "DNASeq_curated",
-        "IlluminaGA_miRNASeq": "miRNASeq",
-        "IlluminaGA_RNASeq": "RNASeq",
-        "IlluminaGA_RNASeqV2": "RNASeqV2",
-        "IlluminaHiSeq_DNASeq": "DNASeq",
-        "IlluminaHiSeq_DNASeq_automated": "DNASeq_automated",
-        "IlluminaHiSeq_DNASeq_Cont": "DNASeq_Cont",
-        "IlluminaHiSeq_DNASeq_Cont_automated": "DNASeq_Cont_automated",
-        "IlluminaHiSeq_DNASeq_Cont_curated": "DNASeq_Cont_curated",
-        "IlluminaHiSeq_DNASeq_curated": "DNASeq_curated",
-        "IlluminaHiSeq_miRNASeq": "miRNASeq",
-        "IlluminaHiSeq_RNASeq": "RNASeq",
-        "IlluminaHiSeq_RNASeqV2": "RNASeqV2",
-        "IlluminaHiSeq_TotalRNASeqV2": "TotalRNASeqV2",
-        "MDA_RPPA_Core": "protein_exp",
-        "microsat_i": "microsat_i",
-        "Mixed_DNASeq": "DNASeq",
-        "Mixed_DNASeq_automated": "DNASeq_automated",
-        "Mixed_DNASeq_Cont": "DNASeq_Cont",
-        "Mixed_DNASeq_Cont_automated": "DNASeq_Cont_automated",
-        "Mixed_DNASeq_Cont_curated": "DNASeq_Cont_curated",
-        "Mixed_DNASeq_curated": "DNASeq_curated"
+    "gcs_wrapper": "gcs_wrapper_gcloud",
+    "metadata_modules": [
+        "store_metadata_cloudsql"
+    ],
+    "download_base_output_dir": "/tmp/",
+    "download_output_file_template": "gdc_download_%s_%s.tar.gz",
+    "download_files_per": 3,
+    "field_report": {
+        "endpoints": [
+            "annotations",
+            "projects",
+            "cases",
+            "files"
+        ],
+        "endpoint_mapping_templates": [
+            "https://gdc-api.nci.nih.gov/%s/_mapping",
+            "https://gdc-api.nci.nih.gov/legacy/%s/_mapping"
+        ],
+        "url_templates": [
+            "https://gdc-api.nci.nih.gov/v0/%s?facets=%s&size=0&pretty=true", 
+            "https://gdc-api.nci.nih.gov/v0/legacy/%s?facets=%s&size=0&pretty=true"
+        ],
+        "field_file": "Z:/tcga/cgc/dataproc/gdc/doc/2016_06_22_gdc_endpoint_fields.txt",
+        "output_path": "Z:/tcga/cgc/dataproc/gdc/doc/",
+        "output_file": "gdc_endpoint_field_values.txt"
     },
-    "cghub_platform2pipeline": {
-        "DNASeq": "DNASeq",
-        "RNASeq": "RNASeq",
-        "HumanMeth": "methylation",
-        "Genome_Wide_SNP_6": "snp_cnv",
-        "MDA_RPPA_Core": "protein_exp",
-        "bio": "bio_clin",
-        "AgilentG4502A": "transcriptome"
+    "map_requests_timeout": 8,
+    "endpt_types_all": [
+        "current",
+        "legacy"
+    ],
+    "annotations_endpt": {
+        "current endpt": "https://gdc-api.nci.nih.gov/annotations",
+        "legacy endpt": "https://gdc-api.nci.nih.gov/legacy/annotations",
+        "query": "?expand=project,project.program"
     },
-    "maflevel": "Level_2",
-    "mafplatforms": [
-        "IlluminaGA_DNASeq",
-        "IlluminaHiSeq_DNASeq",
-        "Mixed_DNASeq",
-        "IlluminaHiSeq_DNASeq_automated",
-        "Mixed_DNASeq_automated",
-        "IlluminaGA_DNASeq_automated",
-        "IlluminaGA_DNASeq_curated",
-        "IlluminaHiSeq_DNASeq_curated",
-        "Mixed_DNASeq_curated",
-        "IlluminaGA_DNASeq_Cont",
-        "IlluminaHiSeq_DNASeq_Cont",
-        "Mixed_DNASeq_Cont",
-        "IlluminaGA_DNASeq_Cont_automated",
-        "IlluminaHiSeq_DNASeq_Cont_automated",
-        "Mixed_DNASeq_Cont_automated",
-        "IlluminaGA_DNASeq_Cont_curated",
-        "IlluminaHiSeq_DNASeq_Cont_curated",
-        "Mixed_DNASeq_Cont_curated"
-    ],
-    "platform2datatype": {
-        "Genome_Wide_SNP_6": "CNV (SNP Array)",
-        "IlluminaGA_miRNASeq": "miRNASeq",
-        "IlluminaHiSeq_miRNASeq": "miRNASeq",
-        "IlluminaGA_RNASeq": "RNASeq",
-        "IlluminaHiSeq_RNASeq": "RNASeq",
-        "IlluminaHiSeq_TotalRNASeqV2": "TotalRNASeqV2",
-        "IlluminaGA_RNASeqV2": "RNASeqV2",
-        "IlluminaHiSeq_RNASeqV2": "RNASeqV2",
-        "bio": "Complete Clinical Set",
-        "MDA_RPPA_Core": "Expression-Protein",
-        "HumanMethylation27": "DNA Methylation",
-        "HumanMethylation450": "DNA Methylation",
-        "microsat_i": "Fragment Analysis Results",
-        "IlluminaGA_DNASeq": "Somatic Mutations",
-        "IlluminaHiSeq_DNASeq": "Somatic Mutations",
-        "Mixed_DNASeq": "Somatic Mutations",
-        "IlluminaHiSeq_DNASeq_automated": "Somatic Mutations",
-        "Mixed_DNASeq_automated": "Somatic Mutations",
-        "IlluminaGA_DNASeq_automated": "Somatic Mutations",
-        "IlluminaGA_DNASeq_curated": "Somatic Mutations",
-        "IlluminaHiSeq_DNASeq_curated": "Somatic Mutations",
-        "Mixed_DNASeq_curated": "Somatic Mutations",
-        "IlluminaGA_DNASeq_Cont": "Protected Mutations",
-        "IlluminaHiSeq_DNASeq_Cont": "Protected Mutations",
-        "Mixed_DNASeq_Cont": "Protected Mutations",
-        "IlluminaGA_DNASeq_Cont_automated": "Protected Mutations",
-        "IlluminaHiSeq_DNASeq_Cont_automated": "Protected Mutations",
-        "Mixed_DNASeq_Cont_automated": "Protected Mutations",
-        "IlluminaGA_DNASeq_Cont_curated": "Protected Mutations",
-        "IlluminaHiSeq_DNASeq_Cont_curated": "Protected Mutations",
-        "Mixed_DNASeq_Cont_curated": "Protected Mutations"
+    "projects_endpt": {
+        "current endpt": "https://gdc-api.nci.nih.gov/projects",
+        "legacy endpt": "https://gdc-api.nci.nih.gov/legacy/projects",
+        "query": "?expand=program,summary,summary.experimental_strategies,summary.data_categories&pretty=true"
     },
-    "ignored_centers": [
-        "hms.harvard.edu", 
-        "mskcc.org", 
-        "lbl.gov", 
-        "hudsonalpha.org"
+    "cases_endpt": {
+        "current endpt": "https://gdc-api.nci.nih.gov/cases",
+        "legacy endpt": "https://gdc-api.nci.nih.gov/legacy/cases",
+        "query": "?expand=project,project.program,samples,summary&pretty=true"
+    },
+    "files_endpt": {
+        "current endpt": "https://gdc-api.nci.nih.gov/files",
+        "legacy endpt": "https://gdc-api.nci.nih.gov/legacy/files",
+        "query": "?expand=archive,cases,cases.project,cases.project.program,cases.samples,cases.samples.portions,cases.samples.portions.analytes,cases.samples.portions.analytes.aliquots,analysis,center,index_files&pretty=true"
+    },
+    "data_endpt": {
+        "current endpt": "https://gdc-api.nci.nih.gov/data?compress=true",
+        "legacy endpt": "https://gdc-api.nci.nih.gov/legacy/data?compress=true"
+    },
+    "facets_query": "?facets=%s&size=%d&pretty=true",
+    "database_module": "gdc.model.isbcgc_cloudsql_gdc_model",
+    "all_database_modules": [
+        "gdc.model.isbcgc_cloudsql_annotation_model"
     ],
-    "convert_field_int": [
-        "age_at_initial_pathologic_diagnosis",
-        "days_to_birth",
-        "days_to_last_followup",
-        "number_of_lymphnodes_positive_by_he"
-    ],
-    "convert_field_float": [
-        "height",
-        "weight"
-    ],
-    "list_fields": [
-        "AnnotationCategory",
-        "AnnotationClassification",
-        "wasDerivedFrom"
-    ],
-    "field2datatype": {
-        "AliquotBarcode": "str",
-        "AliquotUUID": "str",
-        "AnnotationCategory": "list:str",
-        "AnnotationClassification": "list:str",
-        "BiospecimenfileName": "str",
-        "ClinicalArchiveName": "str",
-        "ClinicalArchiveURL": "str",
-        "ClinicalDataLevel": "str",
-        "ClinicalfileName": "str",
-        "DataArchiveName": "str",
-        "DataArchiveURL": "str",
-        "DataArchiveVersion": "str",
-        "DataCenterCode": "str",
-        "DataCenterName": "str",
-        "DataCenterType": "str",
-        "DataLevel": "str",
-        "DatafileMD5": "str",
-        "DatafileName": "str",
-        "Datatype": "str",
-        "IncludeForAnalysis": "bool",
-        "MAGETabArchiveName": "str",
-        "MAGETabArchiveURL": "str",
-        "ParticipantBarcode": "str",
-        "ParticipantUUID": "str",
-        "Pipeline": "str",
-        "Platform": "str",
-        "Project": "str",
-        "Repository": "str",
-        "SDRFFileName": "str",
-        "SampleBarcode": "str",
-        "SampleTypeCode": "str",
-        "SampleUUID": "str",
-        "SecurityProtocol": "str",
-        "Study": "str",
-        "TSSCode": "str",
-        "TissueSourceSite": "str",
-        "TumorType": "str",
-        "age_at_initial_pathologic_diagnosis": "int",
-        "batch_number": "str",
-        "bcr": "str",
-        "center_id": "str",
-        "clinical_M": "str",
-        "clinical_N": "str",
-        "clinical_T": "str",
-        "clinical_stage": "str",
-        "days_to_birth": "int",
-        "days_to_last_followup": "int",
-        "disease_code": "str",
-        "ethnicity": "str",
-        "gender": "str",
-        "height": "float",
-        "histological_type": "str",
-        "icd_10": "str",
-        "icd_o_3_histology": "str",
-        "icd_o_3_site": "str",
-        "is_ffpe": "bool",
-        "neoplasm_histologic_grade": "str",
-        "new_tumor_event_after_initial_treatment": "bool",
-        "number_of_lymphnodes_positive_by_he": "int",
-        "pathologic_M": "str",
-        "pathologic_N": "str",
-        "pathologic_T": "str",
-        "pathologic_stage": "str",
-        "person_neoplasm_cancer_status": "str",
-        "prior_dx": "bool",
-        "race": "str",
-        "residual_tumor": "str",
-        "sample_type": "str",
-        "tobacco_smoking_history": "str",
-        "tumor_tissue_site": "str",
-        "vital_status": "str",
-        "wasDerivedFrom": "list:str",
-        "weight": "float"
+    "cloud_projects": {
+        "open": "<open project>",
+        "controlled": "<controlled project>"
+    },
+    "buckets": {
+        "open": "<open bucket>",
+        "controlled": "<controlled bucket>",
+        "folders": {
+            "base_file_folder": "<base file folder>",
+            "base_run_folder": "<base run folder>"
+        }
+    },
+    "cloudsql": {
+        "host": "<host IP>",
+        "db": "<db-name>",
+        "user": "<user name>",
+        "passwd": "<password>",
+        "use_proxy": false,
+        "ssl_dir": "<ssl-dir>"
+    },
+    "user_info": {
+        "user": "<user name>",
+        "password": "<password>"
+    },
+    "log_dir_tag": "run",
+    "endpt2genomebuild": {
+        "current": "HG38",
+        "legacy": "HG19"
+    },
+    "process_projects": {
+        "fetch_count": 1000,
+        "filter_result": {
+            "value": {
+                "project_id": "project_id",
+                "name": "name",
+                "released": "released",
+                "state": "state",
+                "primary_site": "primary_site",
+                "dbgap_accession_number": "dbgap_accession_number",
+                "disease_type": "disease_type"
+            },
+            "": {
+            },
+            "map": {
+                "summary": {
+                    "summary": "summary",
+                    "value": {
+                        "case_count": "case_count",
+                        "file_count": "file_count",
+                        "file_size": "file_size"
+                    }
+                },
+                "program": {
+                    "program": "program",
+                    "value": {
+                        "dbgap_accession_number": "dbgap_accession_number",
+                        "name": "name",
+                        "program_id": "program_id"
+                    }
+                }
+            }
+        }
+    },
+    "postprocess_keypath": {
+        "postproc_query": "SELECT id2url.%s, id2url.file_gdc_id FROM `isb-cgc.GDC_metadata.rel6_GDCfileID_to_GCSurl` id2url join `isb-cgc.GDC_metadata.rel6_fileData_%s` data on id2url.file_gdc_id = data.file_id where cases__project__project_id = '%s' and data_type = '%s'",
+        "postproc_cloudsql_tables": [
+            "CCLE_metadata_data_HG19",
+            "TCGA_metadata_data_HG19",
+            "TCGA_metadata_data_HG38"
+        ],
+        "postproc_cloudsql_tables_complete": [
+            "CCLE_metadata_data_HG19",
+            "TARGET_metadata_data_HG19",
+            "TARGET_metadata_data_HG38",
+            "TCGA_metadata_data_HG19",
+            "TCGA_metadata_data_HG38"
+        ],
+        "postproc_columns": {
+            "file_gcs_url": "file_name_key"
+        },
+        "postproc_project": "isb-cgc",
+        "postproc_key_column": "file_gdc_id",
+        "postproc_file_name_key_null_update": "update %s set file_name_key = null where project_short_name = '%s' and data_type = '%s'",
+        "postproc_file_uploaded_update": "update %s set file_uploaded = 'true' where file_name_key is not null and data_type in ('Biospecimen Supplement', 'Clinical Supplement', 'Aligned Reads', 'Diagnostic image', 'Tissue slide image', 'Genotypes', 'Aligned reads', 'Simple nucleotide variation')",
+        "postproc_fetch_count": 50
+    },
+    "postproc_data_availability": {
+        "target2source_query": {
+            "CCLE_metadata_data_type_availability": [
+                "CCLE_metadata_data_HG19"
+            ],
+            "TARGET_metadata_data_type_availability": [
+                "TARGET_metadata_data_HG19",
+                "TARGET_metadata_data_HG38"
+            ],
+            "TCGA_metadata_data_type_availability": [
+                "TCGA_metadata_data_HG19",
+                "TCGA_metadata_data_HG38"
+            ]
+        },
+        "data_type_exclude": [
+          "Auxiliary test",
+          "Clinical data",
+          "Pathology report",
+          "Clinical Supplement",
+          "Biospecimen Supplement"
+        ],
+        "select_columns": [
+            "data_type",
+            "experimental_strategy",
+            "platform",
+            "analysis_workflow_type",
+            "center_code",
+            "data_format"
+        ],
+        "column_order": [
+            "genomic_build",
+            "data_type",
+            "experimental_strategy",
+            "platform",
+            "analysis_workflow_type",
+            "center_code",
+            "data_format"
+        ],
+        "columns": {
+            "genomic_build": "genomic_build",
+            "data_type": "data_type",
+            "experimental_strategy": "experimental_strategy",
+            "platform": "platform",
+            "analysis_workflow_type": "workflow_type",
+            "center_code": "center",
+            "data_format": "data_format"
+        },
+        "data_type_where": [
+            "Biospecimen Supplement",
+            "Clinical Supplement",
+            "Aligned Reads",
+            "Diagnostic image",
+            "Tissue slide image",
+            "Genotypes",
+            "Aligned reads",
+            "Simple nucleotide variation"
+	    ],
+        "display_column_name": "display_name",
+        "display_name_map": {
+            "platform": {
+                "ABI capillary sequencer": "ABI capillary",
+                "ABI SOLiD": "SOLiD",
+                "Affymetrix SNP Array 6.0": "SNP 6.0",
+                "Affymetrix SNP 6.0": "SNP 6.0",
+                "AgilentG4502A_07_1": "G4502A 07 1",
+                "AgilentG4502A_07_2": "G4502A 07 2",
+                "AgilentG4502A_07_3": "G4502A 07 3",
+                "CGH-1x1M_G4447A": "CGH-1x1M G4447A",
+                "Clinical": "Clinical",
+                "Complete Genomics": "Complete Genomics",
+                "H-miRNA_8x15K": "H-miRNA 8x15K",
+                "H-miRNA_8x15Kv2": "H-miRNA 8x15Kv2",
+                "HG-CGH-244A": "HG-CGH-244A",
+                "HG-CGH-415K_G4124A": "HG-CGH-415K G4124A",
+                "HG-U133_Plus_2": "HG-U133 Plus_2",
+                "HiSeq X Ten": "HiSeq",
+                "HT_HG-U133A": "HT_HG-U133A",
+                "HuEx-1_0-st-v2": "HuEx-1_0-st-v2",
+                "Illumina": "Illumina",
+                "Illumina DNA Methylation OMA002 CPI": "Methylation OMA002 CPI",
+                "Illumina DNA Methylation OMA003 CPI": "Methylation OMA003 CPI",
+                "Illumina GA": "GA",
+                "Illumina HiSeq": "HiSeq",
+                "Illumina Human 1M Duo": "Human 1M Duo",
+                "Illumina Human Methylation 27": "Meth 27",
+                "Illumina Human Methylation 450": "Meth 450",
+                "Illumina HumanHap550": "HumanHap550",
+                "Illumina MiSeq": "MiSeq",
+                "Ion Torrent PGM": "PGM",
+                "LS 454": "LS 454",
+                "MDA_RPPA_Core": "MDA RPPA Core",
+                "Mixed platforms": "Mixed"
+            },
+            "center_code": {
+                "01": "BI",
+                "02": "HMS",
+                "03": "LBL",
+                "04": "MSKCC",
+                "05": "JHU_USC",
+                "06": "HAIB",
+                "07": "UNC",
+                "08": "BI",
+                "09": "WUSM",
+                "10": "BCM",
+                "11": "RG",
+                "12": "BCM",
+                "13": "BCGSC",
+                "14": "BI",
+                "15": "ISB",
+                "16": "LBL",
+                "17": "MSKCC",
+                "18": "UCSC",
+                "19": "MDA",
+                "20": "MDA",
+                "21": "WUSM",
+                "22": "IGC",
+                "23": "NCH",
+                "24": "MDA",
+                "25": "UCSC",
+                "26": "MDA",
+                "27": "VUMC",
+                "28": "JHU",
+                "29": "PNNL",
+                "30": "WUSM",
+                "31": "BCGSC",
+                "32": "SANGER",
+                "33": "UNC",
+                "34": "BCGSC",
+                "36": "BI",
+                "37": "CG"
+            }
+        },
+        "deprecated_column_name": "deprecated"
+    },
+    "TCGA": {
+        "process_annotations": {
+            "fetch_count": 1000,
+            "filter_result": {
+                "value": {
+                    "status": "status",
+                    "state": "state",
+                    "category": "category",
+                    "classification": "classification",
+                    "updated_datetime": "updated_datetime",
+                    "created_datetime": "created_datetime",
+                    "annotation_id": "annotation_id",
+                    "notes": "notes",
+                    "entity_type": "entity_type",
+                    "entity_id": "entity_id",
+                    "entity_submitter_id": "entity_submitter_id",
+                    "case_id": "case_id",
+                    "case_submitter_id": "case_submitter_id",
+                    "submitter_id": "submitter_id"
+                },
+                "map": {
+                    "project": {
+                        "project": "project",
+                        "value": {
+                            "project_id": "project_id"
+                        },
+                        "map": {
+                            "program": {
+                                "program": "program",
+                                "value": {
+                                    "name": "name"
+                                }
+                            }
+                        }
+                        
+                    }
+                }
+            },
+            "annotation_table_mapping": {
+                "value": {
+                    "status": "status",
+                    "category": "category",
+                    "classification": "classification",
+                    "updated_datetime": "substr,0,19,date_edited",
+                    "created_datetime": "substr,0,19,date_created",
+                    "annotation_id": "annotation_gdc_id",
+                    "notes": "notes",
+                    "entity_type": "entity_type",
+                    "entity_id": "entity_gdc_id",
+                    "entity_submitter_id": "entity_barcode",
+                    "case_id": "case_gdc_id",
+                    "case_submitter_id": "case_barcode",
+                    "sample_barcode": "sample_barcode",
+                    "aliquot_barcode": "aliquot_barcode",
+                    "submitter_id": "annotation_submitter_id"
+                },
+                "map": {
+                    "project": {
+                        "project": "project",
+                        "value": {
+                            "project_id": "project_short_name"
+                        },
+                        "map": {
+                            "program": {
+                                "program": "program_name",
+                                "value": {
+                                    "name": "program_name"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "process_projects": {
+            "fetch_count": 1000,
+            "filter_result": {
+                "value": {
+                    "project_id": "project_id",
+                    "name": "name",
+                    "released": "released",
+                    "state": "state",
+                    "dbgap_accession_number": "dbgap_accession_number"
+                },
+                "list": {
+                    "primary_site": "primary_site",
+                    "disease_type": "disease_type"
+                },
+                "map": {
+                    "summary": {
+                        "summary": "summary",
+                        "value": {
+                            "case_count": "case_count",
+                            "file_count": "file_count",
+                            "file_size": "file_size"
+                        }
+                    },
+                    "program": {
+                        "program": "program",
+                        "value": {
+                            "dbgap_accession_number": "dbgap_accession_number",
+                            "name": "name",
+                            "program_id": "program_id"
+                        }
+                    }
+                }
+            },
+            "program_table_mapping": {
+                "map": {
+                    "program": {
+                        "program": "program",
+                        "value": {
+                            "program_id": "program_gdc_id",
+                            "name": "program_name",
+                            "dbgap_accession_number": "dbgap_accession_number"
+                        }
+                    }
+                }
+            },
+            "project_table_mapping": {
+                "value": {
+                    "project_id": "project_short_name",
+                    "name": "name",
+                    "dbgap_accession_number": "dbgap_accession_number"
+                },
+                "list": {
+                    "primary_site": "primary_site",
+                    "disease_type": "disease_type"
+                },
+                "map": {
+                    "summary": {
+                        "summary": "summary",
+                        "value": {
+                            "case_count": "summary_case_count",
+                            "file_count": "summary_file_count",
+                            "file_size": "summary_file_size"
+                        }
+                    },
+                    "program": {
+                        "program": "program",
+                        "value": {
+                            "name": "program_name"
+                        }
+                    }
+                }
+            }
+        },
+        "process_cases": {
+            "fetch_count": 20,
+            "filter_result": {
+                "value": {
+                    "submitter_id": "submitter_id", 
+                    "case_id": "case_id",
+                    "created_datetime": "created_datetime",
+                    "updated_datetime": "updated_datetime",
+                    "state": "state"
+                },
+                "map": {
+                    "project": {
+                        "project": "project",
+                        "value": {
+                            "project_id": "project_id"
+                        },
+                        "map": {
+                            "program": {
+                                "program": "program",
+                                "value": {
+                                    "name": "name"
+                                }
+                            }
+                        }
+                    },
+                    "summary": {
+                        "summary": "summary",
+                        "value": {
+                            "file_count": "file_count"
+                        }
+                    }
+                },
+                "map_list": {
+                    "samples": {
+                        "samples": "samples",
+                        "value": {
+                            "submitter_id": "submitter_id", 
+                            "sample_id": "sample_id",
+                            "created_datetime": "created_datetime",
+                            "updated_datetime": "updated_datetime",
+                            "state": "state",
+                            "pathology_report_uuid": "pathology_report_uuid", 
+                            "sample_type": "sample_type",
+                            "sample_type_id": "sample_type_id",
+                            "is_ffpe": "is_ffpe",
+                            "tissue_type": "tissue_type",
+                            "tumor_code": "tumor_code",
+                            "tumor_code_id": "tumor_code_id"
+                        }
+                    }
+                }
+            },
+            "clinical_table_mapping": {
+                "value": {
+                    "submitter_id": "case_barcode", 
+                    "case_id": "case_gdc_id"
+                },
+                "map": {
+                    "project": {
+                        "project": "project",
+                         "value": {
+                            "project_id": "project_short_name"
+                        },
+                        "map": {
+                            "program": {
+                                "program": "program",
+                                "value": {
+                                    "name": "program_name"
+                                }
+                            }
+                        }
+                    },
+                    "summary": {
+                        "summary": "summary",
+                        "value": {
+                            "file_count": "summary_file_count"
+                        }
+                    }
+                }
+            },
+            "sample_table_mapping": {
+                "value": {
+                    "case_id": "case_gdc_id", 
+                    "submitter_id": "case_barcode"
+                },
+                "map": {
+                    "project": {
+                        "project": "project",
+                        "value": {
+                            "project_id": "project_short_name"
+                        },
+                        "map": {
+                            "program": {
+                                "program": "program",
+                                "value": {
+                                    "name": "program_name"
+                                }
+                            }
+                        }
+                    }
+                },
+                "map_list": {
+                    "samples": {
+                        "samples": "samples",
+                        "value": {
+                            "submitter_id": "sample_barcode", 
+                            "sample_id": "sample_gdc_id",
+                            "pathology_report_uuid": "pathology_report_uuid", 
+                            "sample_type_id": "sample_type",
+                            "tumor_code_id": "tumor_code",
+                            "is_ffpe": "is_ffpe"
+                        }
+                    }
+                }
+            },
+            "postproc_case": {
+                "postproc_module": "gdc.postprocess.tcga_case_postprocessing",
+                "postproc_query": "select %s, case_barcode from TCGA_bioclin_v0.Clinical where project_short_name = '%s'",
+                "postproc_columns": {
+                    "gender": "gender",
+                    "age_at_diagnosis": "age_at_diagnosis",
+                    "history_of_neoadjuvant_treatment": "history_of_neoadjuvant_treatment",
+                    "vital_status": "vital_status",
+                    "bcr": "bcr",
+                    "batch_number": "batch_number",
+                    "tss_code": "tss_code",
+                    "tumor_tissue_site": "tumor_tissue_site",
+                    "days_to_birth": "days_to_birth",
+                    "days_to_death": "days_to_death",
+                    "days_to_initial_pathologic_diagnosis": "days_to_initial_pathologic_diagnosis",
+                    "days_to_last_followup": "days_to_last_followup",
+                    "days_to_last_known_alive": "days_to_last_known_alive",
+                    "days_to_submitted_specimen_dx": "days_to_submitted_specimen_dx",
+                    "year_of_initial_pathologic_diagnosis": "year_of_diagnosis",
+                    "icd_10": "icd_10",
+                    "icd_o_3_histology": "icd_o_3_histology",
+                    "icd_o_3_site": "icd_o_3_site",
+                    "histological_type": "histological_type",
+                    "person_neoplasm_cancer_status": "person_neoplasm_cancer_status",
+                    "race": "race",
+                    "ethnicity": "ethnicity",
+                    "other_dx": "other_dx",
+                    "other_malignancy_anatomic_site": "other_malignancy_anatomic_site",
+                    "other_malignancy_histological_type": "other_malignancy_histological_type",
+                    "other_malignancy_type": "other_malignancy_type",
+                    "primary_therapy_outcome_success": "primary_therapy_outcome_success",
+                    "new_tumor_event_after_initial_treatment": "new_tumor_event_after_initial_treatment",
+                    "country": "country",
+                    "clinical_stage": "clinical_stage",
+                    "clinical_T": "clinical_T",
+                    "clinical_N": "clinical_N",
+                    "clinical_M": "clinical_M",
+                    "pathologic_stage": "pathologic_stage",
+                    "pathologic_T": "pathologic_T",
+                    "pathologic_N": "pathologic_N",
+                    "pathologic_M": "pathologic_M",
+                    "anatomic_neoplasm_subdivision": "anatomic_neoplasm_subdivision",
+                    "primary_neoplasm_melanoma_dx": "primary_neoplasm_melanoma_dx",
+                    "neoplasm_histologic_grade": "neoplasm_histologic_grade",
+                    "residual_tumor": "residual_tumor",
+                    "number_of_lymphnodes_examined": "number_of_lymphnodes_examined",
+                    "number_of_lymphnodes_positive_by_he": "number_of_lymphnodes_positive_by_he",
+                    "age_began_smoking_in_years": "age_began_smoking_in_years",
+                    "year_of_tobacco_smoking_onset": "year_of_tobacco_smoking_onset",
+                    "stopped_smoking_year": "stopped_smoking_year",
+                    "tobacco_smoking_history": "tobacco_smoking_history",
+                    "number_pack_years_smoked": "number_pack_years_smoked",
+                    "height": "height",
+                    "weight": "weight",
+                    "BMI": "bmi",
+                    "mononucleotide_and_dinucleotide_marker_panel_analysis_status": "mononucleotide_and_dinucleotide_marker_panel_analysis_status",
+                    "menopause_status": "menopause_status",
+                    "pregnancies": "pregnancies",
+                    "hpv_status": "hpv_status",
+                    "hpv_calls": "hpv_calls",
+                    "lymphatic_invasion": "lymphatic_invasion",
+                    "lymphnodes_examined": "lymphnodes_examined",
+                    "tumor_type": "tumor_type",
+                    "venous_invasion": "venous_invasion",
+                    "lymphovascular_invasion_present": "lymphovascular_invasion_present",
+                    "gleason_score_combined": "gleason_score_combined",
+                    "psa_value": "psa_value",
+                    "colorectal_cancer": "colorectal_cancer",
+                    "history_of_colon_polyps": "history_of_colon_polyps",
+                    "h_pylori_infection": "h_pylori_infection"
+                },
+                "postproc_project": "isb-cgc",
+                "postproc_key_column": "case_barcode",
+                "postproc_fetch_count": 100,
+                "postproc_cloudsql_table": "TCGA_metadata_clinical"
+            },
+            "postproc_biospecimen": {
+                "postproc_module": "gdc.postprocess.tcga_case_postprocessing",
+                "postproc_query": "select %s, sample_barcode from TCGA_bioclin_v0.Biospecimen where project_short_name = '%s'",
+                "postproc_columns": {
+                    "batch_number": "batch_number",
+                    "bcr": "bcr",
+                    "days_to_collection": "days_to_collection",
+                    "days_to_sample_procurement": "days_to_sample_procurement",
+                    "num_portions": "num_portions",
+                    "num_slides": "num_slides",
+                    "avg_percent_lymphocyte_infiltration": "avg_percent_lymphocyte_infiltration",
+                    "avg_percent_monocyte_infiltration": "avg_percent_monocyte_infiltration",
+                    "avg_percent_necrosis": "avg_percent_necrosis",
+                    "avg_percent_neutrophil_infiltration": "avg_percent_neutrophil_infiltration",
+                    "avg_percent_normal_cells": "avg_percent_normal_cells",
+                    "avg_percent_stromal_cells": "avg_percent_stromal_cells",
+                    "avg_percent_tumor_cells": "avg_percent_tumor_cells",
+                    "avg_percent_tumor_nuclei": "avg_percent_tumor_nuclei",
+                    "max_percent_lymphocyte_infiltration": "max_percent_lymphocyte_infiltration",
+                    "max_percent_monocyte_infiltration": "max_percent_monocyte_infiltration",
+                    "max_percent_necrosis": "max_percent_necrosis",
+                    "max_percent_neutrophil_infiltration": "max_percent_neutrophil_infiltration",
+                    "max_percent_normal_cells": "max_percent_normal_cells",
+                    "max_percent_stromal_cells": "max_percent_stromal_cells",
+                    "max_percent_tumor_cells": "max_percent_tumor_cells",
+                    "max_percent_tumor_nuclei": "max_percent_tumor_nuclei",
+                    "min_percent_lymphocyte_infiltration": "min_percent_lymphocyte_infiltration",
+                    "min_percent_monocyte_infiltration": "min_percent_monocyte_infiltration",
+                    "min_percent_necrosis": "min_percent_necrosis",
+                    "min_percent_neutrophil_infiltration": "min_percent_neutrophil_infiltration",
+                    "min_percent_normal_cells": "min_percent_normal_cells",
+                    "min_percent_stromal_cells": "min_percent_stromal_cells",
+                    "min_percent_tumor_cells": "min_percent_tumor_cells",
+                    "min_percent_tumor_nuclei": "min_percent_tumor_nuclei"
+                },
+                "postproc_project": "isb-cgc",
+                "postproc_key_column": "sample_barcode",
+                "postproc_fetch_count": 300,
+                "postproc_cloudsql_table": "TCGA_metadata_biospecimen"
+            }
+        },
+        "populate_samples": {
+            "stmts": [
+                "INSERT INTO TCGA_metadata_samples (case_barcode, sample_barcode, sample_type, program_name, project_short_name, disease_code, preservation_method, endpoint_type) SELECT case_barcode, sample_barcode, sample_type, program_name, project_short_name, disease_code, preservation_method, endpoint_type FROM TCGA_metadata_biospecimen where project_short_name = '%s' and endpoint_type = '%s' and sample_barcode not in (select sample_barcode from TCGA_metadata_samples)",
+                "update TCGA_metadata_samples s left join TCGA_metadata_clinical c on s.case_barcode=c.case_barcode set s.age_at_diagnosis=c.age_at_diagnosis, s.gender=c.gender, s.vital_status=c.vital_status, s.tumor_tissue_site=c.tumor_tissue_site, s.days_to_last_known_alive=c.days_to_last_known_alive, s.person_neoplasm_cancer_status=c.person_neoplasm_cancer_status, s.race=c.race, s.ethnicity=c.ethnicity, s.bmi=c.bmi, s.tobacco_smoking_history=c.tobacco_smoking_history, s.menopause_status=c.menopause_status, s.hpv_status=c.hpv_status, s.year_of_diagnosis=c.year_of_diagnosis, s.pathologic_stage=c.pathologic_stage, s.residual_tumor=c.residual_tumor, s.neoplasm_histologic_grade=c.neoplasm_histologic_grade, s.histological_type=c.histological_type where c.project_short_name = '%s' and c.endpoint_type = '%s'"
+            ],
+            "attr_order": [
+                 "attribute",
+                 "spec",
+                 "code"
+            ],
+            "attr_rows": [
+                ["program_name", "CLIN", "C"],
+                ["project_short_name", "CLIN", "C"],
+                ["disease_code", "CLIN", "C"],
+                ["age_at_diagnosis", "CLIN", "N"],
+                ["gender", "CLIN", "C"],
+                ["vital_status", "CLIN", "C"],
+                ["tumor_tissue_site", "CLIN", "C"],
+                ["days_to_last_known_alive", "CLIN", "N"],
+                ["person_neoplasm_cancer_status", "CLIN", "C"],
+                ["race", "CLIN", "C"],
+                ["ethnicity", "CLIN", "C"],
+                ["bmi", "CLIN", "N"],
+                ["tobacco_smoking_history", "CLIN", "C"],
+                ["menopause_status", "CLIN", "C"],
+                ["hpv_status", "CLIN", "C"],
+                ["year_of_diagnosis", "CLIN", "N"],
+                ["pathologic_stage", "CLIN", "C"],
+                ["residual_tumor", "CLIN", "C"],
+                ["neoplasm_histologic_grade", "CLIN", "C"],
+                ["histological_type", "CLIN", "C"],
+                ["sample_type", "BIOS", "C"],
+                ["preservation_method", "BIOS", "C"]
+            ]
+        },
+        "process_files": {
+            "fetch_count": 10,
+            "bucket_path_template": "%s/%s/%s/%s/%s/%s/%s",
+            "bucket_path": [
+                "endpoint_type",
+                "program_name",
+                "project_short_name",
+                "alt:experimental_strategy:data_category",
+                "data_type",
+                "file_gdc_id",
+                "file_name"
+            ],
+            "filter_result": {
+                "value": {
+                    "acl": "acl",
+                    "access": "access",
+                    "file_id": "file_id",
+                    "data_type": "data_type", 
+                    "file_name": "file_name", 
+                    "md5sum": "md5sum", 
+                    "data_format": "data_format", 
+                    "platform": "platform",
+                    "data_category": "data_category", 
+                    "file_size": "file_size", 
+                    "type": "type", 
+                    "file_state": "file_state", 
+                    "experimental_strategy": "experimental_strategy"
+                },
+                "map": {
+                    "analysis": {
+                        "analysis": "analysis",
+                        "value": {
+                            "analysis_id": "analysis_id",
+                            "workflow_link": "workflow_link",
+                            "workflow_type": "workflow_type"
+                        }
+                    },
+                    "archive": {
+                        "archive": "archive",
+                        "value": {
+                            "file_name": "file_name",
+                            "archive_id": "archive_id",
+                            "submitter_id": "submitter_id",
+                            "revision": "revision"
+                        }
+                    },
+                    "center": {
+                        "center": "center",
+                        "value": {
+                            "code": "code",
+                            "name": "name",
+                            "center_type": "center_type"
+                        }
+                    }
+                },
+                "map_list": {
+                    "cases": {
+                        "cases": "cases",
+                        "value": {
+                            "submitter_id": "submitter_id", 
+                            "case_id": "case_id"
+                        },
+                        "map": {
+                            "project": {
+                                "project": "project",
+                                "value": {
+                                    "project_id": "project_id"
+                                },
+                                "map": {
+                                    "program": {
+                                        "program": "program",
+                                        "value": {
+                                            "name": "name"
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "map_list": {
+                            "samples": {
+                                "samples": "samples",
+                                "value": {
+                                    "sample_id": "sample_id", 
+                                    "submitter_id": "submitter_id",
+                                    "sample_type_id": "sample_type_id"
+                                },
+                                "map_list": {
+                                    "portions": {
+                                        "portions": "portions",
+                                        "value": {
+                                            "submitter_id": "submitter_id",
+                                            "portion_id": "portion_id"
+                                        },
+                                        "map_list": {
+                                            "analytes": {
+                                                "analytes": "analytes",
+                                                "map_list": {
+                                                    "aliquots": {
+                                                        "aliquots": "aliquots",
+                                                        "value": {
+                                                            "submitter_id": "submitter_id", 
+                                                            "aliquot_id": "aliquot_id" 
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "index_files": {
+                        "index_files": "index_files",
+                        "value": {
+                            "file_id": "file_id", 
+                            "file_name": "file_name",
+                            "file_size": "file_size"
+                        }
+                    }
+                }
+            },
+            "data_table_mapping": {
+                "value": {
+                    "acl": "list2str,acl",
+                    "access": "access",
+                    "file_id": "file_gdc_id",
+                    "data_type": "data_type", 
+                    "file_name": "file_name", 
+                    "md5sum": "md5sum", 
+                    "data_format": "data_format", 
+                    "platform": "platform",
+                    "data_category": "data_category", 
+                    "file_size": "file_size", 
+                    "type": "type", 
+                    "file_state": "file_state", 
+                    "experimental_strategy": "experimental_strategy"
+                },
+                "map": {
+                    "analysis": {
+                        "analysis": "analysis",
+                        "value": {
+                            "analysis_id": "analysis_analysis_id",
+                            "workflow_link": "analysis_workflow_link",
+                            "workflow_type": "analysis_workflow_type"
+                        }
+                    },
+                    "archive": {
+                        "archive": "archive",
+                        "value": {
+                            "file_name": "archive_file_name",
+                            "archive_id": "archive_gdc_id",
+                            "submitter_id": "archive_submitter_id",
+                            "revision": "archive_revision"
+                        }
+                    },
+                    "center": {
+                        "center": "center",
+                        "value": {
+                            "code": "center_code",
+                            "name": "center_name",
+                            "center_type": "center_type"
+                        }
+                    }
+                },
+                "map_list": {
+                    "cases": {
+                        "cases": "cases",
+                        "value": {
+                            "submitter_id": "case_barcode", 
+                            "case_id": "case_gdc_id"
+                        },
+                        "map": {
+                            "project": {
+                                "project": "project",
+                                "value": {
+                                    "project_id": "project_short_name"
+                                },
+                                "map": {
+                                    "program": {
+                                        "program": "program",
+                                        "value": {
+                                            "name": "program_name"
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "map_list": {
+                            "samples": {
+                                "samples": "samples",
+                                "value": {
+                                    "sample_id": "sample_gdc_id", 
+                                    "submitter_id": "sample_barcode",
+                                    "sample_type_id": "sample_type"
+                                },
+                                "map_list": {
+                                    "portions": {
+                                        "portions": "portions",
+                                        "value": {
+                                            "submitter_id": "portion_barcode",
+                                            "portion_id": "portion_gdc_id"
+                                        },
+                                        "map_list": {
+                                            "analytes": {
+                                                "analytes": "analytes",
+                                                "map_list": {
+                                                    "aliquots": {
+                                                        "aliquots": "aliquots",
+                                                        "value": {
+                                                            "submitter_id": "aliquot_barcode", 
+                                                            "aliquot_id": "aliquot_gdc_id" 
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "map_list_first": {
+                    "index_files": {
+                        "index_files": "index_files",
+                        "value": {
+                            "file_id": "index_file_id", 
+                            "file_name": "index_file_name",
+                            "file_size": "index_file_size"
+                        }
+                    }
+                }
+            },
+            "images": {
+                "image_tag2data_type": {
+                    "Radiology": "Radiology image",
+                    "Tissue": "Tissue slide image",
+                    "Diagnostic": "Diagnostic image"
+                },
+                "image_tag2row_method": {
+                    "Radiology": "setup_radiology_row",
+                    "Tissue": "setup_svs_row",
+                    "Diagnostic": "setup_svs_row"
+                },
+                "fetch_count": 3000,
+                "clinical_select_template": "select case_barcode from TCGA_metadata_clinical where case_barcode in (%s) order by case_barcode",
+                "clinical_table": "TCGA_metadata_clinical",
+                "clinical_columns": [
+                    "endpoint_type",
+                    "case_barcode",
+                    "program_name",
+                    "disease_code",
+                    "project_short_name"
+                ],
+                "biospecimen_select_template": "select sample_barcode from TCGA_metadata_biospecimen where sample_barcode in (%s) order by sample_barcode",
+                "biospecimen_table": "TCGA_metadata_biospecimen",
+                "biospecimen_columns": [
+                    "endpoint_type",
+                    "sample_barcode",
+                    "sample_type",
+                    "case_barcode",
+                    "program_name",
+                    "disease_code",
+                    "project_short_name"
+                ],
+                "samples_select_template": "select sample_barcode from TCGA_metadata_samples where sample_barcode in (%s) order by sample_barcode",
+                "samples_table": "TCGA_metadata_samples",
+                "samples_columns": [
+                    "endpoint_type",
+                    "sample_barcode",
+                    "sample_type",
+                    "case_barcode",
+                    "program_name",
+                    "disease_code",
+                    "project_short_name"
+                ],
+                "data_table": "TCGA_metadata_data_HG19",
+                "Radiology": {
+                    "use_legacy": false,
+                    "bq_select_template": "select {0} FROM `isb-cgc.metadata.TCGA_radiology_images` group by {0} order by {0}",
+                    "bq_columns": [
+                       "PatientID",
+                       "ZipFileName"
+                    ],
+                    "case_barcode_index": 0,
+                    "data_select_template": "select case_barcode, file_name from TCGA_metadata_data_HG19 where (case_barcode, file_name) in (%s) and data_type = 'Radiology image' order by 1,2",
+                    "data_columns": [
+                        "case_barcode",
+                        "project_short_name",
+                        "disease_code",
+                        "program_name",
+                        "data_type",
+                        "data_category",
+                        "type",
+                        "file_name",
+                        "data_format",
+                        "access",
+                        "acl",
+                        "platform",
+                        "file_name_key",
+                        "file_uploaded",
+                        "endpoint_type",
+                        "species"
+                    ],
+                    "data_update_template": "update TCGA_metadata_data_HG19 set file_name_key = %s, file_uploaded = 'true' where case_barcode = %s and file_name = %s and data_type = %s",
+                    "data_verify_select_template": "select case_barcode, file_name from TCGA_metadata_data_HG19 where data_type = 'Radiology image' and file_uploaded = 'true' order by 1,2"
+                },
+                "Tissue": {
+                    "use_legacy": true,
+                    "bq_select_template": "select {0} FROM [isb-cgc:metadata.TCGA_slide_images] where left(slide_id, 2) <> 'DX' group by {0} order by {0}",
+                    "bq_columns": [
+                        "sample_barcode",
+                        "svsFilename",
+                        "case_barcode",
+                        "slide_barcode",
+                        "GCSurl"
+                    ],
+                    "case_barcode_index": 2,
+                    "sample_barcode_index": 0,
+                    "data_select_template": "select sample_barcode, file_name from TCGA_metadata_data_HG19 where (sample_barcode, file_name) in (%s) and data_type = 'Tissue slide image' order by 1,2",
+                    "data_columns": [
+                        "case_barcode",
+                        "sample_barcode",
+                        "sample_type",
+                        "aliquot_barcode",
+                        "project_short_name",
+                        "disease_code",
+                        "program_name",
+                        "data_type",
+                        "data_category",
+                        "type",
+                        "file_name",
+                        "data_format",
+                        "access",
+                        "acl",
+                        "platform",
+                        "file_name_key",
+                        "file_uploaded",
+                        "endpoint_type",
+                        "species"
+                    ],
+                    "data_update_template": "update TCGA_metadata_data_HG19 set file_name_key = %s, file_uploaded = 'true' where sample_barcode = %s and file_name = %s and data_type = %s",
+                    "data_verify_select_template": "select sample_barcode, file_name from TCGA_metadata_data_HG19 where data_type = 'Tissue slide image' and file_uploaded = 'true' order by 1,2"
+                },
+                "Diagnostic": {
+                    "use_legacy": true,
+                    "bq_select_template": "select {0} FROM [isb-cgc:metadata.TCGA_slide_images] where left(slide_id, 2) = 'DX' group by {0} order by {0}",
+                    "bq_columns": [
+                        "sample_barcode",
+                        "svsFilename",
+                        "case_barcode",
+                        "slide_barcode",
+                        "GCSurl"
+                    ],
+                    "case_barcode_index": 2,
+                    "sample_barcode_index": 0,
+                    "data_select_template": "select sample_barcode, file_name from TCGA_metadata_data_HG19 where (sample_barcode, file_name) in (%s) and data_type = 'Diagnostic image' order by 1,2",
+                    "data_columns": [
+                        "case_barcode",
+                        "sample_barcode",
+                        "sample_type",
+                        "aliquot_barcode",
+                        "project_short_name",
+                        "disease_code",
+                        "program_name",
+                        "data_type",
+                        "data_category",
+                        "type",
+                        "file_name",
+                        "data_format",
+                        "access",
+                        "acl",
+                        "platform",
+                        "file_name_key",
+                        "file_uploaded",
+                        "endpoint_type",
+                        "species"
+                    ],
+                    "data_update_template": "update TCGA_metadata_data_HG19 set file_name_key = %s, file_uploaded = 'true' where sample_barcode = %s and file_name = %s and data_type = %s",
+                    "data_verify_select_template": "select sample_barcode, file_name from TCGA_metadata_data_HG19 where data_type = 'Diagnostic image' and file_uploaded = 'true' order by 1,2"
+                }
+            },
+            "datatype2bqscript": {
+                "Gene Expression Quantification": {
+                    "python_module":"gdc.etl.gene_expression_quantification",
+                    "class":"Gene_expression_quantification",
+                    "file_compressed": true,
+                    "bq_dataset": "test",
+                    "bq_table": "TCGA_GeneExpressionQuantification_local_test",
+                    "schema_file": "gdc/schemas/geq.json",
+                    "write_disposition": "WRITE_APPEND",
+                    "analysis_types": [
+                        "HTSeq - FPKM-UQ",
+                        "HTSeq - FPKM",
+                        "HTSeq - Counts"
+                    ]
+                },
+                "Methylation Beta Value": {
+                    "python_module":"gdc.etl.methylation",
+                    "class":"Methylation",
+                    "file_compressed": false,
+                    "bq_dataset": "test",
+                    "bq_table": "TCGA_Methylation_local_test",
+                    "schema_file": "gdc/schemas/meth.json",
+                    "write_disposition": "WRITE_APPEND",
+                    "use_columns": {
+                        "Composite Element REF": "probe_id",
+                        "Beta_value": "beta_value"
+                    },
+                    "add_metadata_columns": [
+                        "sample_barcode",
+                        "project_short_name",
+                        "program_name",
+                        "sample_type_code",
+                        "file_name",
+                        "file_gdc_id",
+                        "aliquot_barcode",
+                        "case_barcode",
+                        "case_gdc_id",
+                        "sample_gdc_id",
+                        "aliquot_gdc_id"
+                    ],
+                    "order_columns": [
+                        "sample_barcode",
+                        "probe_id",
+                        "beta_value",
+                        "project_short_name",
+                        "program_name",
+                        "sample_type_code",
+                        "file_name",
+                        "file_gdc_id",
+                        "aliquot_barcode",
+                        "case_barcode",
+                        "case_gdc_id",
+                        "sample_gdc_id",
+                        "aliquot_gdc_id"
+                    ]
+                },
+                "miRNA Expression Quantification": {
+                    "python_module":"gdc.etl.mirna_expression_quantification",
+                    "class":"Mirna_expression_quantification",
+                    "file_compressed": false,
+                    "bq_dataset": "test",
+                    "bq_table": "TCGA_miRNAExpressionQuantification_local_test",
+                    "schema_file": "gdc/schemas/mirnaeq.json",
+                    "write_disposition": "WRITE_APPEND",
+                    "use_columns": {
+                        "miRNA_ID": "miRNA_ID",
+                        "read_count": "read_count",
+                        "reads_per_million_miRNA_mapped": "reads_per_million_miRNA_mapped",
+                        "cross-mapped": "cross_mapped"
+                    },
+                    "add_metadata_columns": [
+                        "sample_barcode",
+                        "project_short_name",
+                        "program_name",
+                        "sample_type_code",
+                        "file_name",
+                        "file_gdc_id",
+                        "aliquot_barcode",
+                        "case_barcode",
+                        "case_gdc_id",
+                        "sample_gdc_id",
+                        "aliquot_gdc_id"
+                    ],
+                    "order_columns": [
+                        "sample_barcode",
+                        "miRNA_ID",
+                        "read_count",
+                        "reads_per_million_miRNA_mapped",
+                        "cross_mapped",
+                        "project_short_name",
+                        "program_name",
+                        "sample_type_code",
+                        "file_name",
+                        "file_gdc_id",
+                        "aliquot_barcode",
+                        "case_barcode",
+                        "case_gdc_id",
+                        "sample_gdc_id",
+                        "aliquot_gdc_id"
+                    ]
+                },
+                "Isoform Expression Quantification": {
+                    "python_module":"gdc.etl.mirna_matrix",
+                    "class":"miRNA_matrix",
+                    "only_matrix": true,
+                    "file_compressed": false,
+                    "matrix_script": "./tcga_etl_pipeline/mirna_isoform_matrix/expression_matrix_mimat.pl",
+                    "matrix_adf": "./tcga_etl_pipeline/mirna_isoform_matrix/tcga_mirna_bcgsc_hg19.adf",
+                    "matrix_subdir": "isoform_matrix_files/",
+                    "matrix_output_dir": "./tcga_etl_pipeline/mirna_isoform_matrix/hiseq",
+                    "matrix_filename": "expn_matrix_mimat_norm_%s_miRNASeq.txt",
+                    "matrix_persist_subdir": "isoform_matrix_persist/",
+                    "gcs_output_path": "gdc/NCI-GDC_local_run/etl/isoform_matrix/",
+                    "bq_dataset": "test",
+                    "matrix_bq_table": "TCGA_miRNAIsoformMatrix_local_test",
+                    "bq_table": "TCGA_miRNAIsoformQuantification_local_test",
+                    "matrix_schema_file": "gdc/schemas/mirnamatrix.json",
+                    "schema_file": "gdc/schemas/mirnaiso.json",
+                    "write_disposition": "WRITE_APPEND",
+                    "use_columns": {
+                        "miRNA_ID": "miRNA_ID",
+                        "isoform_coords": "split~(?P<genomic_build>.+):(?P<chromosome>.+):(?P<start>.+)-(?P<end>.+):(?P<strand>.)",
+                        "read_count": "read_count",
+                        "reads_per_million_miRNA_mapped": "reads_per_million_miRNA_mapped",
+                        "cross-mapped": "cross_mapped",
+                        "miRNA_region": "split~(?P<mirna_transcript>.+),(?P<mirna_accession>.+)|(?P<mirna_trans>[^,]+)"
+                    },
+                    "add_metadata_columns": [
+                        "sample_barcode",
+                        "project_short_name",
+                        "program_name",
+                        "sample_type_code",
+                        "file_name",
+                        "file_gdc_id",
+                        "aliquot_barcode",
+                        "case_barcode",
+                        "case_gdc_id",
+                        "sample_gdc_id",
+                        "aliquot_gdc_id"
+                    ],
+                    "order_columns": [
+                        "sample_barcode",
+                        "miRNA_ID",
+                        "read_count",
+                        "reads_per_million_miRNA_mapped",
+                        "genomic_build",
+                        "chromosome",
+                        "start",
+                        "end",
+                        "strand",
+                        "cross_mapped",
+                        "mirna_accession",
+                        "mirna_transcript",
+                        "project_short_name",
+                        "program_name",
+                        "sample_type_code",
+                        "file_name",
+                        "file_gdc_id",
+                        "aliquot_barcode",
+                        "case_barcode",
+                        "case_gdc_id",
+                        "sample_gdc_id",
+                        "aliquot_gdc_id"
+                    ]
+                }
+            }
+        }
+    },
+    "TARGET": {
+        "process_projects": {
+            "fetch_count": 1000,
+            "filter_result": {
+                "value": {
+                    "project_id": "project_id",
+                    "name": "name",
+                    "released": "released",
+                    "state": "state",
+                    "dbgap_accession_number": "dbgap_accession_number"
+                },
+                "list": {
+                    "primary_site": "primary_site",
+                    "disease_type": "disease_type"
+                },
+                "map": {
+                    "summary": {
+                        "summary": "summary",
+                        "value": {
+                            "case_count": "case_count",
+                            "file_count": "file_count",
+                            "file_size": "file_size"
+                        }
+                    },
+                    "program": {
+                        "program": "program",
+                        "value": {
+                            "dbgap_accession_number": "dbgap_accession_number",
+                            "name": "name",
+                            "program_id": "program_id"
+                        }
+                    }
+                }
+            },
+            "program_table_mapping": {
+                "map": {
+                    "program": {
+                        "program": "program",
+                        "value": {
+                            "program_id": "program_gdc_id",
+                            "name": "program_name",
+                            "dbgap_accession_number": "dbgap_accession_number"
+                        }
+                    }
+                }
+            },
+            "project_table_mapping": {
+                "value": {
+                    "project_id": "project_short_name",
+                    "name": "name",
+                    "dbgap_accession_number": "dbgap_accession_number"
+                },
+                "list": {
+                    "primary_site": "primary_site",
+                    "disease_type": "disease_type"
+                },
+                "map": {
+                    "summary": {
+                        "summary": "summary",
+                        "value": {
+                            "case_count": "summary_case_count",
+                            "file_count": "summary_file_count",
+                            "file_size": "summary_file_size"
+                        }
+                    },
+                    "program": {
+                        "program": "program",
+                        "value": {
+                            "name": "program_name"
+                        }
+                    }
+                }
+            }
+        },
+        "process_cases": {
+            "fetch_count": 20,
+            "project2clinical_spreadsheet": {
+                "TARGET-ALL-P1": "https://target-data.nci.nih.gov/Public/ALL/clinical/Phase1/harmonized/TARGET_ALL_ClinicalData_Phase1_20160714.xlsx",
+                "TARGET-ALL-P2": "https://target-data.nci.nih.gov/Public/ALL/clinical/Phase2/harmonized/TARGET_ALL_ClinicalData_Phase2_Validation_20160714.xlsx",
+                "TARGET-AML": "https://target-data.nci.nih.gov/Public/AML/clinical/harmonized/TARGET_AML_ClinicalData_20160714.xlsx",
+                "TARGET-NBL": "https://target-data.nci.nih.gov/Public/NBL/clinical/harmonized/TARGET_NBL_ClinicalData_20151124.xls",
+                "TARGET-OS": "https://target-data.nci.nih.gov/Public/OS/clinical/harmonized/TARGET_OS_ClinicalData_Validation_20160401.xlsx",
+                "TARGET-CCSK": "https://target-data.nci.nih.gov/Public/CCSK/clinical/public/harmonized/TARGET_CCSK_ClinicalData_20160714_public.xlsx",
+                "TARGET-RT": "https://target-data.nci.nih.gov/Public/RT/clinical/public/harmonized/TARGET_RT_ClinicalData_Validation_20150710_public.xlsx",
+                "TARGET-WT": "https://target-data.nci.nih.gov/Public/WT/clinical/public/harmonized/TARGET_WT_ClinicalData_Validation_20160714_public.xlsx"
+            },
+            "filter_result": {
+                "value": {
+                    "submitter_id": "submitter_id", 
+                    "case_id": "case_id",
+                    "created_datetime": "created_datetime",
+                    "updated_datetime": "updated_datetime",
+                    "state": "state"
+                },
+                "map": {
+                    "project": {
+                        "project": "project",
+                        "value": {
+                            "project_id": "project_id"
+                        },
+                        "map": {
+                            "program": {
+                                "program": "program",
+                                "value": {
+                                    "name": "name"
+                                }
+                            }
+                        }
+                    },
+                    "summary": {
+                        "summary": "summary",
+                        "value": {
+                            "file_count": "file_count"
+                        }
+                    }
+                },
+                "map_list": {
+                    "samples": {
+                        "samples": "samples",
+                        "value": {
+                            "submitter_id": "submitter_id", 
+                            "sample_id": "sample_id",
+                            "created_datetime": "created_datetime",
+                            "updated_datetime": "updated_datetime",
+                            "state": "state",
+                            "pathology_report_uuid": "pathology_report_uuid", 
+                            "sample_type": "sample_type",
+                            "sample_type_id": "sample_type_id",
+                            "tissue_type": "tissue_type",
+                            "tumor_code": "tumor_code",
+                            "tumor_code_id": "tumor_code_id"
+                        }
+                    }
+                }
+            },
+            "clinical_table_mapping": {
+                "value": {
+                    "submitter_id": "case_barcode", 
+                    "case_id": "case_gdc_id"
+                },
+                "map": {
+                    "project": {
+                        "project": "project",
+                         "value": {
+                            "project_id": "project_short_name"
+                        },
+                        "map": {
+                            "program": {
+                                "program": "program",
+                                "value": {
+                                    "name": "program_name"
+                                }
+                            }
+                        }
+                    },
+                    "summary": {
+                        "summary": "summary",
+                        "value": {
+                            "file_count": "summary_file_count"
+                        }
+                    }
+                }
+            },
+            "sample_table_mapping": {
+                "value": {
+                    "case_id": "case_gdc_id", 
+                    "submitter_id": "case_barcode"
+                },
+                "map": {
+                    "project": {
+                        "project": "project",
+                        "value": {
+                            "project_id": "project_short_name"
+                        },
+                        "map": {
+                            "program": {
+                                "program": "program",
+                                "value": {
+                                    "name": "program_name"
+                                }
+                            }
+                        }
+                    }
+                },
+                "map_list": {
+                    "samples": {
+                        "samples": "samples",
+                        "value": {
+                            "submitter_id": "sample_barcode", 
+                            "sample_id": "sample_gdc_id",
+                            "sample_type_id": "sample_type",
+                            "tumor_code_id": "tumor_code"
+                        }
+                    }
+                }
+            },
+            "postproc_case": {
+                "postproc_module": "gdc.postprocess.target_case_postprocessing",
+                "postproc_query": "select %s, case_barcode from TARGET_bioclin_v0.Clinical where project_short_name = '%s'",
+                "postproc_columns": {
+                    "gender": "gender",
+                    "age_at_diagnosis": "age_at_diagnosis",
+                    "days_to_birth": "days_to_birth",
+                    "protocol": "protocol",
+                    "race": "race",
+                    "ethnicity": "ethnicity",
+                    "first_event": "first_event",
+                    "vital_status": "vital_status",
+                    "year_of_diagnosis": "year_of_diagnosis",
+                    "year_of_last_follow_up": "year_of_last_follow_up",
+                    "days_to_death": "days_to_death",
+                    "days_to_last_followup": "days_to_last_followup",
+                    "days_to_last_known_alive": "days_to_last_known_alive",
+                    "event_free_survival_time_in_days": "event_free_survival",
+                    "WBC_at_diagnosis": "wbc_at_diagnosis"
+                },
+                "postproc_project": "isb-cgc",
+                "postproc_key_column": "case_barcode",
+                "postproc_fetch_count": 100,
+                "postproc_cloudsql_table": "TARGET_metadata_clinical"
+            }
+        },
+        "populate_samples": {
+            "stmts": [
+                "INSERT INTO TARGET_metadata_samples (case_barcode, sample_barcode, sample_type, program_name, project_short_name, disease_code, endpoint_type) SELECT case_barcode, sample_barcode, sample_type, program_name, project_short_name, disease_code, endpoint_type FROM TARGET_metadata_biospecimen where project_short_name = '%s' and endpoint_type = '%s' and sample_barcode not in (select sample_barcode from TARGET_metadata_samples)",
+                "update TARGET_metadata_samples s join TARGET_metadata_clinical c on s.case_barcode = c.case_barcode set s.age_at_diagnosis=c.age_at_diagnosis, s.gender=c.gender, s.first_event=c.first_event, s.protocol=c.protocol, s.vital_status=c.vital_status, s.race=c.race, s.ethnicity=c.ethnicity, s.days_to_birth=c.days_to_birth, s.days_to_death=c.days_to_death, s.year_of_diagnosis=c.year_of_diagnosis, s.event_free_survival=c.event_free_survival, s.days_to_last_followup=c.days_to_last_followup, s.days_to_last_known_alive=c.days_to_last_known_alive, s.wbc_at_diagnosis=c.wbc_at_diagnosis where c.project_short_name = '%s' and c.endpoint_type = '%s'"
+            ],
+            "attr_order": [
+                 "attribute",
+                 "spec",
+                 "code"
+            ],
+            "attr_rows": [
+                ["program_name", "CLIN", "C"],
+                ["project_short_name", "CLIN", "C"],
+                ["disease_code", "CLIN", "C"],
+                ["sample_type", "CLIN", "C"],
+                ["age_at_diagnosis", "CLIN", "N"],
+                ["gender", "CLIN", "C"],
+                ["vital_status", "CLIN", "C"],
+                ["race", "CLIN", "C"],
+                ["ethnicity", "CLIN", "C"],
+                ["days_to_birth", "CLIN", "N"],
+                ["days_to_last_followup", "CLIN", "N"],
+                ["days_to_last_known_alive", "CLIN", "N"],
+                ["days_to_death", "CLIN", "N"],
+                ["year_of_diagnosis", "CLIN", "N"],
+                ["event_free_survival", "CLIN", "N"],
+                ["wbc_at_diagnosis", "CLIN", "N"]
+            ]
+         },
+        "process_files": {
+            "fetch_count": 10,
+            "bucket_path_template": "%s/%s/%s/%s/%s/%s/%s",
+            "bucket_path": [
+                "endpoint_type",
+                "program_name",
+                "project_short_name",
+                "alt:experimental_strategy:data_category",
+                "data_type",
+                "file_gdc_id",
+                "file_name"
+            ],
+            "filter_result": {
+                "value": {
+                    "acl": "acl",
+                    "access": "access",
+                    "file_id": "file_id",
+                    "data_type": "data_type", 
+                    "file_name": "file_name", 
+                    "md5sum": "md5sum", 
+                    "data_format": "data_format", 
+                    "platform": "platform",
+                    "data_category": "data_category", 
+                    "file_size": "file_size", 
+                    "type": "type", 
+                    "file_state": "file_state", 
+                    "experimental_strategy": "experimental_strategy"
+                },
+                "map": {
+                    "analysis": {
+                        "analysis": "analysis",
+                        "value": {
+                            "analysis_id": "analysis_id",
+                            "workflow_link": "workflow_link",
+                            "workflow_type": "workflow_type"
+                        }
+                    },
+                    "center": {
+                        "center": "center",
+                        "value": {
+                            "code": "code",
+                            "name": "name",
+                            "center_type": "center_type"
+                        }
+                    }
+                },
+                "map_list": {
+                    "cases": {
+                        "cases": "cases",
+                        "value": {
+                            "submitter_id": "submitter_id", 
+                            "case_id": "case_id"
+                        },
+                        "map": {
+                            "project": {
+                                "project": "project",
+                                "value": {
+                                    "project_id": "project_id"
+                                },
+                                "map": {
+                                    "program": {
+                                        "program": "program",
+                                        "value": {
+                                            "name": "name"
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "map_list": {
+                            "samples": {
+                                "samples": "samples",
+                                "value": {
+                                    "sample_id": "sample_id", 
+                                    "submitter_id": "submitter_id",
+                                    "sample_type_id": "sample_type_id"
+                                },
+                                "map_list": {
+                                    "portions": {
+                                        "portions": "portions",
+                                        "map_list": {
+                                            "analytes": {
+                                                "analytes": "analytes",
+                                                "map_list": {
+                                                    "aliquots": {
+                                                        "aliquots": "aliquots",
+                                                        "value": {
+                                                            "submitter_id": "submitter_id", 
+                                                            "aliquot_id": "aliquot_id" 
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "index_files": {
+                        "index_files": "index_files",
+                        "value": {
+                            "file_id": "file_id", 
+                            "file_name": "file_name",
+                            "file_size": "file_size"
+                        }
+                    }
+                }
+            },
+            "data_table_mapping": {
+                "value": {
+                    "acl": "list2str,acl",
+                    "access": "access",
+                    "file_id": "file_gdc_id",
+                    "data_type": "data_type", 
+                    "file_name": "file_name", 
+                    "md5sum": "md5sum", 
+                    "data_format": "data_format", 
+                    "platform": "platform",
+                    "data_category": "data_category", 
+                    "file_size": "file_size", 
+                    "type": "type", 
+                    "file_state": "file_state", 
+                    "experimental_strategy": "experimental_strategy"
+                },
+                "map": {
+                    "analysis": {
+                        "analysis": "analysis",
+                        "value": {
+                            "analysis_id": "analysis_analysis_id",
+                            "workflow_link": "analysis_workflow_link",
+                            "workflow_type": "analysis_workflow_type"
+                        }
+                    },
+                    "center": {
+                        "center": "center",
+                        "value": {
+                            "code": "center_code",
+                            "name": "center_name",
+                            "center_type": "center_type"
+                        }
+                    }
+                },
+                "map_list": {
+                    "cases": {
+                        "cases": "cases",
+                        "value": {
+                            "submitter_id": "case_barcode", 
+                            "case_id": "case_gdc_id"
+                        },
+                        "map": {
+                            "project": {
+                                "project": "project",
+                                "value": {
+                                    "project_id": "project_short_name"
+                                },
+                                "map": {
+                                    "program": {
+                                        "program": "program",
+                                        "value": {
+                                            "name": "program_name"
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "map_list": {
+                            "samples": {
+                                "samples": "samples",
+                                "value": {
+                                    "sample_id": "sample_gdc_id", 
+                                    "submitter_id": "sample_barcode",
+                                    "sample_type_id": "sample_type"
+                                },
+                                "map_list": {
+                                    "portions": {
+                                        "portions": "portions",
+                                        "map_list": {
+                                            "analytes": {
+                                                "analytes": "analytes",
+                                                "map_list": {
+                                                    "aliquots": {
+                                                        "aliquots": "aliquots",
+                                                        "value": {
+                                                            "submitter_id": "aliquot_barcode", 
+                                                            "aliquot_id": "aliquot_gdc_id" 
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "map_list_first": {
+                    "index_files": {
+                        "index_files": "index_files",
+                        "value": {
+                            "file_id": "index_file_id", 
+                            "file_name": "index_file_name",
+                            "file_size": "index_file_size"
+                        }
+                    }
+                }
+            },
+            "datatype2bqscript": {
+                "Gene Expression Quantification": {
+                    "python_module":"gdc.etl.gene_expression_quantification",
+                    "class":"Gene_expression_quantification",
+                    "file_compressed": true,
+                    "bq_dataset": "test",
+                    "bq_table": "TARGET_GeneExpressionQuantification_local_test",
+                    "schema_file": "gdc/schemas/geq.json",
+                    "write_disposition": "WRITE_APPEND",
+                    "analysis_types": [
+                        "HTSeq - FPKM-UQ",
+                        "HTSeq - FPKM",
+                        "HTSeq - Counts"
+                    ]
+                },
+                "miRNA Expression Quantification": {
+                    "python_module":"gdc.etl.mirna_expression_quantification",
+                    "class":"Mirna_expression_quantification",
+                    "file_compressed": false,
+                    "bq_dataset": "test",
+                    "bq_table": "TARGET_miRNAExpressionQuantification_local_test",
+                    "schema_file": "gdc/schemas/mirnaeq.json",
+                    "write_disposition": "WRITE_APPEND",
+                    "use_columns": {
+                        "miRNA_ID": "miRNA_ID",
+                        "read_count": "read_count",
+                        "reads_per_million_miRNA_mapped": "reads_per_million_miRNA_mapped",
+                        "cross-mapped": "cross_mapped"
+                    },
+                    "add_metadata_columns": [
+                        "sample_barcode",
+                        "project_short_name",
+                        "program_name",
+                        "sample_type_code",
+                        "file_name",
+                        "file_gdc_id",
+                        "aliquot_barcode",
+                        "case_barcode",
+                        "case_gdc_id",
+                        "sample_gdc_id",
+                        "aliquot_gdc_id"
+                    ],
+                    "order_columns": [
+                        "sample_barcode",
+                        "miRNA_ID",
+                        "read_count",
+                        "reads_per_million_miRNA_mapped",
+                        "cross_mapped",
+                        "project_short_name",
+                        "program_name",
+                        "sample_type_code",
+                        "file_name",
+                        "file_gdc_id",
+                        "aliquot_barcode",
+                        "case_barcode",
+                        "case_gdc_id",
+                        "sample_gdc_id",
+                        "aliquot_gdc_id"
+                    ]
+                },
+                "Isoform Expression Quantification": {
+                    "python_module":"gdc.etl.mirna_matrix",
+                    "class":"miRNA_matrix",
+                    "only_matrix": true,
+                    "file_compressed": false,
+                    "matrix_script": "./tcga_etl_pipeline/mirna_isoform_matrix/expression_matrix_mimat.pl",
+                    "matrix_adf": "./tcga_etl_pipeline/mirna_isoform_matrix/tcga_mirna_bcgsc_hg19.adf",
+                    "matrix_subdir": "isoform_matrix_files/",
+                    "matrix_output_dir": "./tcga_etl_pipeline/mirna_isoform_matrix/hiseq",
+                    "matrix_filename": "expn_matrix_mimat_norm_%s_miRNASeq.txt",
+                    "matrix_persist_subdir": "isoform_matrix_persist/",
+                    "gcs_output_path": "gdc/NCI-GDC_local_run/etl/isoform_matrix/",
+                    "bq_dataset": "test",
+                    "matrix_bq_table": "TARGET_miRNAIsoformMatrix_local_test",
+                    "bq_table": "TCGA_miRNAIsoformQuantification_local_test",
+                    "matrix_schema_file": "gdc/schemas/mirnamatrix.json",
+                    "schema_file": "gdc/schemas/mirnaiso.json",
+                    "write_disposition": "WRITE_APPEND",
+                    "use_columns": {
+                        "miRNA_ID": "miRNA_ID",
+                        "isoform_coords": "split~(?P<genomic_build>.+):(?P<chromosome>.+):(?P<start>.+)-(?P<end>.+):(?P<strand>.)",
+                        "read_count": "read_count",
+                        "reads_per_million_miRNA_mapped": "reads_per_million_miRNA_mapped",
+                        "cross-mapped": "cross_mapped",
+                        "miRNA_region": "split~(?P<mirna_transcript>.+),(?P<mirna_accession>.+)|(?P<mirna_trans>[^,]+)"
+                    },
+                    "add_metadata_columns": [
+                        "sample_barcode",
+                        "project_short_name",
+                        "program_name",
+                        "sample_type_code",
+                        "file_name",
+                        "file_gdc_id",
+                        "aliquot_barcode",
+                        "case_barcode",
+                        "case_gdc_id",
+                        "sample_gdc_id",
+                        "aliquot_gdc_id"
+                    ],
+                    "order_columns": [
+                        "sample_barcode",
+                        "miRNA_ID",
+                        "read_count",
+                        "reads_per_million_miRNA_mapped",
+                        "genomic_build",
+                        "chromosome",
+                        "start",
+                        "end",
+                        "strand",
+                        "cross_mapped",
+                        "mirna_accession",
+                        "mirna_transcript",
+                        "project_short_name",
+                        "program_name",
+                        "sample_type_code",
+                        "file_name",
+                        "file_gdc_id",
+                        "aliquot_barcode",
+                        "case_barcode",
+                        "case_gdc_id",
+                        "sample_gdc_id",
+                        "aliquot_gdc_id"
+                    ]
+                }
+            }
+        }
+    },
+    "CCLE": {
+        "process_projects": {
+            "fetch_count": 1000,
+            "filter_result": {
+                "value": {
+                    "project_id": "project_id",
+                    "name": "name",
+                    "released": "released",
+                    "state": "state",
+                    "dbgap_accession_number": "dbgap_accession_number"
+                },
+                "list": {
+                    "primary_site": "primary_site",
+                    "disease_type": "disease_type"
+                },
+                "map": {
+                    "summary": {
+                        "summary": "summary",
+                        "value": {
+                            "case_count": "case_count",
+                            "file_count": "file_count",
+                            "file_size": "file_size"
+                        }
+                    },
+                    "program": {
+                        "program": "program",
+                        "value": {
+                            "dbgap_accession_number": "dbgap_accession_number",
+                            "name": "name",
+                            "program_id": "program_id"
+                        }
+                    }
+                }
+            },
+            "program_table_mapping": {
+                "map": {
+                    "program": {
+                        "program": "program",
+                        "value": {
+                            "program_id": "program_gdc_id",
+                            "name": "program_name",
+                            "dbgap_accession_number": "dbgap_accession_number"
+                        }
+                    }
+                }
+            },
+            "project_table_mapping": {
+                "value": {
+                    "project_id": "project_short_name",
+                    "name": "name",
+                    "dbgap_accession_number": "dbgap_accession_number"
+                },
+                "list": {
+                    "primary_site": "primary_site",
+                    "disease_type": "disease_type"
+                },
+                "map": {
+                    "summary": {
+                        "summary": "summary",
+                        "value": {
+                            "case_count": "summary_case_count",
+                            "file_count": "summary_file_count",
+                            "file_size": "summary_file_size"
+                        }
+                    },
+                    "program": {
+                        "program": "program",
+                        "value": {
+                            "name": "program_name"
+                        }
+                    }
+                }
+            }
+        },
+        "process_cases": {
+            "fetch_count": 100,
+            "filter_result": {
+                "value": {
+                    "submitter_id": "submitter_id", 
+                    "case_id": "case_id",
+                    "created_datetime": "created_datetime",
+                    "updated_datetime": "updated_datetime",
+                    "state": "state"
+                },
+                "map": {
+                    "project": {
+                        "project": "project",
+                        "value": {
+                            "project_id": "project_id"
+                        },
+                        "map": {
+                            "program": {
+                                "program": "program",
+                                "value": {
+                                    "name": "name"
+                                }
+                            }
+                        }
+                    },
+                    "summary": {
+                        "summary": "summary",
+                        "value": {
+                            "file_count": "file_count"
+                        }
+                    }
+                },
+                "map_list": {
+                    "samples": {
+                        "samples": "samples",
+                        "value": {
+                            "submitter_id": "submitter_id", 
+                            "sample_id": "sample_id",
+                            "created_datetime": "created_datetime",
+                            "updated_datetime": "updated_datetime",
+                            "state": "state",
+                            "pathology_report_uuid": "pathology_report_uuid", 
+                            "sample_type": "sample_type",
+                            "sample_type_id": "sample_type_id",
+                            "tissue_type": "tissue_type",
+                            "tumor_code": "tumor_code",
+                            "tumor_code_id": "tumor_code_id"
+                        }
+                    }
+                }
+            },
+            "clinical_table_mapping": {
+                "value": {
+                    "submitter_id": "case_barcode", 
+                    "case_id": "case_gdc_id"
+                },
+                "map": {
+                    "project": {
+                        "project": "project",
+                         "value": {
+                            "project_id": "project_short_name"
+                        },
+                        "map": {
+                            "program": {
+                                "program": "program",
+                                "value": {
+                                    "name": "program_name"
+                                }
+                            }
+                        }
+                    },
+                    "summary": {
+                        "summary": "summary",
+                        "value": {
+                            "file_count": "summary_file_count"
+                        }
+                    }
+                }
+            },
+            "sample_table_mapping": {
+                "value": {
+                    "case_id": "case_gdc_id", 
+                    "submitter_id": "case_barcode"
+                },
+                "map": {
+                    "project": {
+                        "project": "project",
+                        "value": {
+                            "project_id": "project_short_name"
+                        },
+                        "map": {
+                            "program": {
+                                "program": "program",
+                                "value": {
+                                    "name": "program_name"
+                                }
+                            }
+                        }
+                    }
+                },
+                "map_list": {
+                    "samples": {
+                        "samples": "samples",
+                        "value": {
+                            "submitter_id": "sample_barcode", 
+                            "sample_id": "sample_gdc_id",
+                            "sample_type_id": "sample_type"
+                        }
+                    }
+                }
+            },
+            "postproc_case": {
+                "postproc_module": "gdc.postprocess.ccle_case_postprocessing",
+                "postproc_query": "select %s, case_barcode from CCLE_bioclin_v0.clinical_v0 where project_short_name = '%s'",
+                "postproc_columns": {
+                    "case gender when 'M' then 'Male' when 'F' then 'Female' when 'U' then 'Undefined' else NULL end": "gender",
+                    "histology": "histology",
+                    "hist_subtype": "hist_subtype",
+                    "site_primary": "site_primary",
+                    "source": "source"
+                },
+                "postproc_project": "isb-cgc",
+                "postproc_key_column": "case_barcode",
+                "postproc_fetch_count": 100,
+                "postproc_cloudsql_table": "CCLE_metadata_clinical"
+            }
+        },
+        "populate_samples": {
+            "stmts": [
+                "INSERT INTO CCLE_metadata_samples (case_barcode, sample_barcode, sample_type, program_name, project_short_name, disease_code, endpoint_type) SELECT case_barcode, sample_barcode, sample_type, program_name, project_short_name, disease_code, endpoint_type FROM CCLE_metadata_biospecimen where project_short_name = '%s' and endpoint_type = '%s' and sample_barcode not in (select sample_barcode from CCLE_metadata_samples)",
+                "update CCLE_metadata_samples s join CCLE_metadata_clinical c on s.case_barcode = c.case_barcode set s.gender=c.gender,s.histology=c.histology,s.hist_subtype=c.hist_subtype,s.site_primary=c.site_primary where c.project_short_name = '%s' and c.endpoint_type = '%s'"
+            ],
+            "attr_order": [
+                 "attribute",
+                 "spec",
+                 "code"
+            ],
+            "attr_rows": [
+                ["program_name", "CLIN", "C"],
+                ["project_short_name", "CLIN", "C"],
+                ["disease_code", "CLIN", "C"],
+                ["sample_type", "CLIN", "C"],
+                ["gender", "CLIN", "C"],
+                ["histology", "CLIN", "C"],
+                ["hist_subtype", "CLIN", "C"],
+                ["site_primary", "CLIN", "C"]
+            ]
+         },
+        "process_files": {
+            "fetch_count": 100,
+            "bucket_path_template": "%s/%s/%s/%s/%s/%s/%s",
+            "bucket_path": [
+                "endpoint_type",
+                "program_name",
+                "project_short_name",
+                "alt:experimental_strategy:data_category",
+                "data_type",
+                "file_gdc_id",
+                "file_name"
+            ],
+            "filter_result": {
+                "value": {
+                    "acl": "acl",
+                    "access": "access",
+                    "file_id": "file_id",
+                    "data_type": "data_type", 
+                    "file_name": "file_name", 
+                    "md5sum": "md5sum", 
+                    "data_format": "data_format", 
+                    "platform": "platform",
+                    "data_category": "data_category", 
+                    "file_size": "file_size", 
+                    "type": "type", 
+                    "file_state": "file_state", 
+                    "experimental_strategy": "experimental_strategy"
+                },
+                "map": {
+                    "analysis": {
+                        "analysis": "analysis",
+                        "value": {
+                            "analysis_id": "analysis_id",
+                            "workflow_link": "workflow_link",
+                            "workflow_type": "workflow_type"
+                        }
+                    },
+                    "center": {
+                        "center": "center",
+                        "value": {
+                            "code": "code",
+                            "name": "name",
+                            "center_type": "center_type"
+                        }
+                    }
+                },
+                "map_list": {
+                    "cases": {
+                        "cases": "cases",
+                        "value": {
+                            "submitter_id": "submitter_id", 
+                            "case_id": "case_id"
+                        },
+                        "map": {
+                            "project": {
+                                "project": "project",
+                                "value": {
+                                    "project_id": "project_id"
+                                },
+                                "map": {
+                                    "program": {
+                                        "program": "program",
+                                        "value": {
+                                            "name": "name"
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "map_list": {
+                            "samples": {
+                                "samples": "samples",
+                                "value": {
+                                    "sample_id": "sample_id", 
+                                    "submitter_id": "submitter_id",
+                                    "sample_type_id": "sample_type_id"
+                                },
+                                "map_list": {
+                                    "portions": {
+                                        "portions": "portions",
+                                        "map_list": {
+                                            "analytes": {
+                                                "analytes": "analytes",
+                                                "map_list": {
+                                                    "aliquots": {
+                                                        "aliquots": "aliquots",
+                                                        "value": {
+                                                            "submitter_id": "submitter_id", 
+                                                            "aliquot_id": "aliquot_id" 
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "index_files": {
+                        "index_files": "index_files",
+                        "value": {
+                            "file_id": "file_id", 
+                            "file_name": "file_name",
+                            "file_size": "file_size"
+                        }
+                    }
+                }
+            },
+            "data_table_mapping": {
+                "value": {
+                    "acl": "list2str,acl",
+                    "access": "access",
+                    "file_id": "file_gdc_id",
+                    "data_type": "data_type", 
+                    "file_name": "file_name", 
+                    "md5sum": "md5sum", 
+                    "data_format": "data_format", 
+                    "platform": "platform",
+                    "data_category": "data_category", 
+                    "file_size": "file_size", 
+                    "type": "type", 
+                    "file_state": "file_state", 
+                    "experimental_strategy": "experimental_strategy"
+                },
+                "map": {
+                    "analysis": {
+                        "analysis": "analysis",
+                        "value": {
+                            "analysis_id": "analysis_analysis_id",
+                            "workflow_link": "analysis_workflow_link",
+                            "workflow_type": "analysis_workflow_type"
+                        }
+                    },
+                    "center": {
+                        "center": "center",
+                        "value": {
+                            "code": "center_code",
+                            "name": "center_name",
+                            "center_type": "center_type"
+                        }
+                    }
+                },
+                "map_list": {
+                    "cases": {
+                        "cases": "cases",
+                        "value": {
+                            "submitter_id": "case_barcode", 
+                            "case_id": "case_gdc_id"
+                        },
+                        "map": {
+                            "project": {
+                                "project": "project",
+                                "value": {
+                                    "project_id": "project_short_name"
+                                },
+                                "map": {
+                                    "program": {
+                                        "program": "program",
+                                        "value": {
+                                            "name": "program_name"
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "map_list": {
+                            "samples": {
+                                "samples": "samples",
+                                "value": {
+                                    "sample_id": "sample_gdc_id", 
+                                    "submitter_id": "sample_barcode",
+                                    "sample_type_id": "sample_type"
+                                },
+                                "map_list": {
+                                    "portions": {
+                                        "portions": "portions",
+                                        "map_list": {
+                                            "analytes": {
+                                                "analytes": "analytes",
+                                                "map_list": {
+                                                    "aliquots": {
+                                                        "aliquots": "aliquots",
+                                                        "value": {
+                                                            "submitter_id": "aliquot_barcode", 
+                                                            "aliquot_id": "aliquot_gdc_id" 
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "map_list_first": {
+                    "index_files": {
+                        "index_files": "index_files",
+                        "value": {
+                            "file_id": "index_file_id", 
+                            "file_name": "index_file_name",
+                            "file_size": "index_file_size"
+                        }
+                    }
+                }
+            },
+            "datatype2bqscript": {
+            }
+        }
     }
 }
