@@ -355,7 +355,7 @@ def process_image_type(config, image_type, log):
         # query the big query table
         bq_select_template = image_config[image_type]['bq_select_template']
         bq_columns = image_config[image_type]['bq_columns']
-        query_results = query_bq_table(bq_select_template.format(','.join(bq_columns)), image_config[image_type]['use_legacy'], 'isb-cgc', log)
+        query_results = query_bq_table(bq_select_template.format(','.join(bq_columns)), image_config[image_type]['use_legacy'], 'isb-cgc-test', log)
         page_token = None
         combined_rows = []
         while True:
