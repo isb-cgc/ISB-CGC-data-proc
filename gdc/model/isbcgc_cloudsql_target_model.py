@@ -153,10 +153,12 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
         'primary_key_name': 'metadata_samples_id',  # todo: define this?
 
         'columns': [
+            ['case_gdc_id', 'VARCHAR(36)', 'NULL'],
             ['case_barcode', 'VARCHAR(45)', 'NOT NULL'],
             ['project_short_name', 'VARCHAR(40)', 'NOT NULL'],
             ['disease_code', 'VARCHAR(30)', 'NOT NULL'],
             ['program_name', 'VARCHAR(40)', 'NOT NULL'],
+            ['sample_gdc_id', 'VARCHAR(36)', 'NULL'],
             ['sample_barcode', 'VARCHAR(45)', 'NOT NULL'],
             ['sample_type', 'VARCHAR(2)', 'NOT NULL'],
             ['endpoint_type', 'VARCHAR(8)', 'NULL'],
