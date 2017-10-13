@@ -328,14 +328,14 @@ def process_image_records(config, program, image_config, image_type, rows, log):
     '''
     # call through each of the tables that have potential inserts or updates
     process_clinical_image_records(config, program, image_config, image_type, rows, log)
-    sleep(30)
+    sleep(1)
     if image_type != 'Radiology':
         process_biospecimen_image_records(config, program, image_config, image_type, rows, log)
-        sleep(30)
+        sleep(1)
         process_sanple_image_records(config, program, image_config, image_type, rows, log)
-        sleep(30)
+        sleep(1)
     process_data_image_records(config, program, image_config, image_type, rows, log)
-    sleep(30)
+    sleep(1)
     process_data_availability_records(config, program, image_config, image_type, rows, log)
         
 def process_image_type(config, image_type, log):
@@ -363,7 +363,7 @@ def process_image_type(config, image_type, log):
             total_rows, rows, page_token = fetch_paged_results(query_results, image_config['fetch_count'], None, page_token, log)
             combined_rows += rows 
             # process updates to the metadata data table
-            rows = process_image_records(config, program, image_config, image_type, rows, log)
+            process_image_records(config, program, image_config, image_type, rows, log)
     
             # create inserts into the metadata data that for big query rows that didn't have a match already in the metadata data table
             if not page_token:
@@ -371,7 +371,6 @@ def process_image_type(config, image_type, log):
                 break
         verify_barcodes_filenames(config, program, image_config, image_type, combined_rows, log)
     
-
 def process_radiology_images(config, log):
     '''
     process the radiology images based on rows in metadata.TCGA_radiology_images
