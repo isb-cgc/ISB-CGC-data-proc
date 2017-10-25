@@ -256,6 +256,7 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
             ['endpoint_type'],
             ['sample_gdc_id'],
             ['sample_barcode'],
+            ['case_gdc_id'],
             ['case_barcode'],
             ['program_name'],
             ['project_short_name'],
@@ -333,6 +334,7 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
             ['endpoint_type', 'VARCHAR(10)', 'NOT NULL'],
         ],
         'indices_defs': [
+            ['case_gdc_id'],
             ['case_barcode'],
             ['program_name'],
             ['project_short_name'],
@@ -354,6 +356,7 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
             ['residual_tumor'],
             ['neoplasm_histologic_grade'],
             ['histological_type'],
+            ['sample_gdc_id'],
             ['sample_barcode'],
             ['sample_type'],
             ['preservation_method'],
