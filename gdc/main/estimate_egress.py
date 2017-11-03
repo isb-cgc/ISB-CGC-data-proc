@@ -45,6 +45,7 @@ def main(path):
         zone = requests.get(metadata_server, headers = metadata_flavor).text.split('/')[-1]
         if location in zone:
             pass
+        country = None
     except:
         send_url = 'http://freegeoip.net/json'
         r = requests.get(send_url)
