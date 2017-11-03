@@ -178,7 +178,9 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
             ['protocol', 'VARCHAR(70)', 'NULL']
         ],
         'indices_defs': [
+            ['case_gdc_id'],
             ['case_barcode'],
+            ['sample_gdc_id'],
             ['sample_barcode'],
             ['project_short_name'],
             ['disease_code'],
