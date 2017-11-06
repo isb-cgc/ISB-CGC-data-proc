@@ -292,51 +292,6 @@ def process_run_param_options(config, adjust, options, msg, paramtype):
     
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-def set_run_info(config):
-    options = []
-    msg = ''
-    paramtype = 'str'
-    done = False
-    while not done:
-        adjust = raw_input('adjust run (t or f):')
-        done = process_run_param_options(config, adjust[0], options, msg, paramtype)
-    if 'f' == adjust[0]:
-        return
-
-    options = config['process_threads_list']
-    msg = 'adjust %s (an integer):'
-    paramtype = 'int'
-    done = False
-    while not done:
-        adjust = raw_input('\nadjust threads (t or f):')
-        done = process_run_param_options(config, adjust[0], options, msg, paramtype)
-
-    options = config['process_option_list']
-    msg = 'adjust %s (t or f or q):'
-    paramtype = 'str'
-    done = False
-    while not done:
-        adjust = raw_input('\nadjust processing (t or f):')
-        done = process_run_param_options(config, adjust[0], options, msg, paramtype)
-
-    options = config['process_upload_list']
-    msg = '%s (t or f or q):'
-    paramtype = 'str'
-    done = False
-    while not done:
-        adjust = raw_input('\nadjust uploading (t or f):')
-        done = process_run_param_options(config, adjust[0], options, msg, paramtype)
-
-    options = config['db_option_list']
-    msg = 'adjust %s (t or f or q):'
-    paramtype = 'str'
-    done = False
-    while not done:
-        adjust = raw_input('\nadjust db options (t or f):')
-        done = process_run_param_options(config, adjust[0], options, msg, paramtype)
-
-## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-
 def finalize(config, log):
     if config['process_annotation']:
         call_metadata2annotation(config, log)
@@ -365,14 +320,6 @@ def uploadGDC():
         log_name = create_log(log_dir, 'top_processing')
         log = logging.getLogger(log_name)
         
-        try:
-            if 'process_adjustments' in config and config['process_adjustments']:
-                log.info('getting run input')
-                set_run_info(config)
-                log.info('finished getting run input')
-        except:
-            log.exception('setting run information had a failure, continuing...')
-
         log.info('begin uploadGDC()')
         
         initializeDB(config, log)
