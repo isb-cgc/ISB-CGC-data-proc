@@ -17,7 +17,7 @@ limitations under the License.
 
 @author: michael
 '''
-from datetime import date
+from datetime import date, datetime
 from logging import getLogger
 from json import dumps
 from time import sleep
@@ -148,66 +148,66 @@ class TCGA_datasets:
                 "sample_barcode",
                 True
             ],
-#             "Gene expression quantification": [
-#                 "mRNA_Gene_Quantification",
-#                 "[isb-cgc:TCGA_hg19_data_v0.RNAseq_Gene_Expression_UNC_RSEM]",
-#                 "sample_barcode",
-#                 False
-#             ],
-#             "Protein expression quantification": [
-#                 "Protein_Quantification",
-#                 "[isb-cgc:TCGA_hg19_data_v0.Protein_Expression]",
-#                 "sample_barcode",
-#                 False
-#             ],
-#             "Simple somatic mutation": [
-#                 "Somatic_Mutation",
-#                 ["[isb-cgc:TCGA_hg19_data_v0.Somatic_Mutation_DCC]", "[isb-cgc:TCGA_hg19_data_v0.Somatic_Mutation_MC3]"],
-#                 ["sample_barcode_tumor", "sample_barcode_normal"],
-#                 False
-#             ],
-#             "Masked Copy Number Segment": [
-#                 "Copy_Number_Segment_Masked",
-#                 "[isb-cgc:TCGA_hg38_data_v0.Copy_Number_Segment_Masked]",
-#                 "sample_barcode",
-#                 True
-#             ],
-#             "Methylation Beta Value": [
-#                 "DNA_Methylation_Beta",
-#                 "[isb-cgc:TCGA_hg38_data_v0.DNA_Methylation]",
-#                 "sample_barcode",
-#                 True
-#             ],
-#             "miRNA Expression Quantification": [
-#                 "miRNA_Gene_Quantification",
-#                 "[isb-cgc:TCGA_hg38_data_v0.miRNAseq_Expression]",
-#                 "sample_barcode",
-#                 True
-#             ],
-#             "Isoform Expression Quantification": [
-#                 "miRNA_Isoform_Quantification",
-#                 "[isb-cgc:TCGA_hg38_data_v0.miRNAseq_Isoform_Expression]",
-#                 "sample_barcode",
-#                 True
-#             ],
-#             "Gene Expression Quantification": [
-#                 "mRNA_Gene_Quantification",
-#                 "[isb-cgc:TCGA_hg38_data_v0.RNAseq_Gene_Expression]",
-#                 "sample_barcode",
-#                 True
-#             ],
-#             "Protein expression quantification": [
-#                 "Protein_Quantification",
-#                 "[isb-cgc:TCGA_hg38_data_v0.Protein_Expression]",
-#                 "sample_barcode",
-#                 False
-#             ],
-#             "Masked Somatic Mutation": [
-#                 "Somatic_Mutation",
-#                 "[isb-cgc:TCGA_hg38_data_v0.Somatic_Mutation]",
-#                 ["sample_barcode_tumor", "sample_barcode_normal"],
-#                 False
-#             ],
+            "Gene expression quantification": [
+                "mRNA_Gene_Quantification",
+                "[isb-cgc:TCGA_hg19_data_v0.RNAseq_Gene_Expression_UNC_RSEM]",
+                "sample_barcode",
+                False
+            ],
+            "Protein expression quantification": [
+                "Protein_Quantification",
+                "[isb-cgc:TCGA_hg19_data_v0.Protein_Expression]",
+                "sample_barcode",
+                False
+            ],
+            "Simple somatic mutation": [
+                "Somatic_Mutation",
+                ["[isb-cgc:TCGA_hg19_data_v0.Somatic_Mutation_DCC]", "[isb-cgc:TCGA_hg19_data_v0.Somatic_Mutation_MC3]"],
+                ["sample_barcode_tumor", "sample_barcode_normal"],
+                False
+            ],
+            "Masked Copy Number Segment": [
+                "Copy_Number_Segment_Masked",
+                "[isb-cgc:TCGA_hg38_data_v0.Copy_Number_Segment_Masked]",
+                "sample_barcode",
+                True
+            ],
+            "Methylation Beta Value": [
+                "DNA_Methylation_Beta",
+                "[isb-cgc:TCGA_hg38_data_v0.DNA_Methylation]",
+                "sample_barcode",
+                True
+            ],
+            "miRNA Expression Quantification": [
+                "miRNA_Gene_Quantification",
+                "[isb-cgc:TCGA_hg38_data_v0.miRNAseq_Expression]",
+                "sample_barcode",
+                True
+            ],
+            "Isoform Expression Quantification": [
+                "miRNA_Isoform_Quantification",
+                "[isb-cgc:TCGA_hg38_data_v0.miRNAseq_Isoform_Expression]",
+                "sample_barcode",
+                True
+            ],
+            "Gene Expression Quantification": [
+                "mRNA_Gene_Quantification",
+                "[isb-cgc:TCGA_hg38_data_v0.RNAseq_Gene_Expression]",
+                "sample_barcode",
+                True
+            ],
+            "Protein expression quantification": [
+                "Protein_Quantification",
+                "[isb-cgc:TCGA_hg38_data_v0.Protein_Expression]",
+                "sample_barcode",
+                False
+            ],
+            "Masked Somatic Mutation": [
+                "Somatic_Mutation",
+                "[isb-cgc:TCGA_hg38_data_v0.Somatic_Mutation]",
+                ["sample_barcode_tumor", "sample_barcode_normal"],
+                False
+            ],
         }
         
 class GDCTestCloudSQLBQBarcodes(GDCTestSetup):
@@ -903,32 +903,7 @@ class GDCTestCloudSQLBQBarcodes(GDCTestSetup):
             raise
         return {}
         
-#     def test_get_api_data_type_barcodes(self):
-#         self.get_api_data_type_barcodes("CCLE", "Aligned reads")
-#         
     def test_gcs_bq_validity(self):
-        endpt = 'https://gdc-api.nci.nih.gov/legacy/files?expand=index_files'
-        params = {
-            'filters': dumps(
-                    {
-                        "op":"=",
-                        "content":{ 
-                            "field":"file_name",
-                            "value": "A42785_1_lane_dupsFlagged.bam"
-                        }
-                    }
-            ), 
-            'sort':'file_id:asc', 
-            'from':0, 
-            'size':200
-        }
-        msg = '\t\tproblem getting filtered map for cases'
-        rj = self.request_response(endpt, params, msg)
-        import pprint
-        pprint.pprint(rj)
-
-
-        
         log_dir = str(date.today()).replace('-', '_') + '_validate/'
         calls = {
             'fn': self.process_program,
