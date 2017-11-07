@@ -26,18 +26,17 @@ def getplace(lat, lon):
     return country
 
 def main(path):
+    location2country = {
+        'US': 'United States',
+        'AUSTRALIA': 'Australia'
+    }
+    
     storage_client = storage.Client(project = 'isb-cgc')
     bucket = storage_client.get_bucket(path)
     location = bucket.location
-    method = None
-    try:
-        for method in dir(bucket):
-            print method, getattr(bucket, method)
-        print 'methods:\n\t{}\n\n'.format('\n\t'.join((method) for method in dir(bucket)))
-        print 'attrs:\n\t{}\n\n'.format('\n\t'.join('{}'.format(key) for key in bucket.__dict__))
-    except:
-        raise
+    loc_country = location.split('-')[0].upper()
 
+    # this will either get a zone, if running from a google vm, or a physical location if not (for instance, from a web URL)
     try:
         zone = None
         metadata_server = "http://metadata/computeMetadata/v1/instance/zone"
@@ -62,7 +61,7 @@ def main(path):
     for blob in blobs:
         count += 1
         total_size += blob.size
-    print '\n\tcountry: {}\n\tzone: {}\n\tblobs({}): combined size: {}'.format(country, zone, count, total_size)
+    print '\n\tlocation: {}\n\tloc country: {}\n\tcountry: {}\n\tzone: {}\n\tblobs({}): combined size: {}'.format(location, loc_country, country, zone, count, total_size)
 
 if __name__ == '__main__':
     main(argv[1])
