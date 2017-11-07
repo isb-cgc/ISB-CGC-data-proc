@@ -1,34 +1,34 @@
 {
-    "mode": "test",
-    "program_threads": 5,
-    "project_threads": 5,
-    "process_annotation": true,
-    "process_program": true,
-    "process_project": true,
-    "process_case": true,
-    "process_data_type": true,
-    "process_data_availability": true,
-    "process_images": true,
-    "process_metadata_attrs": true,
-    "process_paths": true,
-    "upload_files": false,
-    "upload_etl_files": false,
-    "upload_open": true,
-    "upload_controlled": false,
-    "update_cloudsql": true,
-    "update_schema": true,
-    "delete_dir_contents": true,
+    "mode": "test", # can be used by code to trigger behavior
+    "program_threads": 5, # number of threads per program for processing projects
+    "project_threads": 5, # number of threads per project for processing data_types
+    "process_annotation": true, # whether to save annotations metadata information to the TCGA_metadata_annotation table
+    "process_program": true, # whether to save pragram metadata information to the metadata_program table
+    "process_project": true, # whether to save project metadata information to the <program_name>_metadata_project table
+    "process_case": true, # whether to save case metadata information to the <program_name>_metadata_clinical, <program_name>_metadata_biospecimen and the <program_name>_metadata_samples tables
+    "process_data_type": true, # whether to save file metadata information to the <program_name>_metadata_data_HG19 and <program_name>_metadata_data_HG38 tables
+    "process_data_availability": true, # whether to save sample to data_type information to the <program_name>_metadata_data_type_availability and <program_name>_metadata_data_sample_data_availability tables
+    "process_images": true, # whether to save image metadata information to the TCGA_metadata_data_HG19 table
+    "process_metadata_attrs": true, # whether to save clinical and biospecimen attributes for use by the webapp information to the <program_name>_metadata_attrs table
+    "process_paths": true, # whether to update file records with their GCS path in the <program_name>_metadata_HG19 and <program_name>_metadata_data_HG38 tables
+    "upload_files": false, # whether to upload files to google cloud storage
+    "upload_etl_files": false, # whether to populate BigQuery with file data per data_type
+    "upload_open": true, # whether to upload open access files to GCS
+    "upload_controlled": false, # whether to upload controlled access files to GCS
+    "update_cloudsql": true, # whether to populate the CLoudSQL database with metadata
+    "update_schema": true, # whether to delete the current database schema and recreate it empty
+    "delete_dir_contents": true, # whether to delete downloaded files from the vm after they are processed 
     
     "program_name_restrict": [
-       
+        # if empty, process all programs, otherwise just populates the prtogeams on the list
     ],
     "project_name_restrict": [
-       
+        # if empty, process all projects for programs being loaded, otherwise just populates the projects on the list
     ],
     "data_type_restrict": [
-       
+        # if empty, process all data_types, otherwise just populates the data_types on the list
     ],
-    "data_type2isb_label": {
+    "data_type2isb_label": { # used to determin if a data_type will be processed and to populate the <program_name>_metadata_data_type_availability table and <program_name>_metadata_sample_data_availability tables
         "Aligned reads": "Aligned_Reads",
         "Copy number segmentation": "Copy_Number_Segment_Masked",
         "Gene expression quantification": "mRNA_Gene_Quantification",
@@ -50,7 +50,7 @@
         "Genotypes": "Genotypes",
         "Aligned Reads": "Aligned_Reads"
     },
-    "data_type_gcs": [
+    "data_type_gcs": [ # data_types whose files will be saved to GCS
         "Biospecimen Supplement",
         "Clinical Supplement",
         "Aligned Reads",
@@ -60,33 +60,33 @@
         "Aligned reads",
         "Simple nucleotide variation"
     ],
-    "program_names_for_annotation": [
+    "program_names_for_annotation": [ # programs whose annotations will be saved to the database
         "TCGA"
     ],
-    "program_names_for_images": [
+    "program_names_for_images": [ # programs whose images metadata will be saved to the databes
         "TCGA"
     ],
-    "genomic_builds": [
+    "genomic_builds": [ # the genomic builds to process
         "HG19",
         "HG38"
     ],
-    "endpt_types": [
+    "endpt_types": [ # the GDC endpoint types to process
         "current",
         "legacy"
     ],
     
-    "program_names": [
+    "program_names": [ # determines what programs can have finilazed called for them
         "TCGA",
         "TARGET",
         "CCLE",
         "FM"
     ],
-    "skip_projects": [
+    "skip_projects": [ # what projects to always skip
         "cntl",
         "fppp",
         "_missing"
     ],
-    "data_types_legacy2use_project": {
+    "data_types_legacy2use_project": { #  a hack for when, originally, some data_types weren't associated with projects
         "Copy number segmentation": true, 
         "Raw intensities": true, 
         "Aligned reads": true, 
@@ -129,7 +129,7 @@
         "Sequencing tag counts": true, 
         "LOH": true 
     },
-    "sample_code_position" : {
+    "sample_code_position" : { # where to find the sample code in the sample barcode
         "TCGA": {
           "start": 13,
           "end": 15
@@ -139,7 +139,7 @@
           "end": 19
         }
     },
-    "sample_code2letter": {
+    "sample_code2letter": { # map to translate the numeric sample code to the alpha sample code where needed for the metadata
         "01": "TP",
         "02": "TR",
         "03": "TB",
@@ -160,14 +160,14 @@
         "60": "XP",
         "61": "XCL"
     },
-    "gcs_wrapper": "gcs_wrapper_gcloud",
-    "metadata_modules": [
+    "gcs_wrapper": "gcs_wrapper_gcloud", # python module to use for interacting with GCS
+    "metadata_modules": [ # module to use for interacting with the ClouldSQL database
         "store_metadata_cloudsql"
     ],
-    "download_base_output_dir": "/tmp/",
-    "download_output_file_template": "gdc_download_%s_%s.tar.gz",
-    "download_files_per": 3, 
-    "field_report": {
+    "download_base_output_dir": "/tmp/", # base directory for downloading files onto the vm
+    "download_output_file_template": "gdc_download_%s_%s.tar.gz", # tar file name of GDC downloaded files
+    "download_files_per": 3,  # number of files in the downloaded tar file
+    "field_report": { # used by gdc/util/field_report.py to generate a report on the fields for each api and the values those fileds can have
         "endpoints": [
             "annotations",
             "projects",
@@ -195,42 +195,42 @@
         "output_path": "Z:/tcga/cgc/dataproc/gdc/doc/",
         "output_file": "gdc_endpoint_field_values.txt"
     },
-    "map_requests_timeout": 8,
-    "endpt_types_all": [
+    "map_requests_timeout": 8, # timeout when calling a GDC API
+    "endpt_types_all": [ # GDC API endpoints
         "current",
         "legacy"
     ],
-    "annotations_endpt": {
+    "annotations_endpt": { # GDC annotations API endpoint URLs
         "current endpt": "https://gdc-api.nci.nih.gov/annotations",
         "legacy endpt": "https://gdc-api.nci.nih.gov/legacy/annotations",
         "query": "?expand=project,project.program"
     },
-    "projects_endpt": {
+    "projects_endpt": { # GDC projects API endpoint URLs
         "current endpt": "https://gdc-api.nci.nih.gov/projects",
         "legacy endpt": "https://gdc-api.nci.nih.gov/legacy/projects",
         "query": "?expand=program,summary,summary.experimental_strategies,summary.data_categories&pretty=true"
     },
-    "cases_endpt": {
+    "cases_endpt": { # GDC cases API endpoint URLs
         "current endpt": "https://gdc-api.nci.nih.gov/cases",
         "legacy endpt": "https://gdc-api.nci.nih.gov/legacy/cases",
         "query": "?expand=project,project.program,samples,summary&pretty=true"
     },
-    "files_endpt": {
+    "files_endpt": { # GDC files API endpoint URLs
         "current endpt": "https://gdc-api.nci.nih.gov/files",
         "legacy endpt": "https://gdc-api.nci.nih.gov/legacy/files",
         "query": "?expand=archive,cases,cases.project,cases.project.program,cases.samples,cases.samples.portions,cases.samples.portions.analytes,cases.samples.portions.analytes.aliquots,analysis,center,index_files&pretty=true"
     },
-    "data_endpt": {
+    "data_endpt": { # GDC data API endpoint URLs
         "current endpt": "https://gdc-api.nci.nih.gov/data?compress=true",
         "legacy endpt": "https://gdc-api.nci.nih.gov/legacy/data?compress=true"
     },
-    "facets_query": "?facets=%s&size=%d&pretty=true",
-    "database_module": "gdc.model.isbcgc_cloudsql_gdc_model",
-    "cloud_projects": {
+    "facets_query": "?facets=%s&size=%d&pretty=true", # the query string to add to a GDC API URL to get the possible fields for it
+    "database_module": "gdc.model.isbcgc_cloudsql_gdc_model", # the top-level database python module
+    "cloud_projects": { # google cloud projects for the open and controlled access data
         "open": "isb-cgc",
         "controlled": "isb-cgc-data-02"
     },
-    "buckets": {
+    "buckets": { # google cloud buckets for the open and controlled access data
         "open": "isb-cgc-scratch",
         "controlled": "62f2c827-test-a",
         "folders": {
@@ -238,7 +238,7 @@
             "base_run_folder": "gdc/NCI-GDC_local_run/"
         }
     },
-    "cloudsql": {
+    "cloudsql": { # database credentials
         "host": "<cloudsql instance IP>",
         "db": "<database name>",
         "user": "<user name>",
@@ -246,18 +246,18 @@
         "use_proxy": "<true if set up to use proxy db connection>",
         "ssl_dir": "<directory with ssl files>"
     },
-    "user_info": {
+    "user_info": { # user dbgap credentials
         "user": "<dbgap user name>",
         "password": "<dbgap password>"
     },
-    "log_dir_tag": "run",
-    "endpt2genomebuild": {
+    "log_dir_tag": "run", # tag for the logs directory
+    "endpt2genomebuild": { # mapping of the GDC endpoints to the their default build
         "current": "HG38",
         "legacy": "HG19"
     },
-    "process_projects": {
-        "fetch_count": 1000,
-        "filter_result": {
+    "process_projects": { # fields used for processing projects
+        "fetch_count": 1000, # how many projects to fetch per API call
+        "filter_result": { # filter for the returned json results
             "value": {
                 "project_id": "project_id",
                 "name": "name",
@@ -289,8 +289,8 @@
             }
         }
     },
-    "postprocess_keypath": {
-        "postproc_query": "SELECT id2url.%s, id2url.file_gdc_id FROM `isb-cgc.GDC_metadata.rel<release
+    "postprocess_keypath": { # information on postprocessing for the CLoudSQL metadata, for adding the GCS path information to the metadata
+        "postproc_query": "SELECT id2url.%s, id2url.file_gdc_id FROM `isb-cgc.GDC_metadata.rel<release #>_GDCfileID_to_GCSurl` id2url join `isb-cgc.GDC_metadata.rel<release #>_fileData_%s` data on id2url.file_gdc_id = data.file_id where cases__project__project_id = '%s' and data_type = '%s'",
         "postproc_cloudsql_tables": [
             "CCLE_metadata_data_HG19",
             "TCGA_metadata_data_HG19",
@@ -305,7 +305,7 @@
         "postproc_file_uploaded_update": "update %s set file_uploaded = 'true' where file_name_key is not null and data_type in ('Biospecimen Supplement', 'Clinical Supplement', 'Aligned Reads', 'Diagnostic image', 'Tissue slide image', 'Genotypes', 'Aligned reads', 'Simple nucleotide variation')",
         "postproc_fetch_count": 50
     },
-    "postproc_data_availability": {
+    "postproc_data_availability": { # information for updating data availablity
         "target2source_query": {
             "CCLE_metadata_data_type_availability": [
                 "CCLE_metadata_data_HG19"
@@ -363,8 +363,11 @@
             "Simple nucleotide variation"
 	    ]
     },
+    # in the sections below, the filter_results, and <object>_table_mapping sections are templates to filter the 
+    # returned json from API calls, then flattened that json into a list that can be used as parameters to a sql
+    # insert statement
     "TCGA": {
-        "process_annotations": {
+        "process_annotations": { # information for processing TCGA annotations
             "fetch_count": 1000,
             "filter_result": {
                 "value": {
@@ -437,7 +440,7 @@
                 }
             }
         },
-        "process_projects": {
+        "process_projects": { # information for processing TCGA projects
             "fetch_count": 1000,
             "filter_result": {
                 "value": {
@@ -510,7 +513,7 @@
                 }
             }
         },
-        "process_cases": {
+        "process_cases": { # information for processing TCGA cases and biospecimens
             "fetch_count": 20,
             "filter_result": {
                 "value": {
@@ -742,7 +745,7 @@
                 "postproc_cloudsql_table": "TCGA_metadata_biospecimen"
             }
         },
-        "populate_samples": {
+        "populate_samples": { # information for processing TCGA samples table 
             "stmts": [
                 "INSERT INTO TCGA_metadata_samples (case_gdc_id, case_barcode, sample_gdc_id, sample_barcode, sample_type, program_name, project_short_name, disease_code, preservation_method, endpoint_type) SELECT case_gdc_id, case_barcode, sample_gdc_id, sample_barcode, sample_type, program_name, project_short_name, disease_code, preservation_method, endpoint_type FROM TCGA_metadata_biospecimen where project_short_name = '%s' and endpoint_type = '%s' and sample_barcode not in (select sample_barcode from TCGA_metadata_samples)",
                 "update TCGA_metadata_samples s left join TCGA_metadata_clinical c on s.case_barcode=c.case_barcode set s.age_at_diagnosis=c.age_at_diagnosis, s.gender=c.gender, s.vital_status=c.vital_status, s.tumor_tissue_site=c.tumor_tissue_site, s.days_to_last_known_alive=c.days_to_last_known_alive, s.person_neoplasm_cancer_status=c.person_neoplasm_cancer_status, s.race=c.race, s.ethnicity=c.ethnicity, s.bmi=c.bmi, s.tobacco_smoking_history=c.tobacco_smoking_history, s.menopause_status=c.menopause_status, s.hpv_status=c.hpv_status, s.year_of_diagnosis=c.year_of_diagnosis, s.pathologic_stage=c.pathologic_stage, s.residual_tumor=c.residual_tumor, s.neoplasm_histologic_grade=c.neoplasm_histologic_grade, s.histological_type=c.histological_type where c.project_short_name = '%s' and c.endpoint_type = '%s'"
@@ -777,7 +780,7 @@
                 ["preservation_method", "BIOS", "C"]
             ]
         },
-        "process_files": {
+        "process_files": { # information for processing TCGA files
             "fetch_count": 10,
             "bucket_path_template": "%s/%s/%s/%s/%s/%s/%s",
             "bucket_path": [
@@ -1161,7 +1164,7 @@
                     "data_verify_select_template": "select sample_barcode, file_name from TCGA_metadata_data_HG19 where data_type = 'Diagnostic image' and file_uploaded = 'true' order by 1,2"
                 }
             },
-            "datatype2bqscript": {
+            "datatype2bqscript": { # information for creating BigQuery tables from the TCGA data files
                 "Gene Expression Quantification": {
                     "python_module":"gdc.etl.gene_expression_quantification",
                     "class":"Gene_expression_quantification",
@@ -1330,7 +1333,7 @@
         }
     },
     "TARGET": {
-        "process_projects": {
+        "process_projects": { # information for processing TARGET projects
             "fetch_count": 1000,
             "filter_result": {
                 "value": {
@@ -1403,7 +1406,7 @@
                 }
             }
         },
-        "process_cases": {
+        "process_cases": { # information for processing TARGET cases and biospecimens
             "fetch_count": 20,
             "project2clinical_spreadsheet": {
                 "TARGET-ALL-P1": "https://target-data.nci.nih.gov/Public/ALL/clinical/Phase1/harmonized/TARGET_ALL_ClinicalData_Phase1_20160714.xlsx",
@@ -1551,7 +1554,7 @@
                 "postproc_cloudsql_table": "TARGET_metadata_clinical"
             }
         },
-        "populate_samples": {
+        "populate_samples": { # information for processing TARGET sample table
             "stmts": [
                 "INSERT INTO TARGET_metadata_samples (case_gdc_id, case_barcode, sample_gdc_id, sample_barcode, sample_type, program_name, project_short_name, disease_code, endpoint_type) SELECT case_gdc_id, case_barcode, sample_gdc_id, sample_barcode, sample_type, program_name, project_short_name, disease_code, endpoint_type FROM TARGET_metadata_biospecimen where project_short_name = '%s' and endpoint_type = '%s' and sample_barcode not in (select sample_barcode from TARGET_metadata_samples)",
                 "update TARGET_metadata_samples s join TARGET_metadata_clinical c on s.case_barcode = c.case_barcode set s.age_at_diagnosis=c.age_at_diagnosis, s.gender=c.gender, s.first_event=c.first_event, s.protocol=c.protocol, s.vital_status=c.vital_status, s.race=c.race, s.ethnicity=c.ethnicity, s.days_to_birth=c.days_to_birth, s.days_to_death=c.days_to_death, s.year_of_diagnosis=c.year_of_diagnosis, s.event_free_survival=c.event_free_survival, s.days_to_last_followup=c.days_to_last_followup, s.days_to_last_known_alive=c.days_to_last_known_alive, s.wbc_at_diagnosis=c.wbc_at_diagnosis where c.project_short_name = '%s' and c.endpoint_type = '%s'"
@@ -1580,7 +1583,7 @@
                 ["wbc_at_diagnosis", "CLIN", "N"]
             ]
          },
-        "process_files": {
+        "process_files": { # information for processing TARGET files
             "fetch_count": 10,
             "bucket_path_template": "%s/%s/%s/%s/%s/%s/%s",
             "bucket_path": [
@@ -1788,7 +1791,7 @@
                     }
                 }
             },
-            "datatype2bqscript": {
+            "datatype2bqscript": { # information for processing TARGET BigQuery tables from data files
                 "Gene Expression Quantification": {
                     "python_module":"gdc.etl.gene_expression_quantification",
                     "class":"Gene_expression_quantification",
@@ -1916,7 +1919,7 @@
         }
     },
     "CCLE": {
-        "process_projects": {
+        "process_projects": { # information for processing CCLE projects
             "fetch_count": 1000,
             "filter_result": {
                 "value": {
@@ -1989,7 +1992,7 @@
                 }
             }
         },
-        "process_cases": {
+        "process_cases": { # information for processing CCLE cases and biospecimens
             "fetch_count": 100,
             "filter_result": {
                 "value": {
@@ -2116,7 +2119,7 @@
                 "postproc_cloudsql_table": "CCLE_metadata_clinical"
             }
         },
-        "populate_samples": {
+        "populate_samples": { # information for processing CCLE sample table
             "stmts": [
                 "INSERT INTO CCLE_metadata_samples (case_gdc_id, case_barcode, sample_gdc_id, sample_barcode, sample_type, program_name, project_short_name, disease_code, endpoint_type) SELECT case_gdc_id, case_barcode, sample_gdc_id, sample_barcode, sample_type, program_name, project_short_name, disease_code, endpoint_type FROM CCLE_metadata_biospecimen where project_short_name = '%s' and endpoint_type = '%s' and sample_barcode not in (select sample_barcode from CCLE_metadata_samples)",
                 "update CCLE_metadata_samples s join CCLE_metadata_clinical c on s.case_barcode = c.case_barcode set s.gender=c.gender,s.histology=c.histology,s.hist_subtype=c.hist_subtype,s.site_primary=c.site_primary where c.project_short_name = '%s' and c.endpoint_type = '%s'"
@@ -2137,7 +2140,7 @@
                 ["site_primary", "CLIN", "C"]
             ]
          },
-        "process_files": {
+        "process_files": { # information for processing CCLE data files
             "fetch_count": 100,
             "bucket_path_template": "%s/%s/%s/%s/%s/%s/%s",
             "bucket_path": [
