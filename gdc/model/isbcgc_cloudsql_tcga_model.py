@@ -210,6 +210,7 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
             ['endpoint_type', 'VARCHAR(10)', 'NOT NULL'],
             ['sample_gdc_id', 'VARCHAR(36)', 'NULL'],
             ['sample_barcode', 'VARCHAR(40)', 'NOT NULL'],
+            ['case_gdc_id', 'VARCHAR(36)', 'NULL'],
             ['case_barcode', 'VARCHAR(40)', 'NOT NULL'],
             ['program_name', 'VARCHAR(30)', 'NOT NULL'],
             ['project_short_name', 'VARCHAR(30)', 'NOT NULL'],
@@ -255,6 +256,7 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
             ['endpoint_type'],
             ['sample_gdc_id'],
             ['sample_barcode'],
+            ['case_gdc_id'],
             ['case_barcode'],
             ['program_name'],
             ['project_short_name'],
@@ -303,6 +305,7 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
         'primary_key_name': 'metadata_samples_id',  # todo: define this?
 
         'columns': [
+            ['case_gdc_id', 'VARCHAR(36)', 'NULL'],
             ['case_barcode', 'VARCHAR(40)', 'NOT NULL'],
             ['program_name', 'VARCHAR(30)', 'NOT NULL'],
             ['project_short_name', 'VARCHAR(30)', 'NOT NULL'],
@@ -324,12 +327,14 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
             ['residual_tumor', 'VARCHAR(5)', 'NULL'],
             ['neoplasm_histologic_grade', 'VARCHAR(15)', 'NULL'],
             ['histological_type', 'VARCHAR(120)', 'NULL'],
+            ['sample_gdc_id', 'VARCHAR(36)', 'NULL'],
             ['sample_barcode', 'VARCHAR(40)', 'NOT NULL'],
             ['sample_type', 'VARCHAR(2)', 'NOT NULL'],
             ['preservation_method', 'VARCHAR(10)', 'NULL'],
             ['endpoint_type', 'VARCHAR(10)', 'NOT NULL'],
         ],
         'indices_defs': [
+            ['case_gdc_id'],
             ['case_barcode'],
             ['program_name'],
             ['project_short_name'],
@@ -351,6 +356,7 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
             ['residual_tumor'],
             ['neoplasm_histologic_grade'],
             ['histological_type'],
+            ['sample_gdc_id'],
             ['sample_barcode'],
             ['sample_type'],
             ['preservation_method'],

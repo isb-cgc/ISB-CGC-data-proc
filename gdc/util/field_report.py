@@ -31,22 +31,25 @@ def get_values_for_field(endpoint, field, field2values, output, template, print_
     try:
         field = '.'.join(field.split('.')[1:])
         response = requests.get(template % (endpoint, field))
+        response.raise_for_status()
         json = response.json()
     except Exception as e:
-        retry = 3
+        field2values[field] = {'error':'no values'}
+        output.write('\t\t\t%s\n\t\t\t\terror getting value\n' % (field))
+        return
+        retry = 1
         while 0 < retry:
             time.sleep(1)
             retry -= retry
-            log.warning('retrying request for %s because of %s' % (field, e))
+            log.warning('retrying request for %s:%s because of %s' % (endpoint, field, e))
             response = requests.get(template % (endpoint, field))
             json = response.json()
             break
         if 0 == retry:
-            log.exception('problem getting value from response for field %s: %s' % (field, response))
-            return
-    response.raise_for_status()
+            log.exception('problem getting value from response for field %s-%s: %s' % (endpoint, field, response))
+            raise
     if print_status:
-        log.info('\t\t\tfinding values for field \'%s\'' % (field))
+        log.info('\t\t\tfinding values for field \'%s:%s\'' % (endpoint, field))
     data = json['data']
     if 'aggregations' not in data:
         output.write('\t\t\t%s\n' % (field))
@@ -168,6 +171,8 @@ def create_field_report(configfilename):
                         onlyreg += [field]
                         continue
                     legvalues = legfield2values[field]
+                    if 'error' in regvalues:
+                        continue
                     if 'count' in regvalues:
                         if 'count' in legvalues:
                             output.write('\tprocessing %s\n' % (field))
@@ -183,7 +188,9 @@ def create_field_report(configfilename):
                             output.write('\tprocessing eqiv and diffs for %s\n' % (field))
                             output.write('\t\t%s is a count field for the current endpoint and a buckets field for legacy\n' % (field))
                     if 'buckets' in regvalues:
-                        if 'count' in legvalues:
+                        if 'error' in regvalues:
+                            continue
+                        elif 'count' in legvalues:
                             # this (not surprisingly) doesn't appear to happen
                             output.write('\tprocessing %s\n' % (field))
                             output.write('\t\t%s is a buckets field for the current endpoint and a count field for legacy\n' % (field))

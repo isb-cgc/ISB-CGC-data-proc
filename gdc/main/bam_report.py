@@ -155,14 +155,14 @@ def update_database(path2bam2bai, config, log):
             dbbam2bai[bam] = bai
 
         if 0 < len(params):
-            ISBCGC_database_helper.update(config, 'update {} set index_file_name = %s where file_name_key = %s'.format(table), log, params)
+#             ISBCGC_database_helper.update(config, 'update {} set index_file_name = %s where file_name_key = %s'.format(table), log, params)
             log.info('there were {} param sets for update'.format(len(params)))
         else:
             log.info('there were no param sets for update')
         
         if 0 < len(missing_files):
             missing_files = sorted(missing_files)
-            log.warning('\n\t\t\tfound {} missing files in tsv that are in db out of {} total: {} ... {}\n'.format(len(missing_files), len(rows), missing_files[:6], missing_files[-5:]))
+            log.warning('\n\t\t\tfound {} missing files in tsv that are in db out of {} total: \n\t{}\n'.format(len(missing_files), len(rows), '\n\t'.join(missing_files)))
             for bucket, bmissing_files in bucket2missing_files.iteritems():
                 if 0 < bmissing_files:
                     log.warning('\n\t\t\tfound {} missing files in tsv that is in bucket {}\n'.format(bmissing_files, bucket))

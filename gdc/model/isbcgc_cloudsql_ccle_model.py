@@ -98,6 +98,7 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
             ['endpoint_type', 'VARCHAR(10)', 'NOT NULL'],
             ['sample_gdc_id', 'VARCHAR(36)', 'NOT NULL'],
             ['sample_barcode', 'VARCHAR(40)', 'NOT NULL'],
+            ['case_gdc_id', 'VARCHAR(36)', 'NULL'],
             ['case_barcode', 'VARCHAR(40)', 'NOT NULL'],
             ['program_name', 'VARCHAR(30)', 'NOT NULL'],
             ['project_short_name', 'VARCHAR(30)', 'NOT NULL'],
@@ -111,6 +112,7 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
             ['endpoint_type'],
             ['sample_gdc_id'],
             ['sample_barcode'],
+            ['case_gdc_id'],
             ['case_barcode'],
             ['program_name'],
             ['project_short_name'],
@@ -128,10 +130,12 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
         'table_name': 'CCLE_metadata_samples',
         'primary_key_name': 'metadata_samples_id',
         'columns': [
+            ['case_gdc_id', 'VARCHAR(36)', 'NULL'],
             ['case_barcode', 'VARCHAR(45)', 'NOT NULL'],
             ['program_name', 'VARCHAR(40)', 'NOT NULL'],
             ['project_short_name', 'VARCHAR(40)', 'NOT NULL'],
             ['disease_code', 'VARCHAR(40)', 'NOT NULL'],
+            ['sample_gdc_id', 'VARCHAR(36)', 'NULL'],
             ['sample_barcode', 'VARCHAR(45)', 'NOT NULL'],
             ['sample_type', 'VARCHAR(2)', 'NOT NULL'],
             ['endpoint_type', 'VARCHAR(8)', 'NOT NULL'],
@@ -141,7 +145,9 @@ class ISBCGC_database_helper(isbcgc_cloudsql_model.ISBCGC_database_helper):
             ['site_primary', 'VARCHAR(35)', 'NULL']
         ],
         'indices_defs': [
+            ['case_gdc_id'],
             ['case_barcode'],
+            ['sample_gdc_id'],
             ['sample_barcode'],
             ['program_name'],
             ['project_short_name'],

@@ -53,12 +53,15 @@ class ISBCGC_database_helper(ISBCGC_database_helper):
         ],
 
         'indices_defs': [
+            ['annotation_gdc_id'],
             ['category'],
             ['classification'],
             ['entity_type'],
+            ['entity_gdc_id'],
             ['entity_barcode'],
             ['project_short_name'],
             ['program_name'],
+            ['case_gdc_id'],
             ['case_barcode'],
             ['date_created'],
             ['date_edited'],
