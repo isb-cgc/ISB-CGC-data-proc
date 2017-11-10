@@ -290,7 +290,7 @@
         }
     },
     "postprocess_keypath": {
-        "postproc_query": "SELECT id2url.%s, id2url.file_gdc_id FROM `isb-cgc.GDC_metadata.rel<release
+        "postproc_query": "SELECT id2url.%s, id2url.file_gdc_id FROM `isb-cgc.GDC_metadata.rel<release #>_GDCfileID_to_GCSurl`",
         "postproc_cloudsql_tables": [
             "CCLE_metadata_data_HG19",
             "TCGA_metadata_data_HG19",
