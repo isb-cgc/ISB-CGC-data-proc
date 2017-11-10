@@ -81,7 +81,7 @@ class TARGET_datasets:
             ],
             "Isoform Expression Quantification": [
                 "miRNA_Isoform_Quantification",
-                "[isb-cgc:test.TARGET_miRNAIsoformQuantification_HG38_170828]",
+                "[isb-cgc:test.TARGET_miRNAIsoformQuantification_HG38]",
                 "sample_barcode",
                 True
             ],
