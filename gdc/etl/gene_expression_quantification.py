@@ -46,18 +46,18 @@ class Gene_expression_quantification(etl.Etl):
         end_samplecode = config['sample_code_position'][program]['end']
         sample_type_code = metadata['sample_barcode'][start_samplecode:end_samplecode]
         
-        data_df['file_gdc_id'] = metadata['file_gdc_id']
-        data_df['aliquot_barcode'] = metadata['aliquot_barcode']
-        data_df['aliquot_barcode'] = metadata['aliquot_barcode']
-        data_df['sample_gdc_id'] = metadata['sample_gdc_id']
-        data_df['sample_barcode'] = metadata['sample_barcode']
-        data_df['case_gdc_id'] = metadata['case_gdc_id']
-        data_df['case_barcode'] = metadata['case_barcode']
-        data_df['program_name'] = metadata['program_name'].upper()
-        data_df['project_short_name'] = metadata['project_short_name'].upper()
-        data_df['sample_type_letter_code'] = config['sample_code2letter'][sample_type_code]
+        data_df['FileID'] = metadata['file_gdc_id']
+        data_df['AliquotsAliquotID'] = metadata['aliquot_barcode']
+        data_df['AliquotsSubmitterID'] = metadata['aliquot_barcode']
+        data_df['SampleID'] = metadata['sample_gdc_id']
+        data_df['SamplesSubmitterID'] = metadata['sample_barcode']
+        data_df['CaseID'] = metadata['case_gdc_id']
+        data_df['CasesSubmitterID'] = metadata['case_barcode']
+        data_df['ProgramName'] = metadata['program_name'].upper()
+        data_df['ProjectID'] = metadata['project_short_name'].upper()
+        data_df['SampleTypeLetterCode'] = config['sample_code2letter'][sample_type_code]
         data_df['data_type'] = metadata['data_type']
-        data_df['experimental_strategy'] = metadata['experimental_strategy']
+        data_df['ExperimentalStrategy'] = metadata['experimental_strategy']
     
         return data_df
     
@@ -80,18 +80,18 @@ class Gene_expression_quantification(etl.Etl):
         for df in dfs[1:]:
             merge_df = merge_df.merge(df, how='inner', on=[
                     'Ensembl_versioned_gene_ID', 
-                    'file_gdc_id',
-                    'aliquot_barcode',
-                    'aliquot_barcode',
-                    'sample_gdc_id',
-                    'sample_barcode', 
-                    'case_gdc_id',
-                    'case_barcode', 
-                    'program_name', 
-                    'project_short_name', 
-                    'sample_type_letter_code', 
-                    'data_type', 
-                    'experimental_strategy'])
+                    'FileID',
+                    'AliquotsAliquotID',
+                    'AliquotsSubmitterID',
+                    'SampleID',
+                    'SamplesSubmitterID', 
+                    'CaseID',
+                    'CasesSubmitterID', 
+                    'ProgramName', 
+                    'ProjectID', 
+                    'SampleTypeLetterCode', 
+                    'DataType', 
+                    'ExperimentalStrategy'])
         
         log.info('merge workflow(%d):\n%s\n\t...\n%s' % (len(merge_df), merge_df.head(3), merge_df.tail(3)))
         return merge_df
