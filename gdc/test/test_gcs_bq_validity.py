@@ -909,7 +909,7 @@ class GDCTestCloudSQLBQBarcodes(GDCTestSetup):
             'fn': self.process_program,
             'validity': {
                 'params': [
-#                     ['CCLE', CCLE_datasets, log_dir],
+                    ['CCLE', CCLE_datasets, log_dir],
                     ['TARGET', TARGET_datasets, log_dir],
                     ['TCGA', TCGA_datasets, log_dir]
                 ]
