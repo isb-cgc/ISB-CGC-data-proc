@@ -361,7 +361,7 @@
             "Genotypes",
             "Aligned reads",
             "Simple nucleotide variation"
-	    ]
+        ]
     },
     "TCGA": {
         "process_annotations": {
@@ -1169,6 +1169,25 @@
                     "bq_dataset": "test",
                     "bq_table": "TCGA_GeneExpressionQuantification_local_test",
                     "schema_file": "gdc/schemas/geq.json",
+                    "column_mapping": {
+                        "Ensembl_gene_ID":"Ensembl_gene_ID",
+                        "Ensembl_versioned_gene_ID":"Ensembl_versioned_gene_ID",
+                        "HTSeq__FPKM_UQ":"HTSeq__FPKM_UQ",
+                        "HTSeq__FPKM":"HTSeq__FPKM",
+                        "HTSeq__Counts":"HTSeq__Counts",
+                        "file_gdc_id":"FileID",
+                        "aliquot_gdc_id":"AliquotsAliquotID",
+                        "aliquot_barcode":"AliquotsSubmitterID",
+                        "sample_gdc_id":"SampleID",
+                        "sample_barcode":"SamplesSubmitterID",
+                        "case_gdc_id":"CaseID",
+                        "case_barcode":"CasesSubmitterID",
+                        "program_name":"ProgramName",
+                        "project_short_name":"ProjectID",
+                        "sample_type_letter_code":"SampleTypeLetterCode",
+                        "data_type":"DataType",
+                        "experimental_strategy":"ExperimentalStrategy"
+                    },
                     "write_disposition": "WRITE_APPEND",
                     "analysis_types": [
                         "HTSeq - FPKM-UQ",
@@ -1797,6 +1816,25 @@
                     "bq_table": "TARGET_GeneExpressionQuantification_local_test",
                     "schema_file": "gdc/schemas/geq.json",
                     "write_disposition": "WRITE_APPEND",
+                    "column_mapping": {
+                        "Ensembl_gene_ID":"Ensembl_gene_ID",
+                        "Ensembl_versioned_gene_ID":"Ensembl_versioned_gene_ID",
+                        "HTSeq__FPKM_UQ":"HTSeq__FPKM_UQ",
+                        "HTSeq__FPKM":"HTSeq__FPKM",
+                        "HTSeq__Counts":"HTSeq__Counts",
+                        "file_gdc_id":"FileID",
+                        "aliquot_gdc_id":"AliquotsAliquotID",
+                        "aliquot_barcode":"AliquotsSubmitterID",
+                        "sample_gdc_id":"SampleID",
+                        "sample_barcode":"SamplesSubmitterID",
+                        "case_gdc_id":"CaseID",
+                        "case_barcode":"CasesSubmitterID",
+                        "program_name":"ProgramName",
+                        "project_short_name":"ProjectID",
+                        "sample_type_letter_code":"SampleTypeLetterCode",
+                        "data_type":"DataType",
+                        "experimental_strategy":"ExperimentalStrategy"
+                    },
                     "analysis_types": [
                         "HTSeq - FPKM-UQ",
                         "HTSeq - FPKM",
