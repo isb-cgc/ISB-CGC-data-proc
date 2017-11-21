@@ -81,7 +81,7 @@ class TARGET_datasets:
             ],
             "Isoform Expression Quantification": [
                 "miRNA_Isoform_Quantification",
-                "[isb-cgc:test.TARGET_miRNAIsoformQuantification_HG38_170828]",
+                "[isb-cgc:test.TARGET_miRNAIsoformQuantification_HG38]",
                 "sample_barcode",
                 True
             ],
@@ -909,7 +909,7 @@ class GDCTestCloudSQLBQBarcodes(GDCTestSetup):
             'fn': self.process_program,
             'validity': {
                 'params': [
-#                     ['CCLE', CCLE_datasets, log_dir],
+                    ['CCLE', CCLE_datasets, log_dir],
                     ['TARGET', TARGET_datasets, log_dir],
                     ['TCGA', TCGA_datasets, log_dir]
                 ]

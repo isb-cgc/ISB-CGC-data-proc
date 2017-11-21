@@ -45,7 +45,6 @@ def process_projects_for_programs(config, endpt_type, projects_endpt, log):
     try:
         log.info('begin process_projects_for_programs')
         project2info = get_map_rows(config, endpt_type, 'project', None, {}, log)
-#         save2db(config, endpt_type, 'metadata_gdc_project', project2info, config['process_projects']['project_table_mapping'], log)
         log.info('finished process_projects_for_programs')
         return project2info
     except:

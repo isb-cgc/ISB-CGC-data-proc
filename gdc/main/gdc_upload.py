@@ -226,7 +226,7 @@ def process_programs(config, endpt_type, log_dir, log):
         log.info('begin process_programs()')
         programs = get_programs(config, endpt_type, log_dir, log)
         for program_name in programs:
-            if 0 == len(config['program_name_restrict']) or program_name in config['program_name_restrict']:
+            if 0 == len(config['program_name_restrict']) or not program_name in config['program_name_restrict']:
                 log.info('\tstart program %s' % (program_name))
                 projects = get_program_info(config, endpt_type, config['projects_endpt']['%s endpt' % (endpt_type)] + config['projects_endpt']['query'], program_name, log_dir, log)
                 process_program(config, endpt_type, program_name, projects, log_dir)
