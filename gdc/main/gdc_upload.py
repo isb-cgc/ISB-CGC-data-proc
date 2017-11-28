@@ -249,8 +249,9 @@ def initializeDB(config, log):
         isb_labels = set(config['data_type2isb_label'].values())
         for build in config['genomic_builds']:
             params = [[build, isb_label] for isb_label in isb_labels]
-            for program_name in config['program_name_restrict']:
-                helper.column_insert(config, params, '%s_metadata_data_type_availability' % (program_name), ['genomic_build', 'isb_label'], log)
+            for program_name in config['program_names']:
+                if 0 == len(config['program_name_restrict']) or not program_name in config['program_name_restrict']:
+                    helper.column_insert(config, params, '%s_metadata_data_type_availability' % (program_name), ['genomic_build', 'isb_label'], log)
     
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
@@ -298,7 +299,7 @@ def finalize(config, log):
 
     if config['process_case'] and config['process_metadata_attrs']:
         for program_name in config['program_names']:
-            if 0 == len(config['program_name_restrict']) or program_name in config['program_name_restrict']:
+            if 0 == len(config['program_name_restrict']) or not program_name in config['program_name_restrict']:
                 postproc_module = import_module(config[program_name]['process_cases']['postproc_case']['postproc_module'])
                 postproc_module.process_metadata_attrs(config, log)
     
