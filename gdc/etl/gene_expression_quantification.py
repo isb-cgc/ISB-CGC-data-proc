@@ -56,7 +56,7 @@ class Gene_expression_quantification(etl.Etl):
         data_df['ProgramName'] = metadata['program_name'].upper()
         data_df['ProjectID'] = metadata['project_short_name'].upper()
         data_df['SampleTypeLetterCode'] = config['sample_code2letter'][sample_type_code]
-        data_df['data_type'] = metadata['data_type']
+        data_df['DataType'] = metadata['data_type']
         data_df['ExperimentalStrategy'] = metadata['experimental_strategy']
     
         return data_df
@@ -65,10 +65,17 @@ class Gene_expression_quantification(etl.Etl):
     def process_per_sample_files(self, config, outputdir, associated_paths, types, info, program_name, project, log):
         dfs = [None] * 3
         curindex = 0
+        uncompress = config[program_name]['process_files']['datatype2bqscript']['Gene Expression Quantification']['file_compressed']
         for associated_path in associated_paths:
             # convert blob into dataframe
             log.info('\t\tcalling convert_file_to_dataframe() for %s' % (associated_path))
-            dfs[curindex] = convert_file_to_dataframe(gzip.open(outputdir + associated_path), header=None)
+            if uncompress:
+                with gzip.open(outputdir + associated_path) as input_file:
+                    dfs[curindex] = convert_file_to_dataframe(input_file, header=None)
+            else:
+                with open(outputdir + associated_path) as input_file:
+                    dfs[curindex] = convert_file_to_dataframe(input_file, header=None)
+            #  dfs[curindex] = convert_file_to_dataframe(gzip.open(outputdir + associated_path), header=None)
             dfs[curindex].columns = ['Ensembl_versioned_gene_ID', types[curindex]]
             self.add_metadata(dfs[curindex], info, program_name, project, config)
             if 'HTSeq - Counts' == types[curindex]:

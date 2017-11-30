@@ -59,6 +59,16 @@ from gdc.util.process_images import process_images
 
 from util import close_log, create_log, import_module
 
+
+##
+## WJRL: This pair of lines is needed (along with installing (--upgrade) packages pyOpenSSL, cryptography,
+## and urllib3[secure]) to shut up incessant Platform Insecure Warnings!
+##
+
+import urllib3.contrib.pyopenssl
+urllib3.contrib.pyopenssl.inject_into_urllib3()
+
+
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 projects_fields = set()
