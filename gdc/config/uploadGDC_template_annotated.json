@@ -20,7 +20,7 @@
     "delete_dir_contents": true, # whether to delete downloaded files from the vm after they are processed 
     
     "program_name_restrict": [
-        # if empty, process all programs, otherwise just populates the prtogeams on the list
+        # if empty, process all programs, otherwise SKIPS the programs on the list (note different semantics from below)
     ],
     "project_name_restrict": [
         # if empty, process all projects for programs being loaded, otherwise just populates the projects on the list
@@ -1172,6 +1172,25 @@
                     "bq_dataset": "test",
                     "bq_table": "TCGA_GeneExpressionQuantification_local_test",
                     "schema_file": "gdc/schemas/geq.json",
+                    "column_mapping": {
+                        "Ensembl_gene_ID":"Ensembl_gene_ID",
+                        "Ensembl_versioned_gene_ID":"Ensembl_versioned_gene_ID",
+                        "HTSeq__FPKM_UQ":"HTSeq__FPKM_UQ",
+                        "HTSeq__FPKM":"HTSeq__FPKM",
+                        "HTSeq__Counts":"HTSeq__Counts",
+                        "file_gdc_id":"FileID",
+                        "aliquot_gdc_id":"AliquotsAliquotID",
+                        "aliquot_barcode":"AliquotsSubmitterID",
+                        "sample_gdc_id":"SampleID",
+                        "sample_barcode":"SamplesSubmitterID",
+                        "case_gdc_id":"CaseID",
+                        "case_barcode":"CasesSubmitterID",
+                        "program_name":"ProgramName",
+                        "project_short_name":"ProjectID",
+                        "sample_type_letter_code":"SampleTypeLetterCode",
+                        "data_type":"DataType",
+                        "experimental_strategy":"ExperimentalStrategy"
+                    },
                     "write_disposition": "WRITE_APPEND",
                     "analysis_types": [
                         "HTSeq - FPKM-UQ",
@@ -1799,6 +1818,25 @@
                     "bq_dataset": "test",
                     "bq_table": "TARGET_GeneExpressionQuantification_local_test",
                     "schema_file": "gdc/schemas/geq.json",
+                    "column_mapping": {
+                        "Ensembl_gene_ID":"Ensembl_gene_ID",
+                        "Ensembl_versioned_gene_ID":"Ensembl_versioned_gene_ID",
+                        "HTSeq__FPKM_UQ":"HTSeq__FPKM_UQ",
+                        "HTSeq__FPKM":"HTSeq__FPKM",
+                        "HTSeq__Counts":"HTSeq__Counts",
+                        "file_gdc_id":"FileID",
+                        "aliquot_gdc_id":"AliquotsAliquotID",
+                        "aliquot_barcode":"AliquotsSubmitterID",
+                        "sample_gdc_id":"SampleID",
+                        "sample_barcode":"SamplesSubmitterID",
+                        "case_gdc_id":"CaseID",
+                        "case_barcode":"CasesSubmitterID",
+                        "program_name":"ProgramName",
+                        "project_short_name":"ProjectID",
+                        "sample_type_letter_code":"SampleTypeLetterCode",
+                        "data_type":"DataType",
+                        "experimental_strategy":"ExperimentalStrategy"
+                    },
                     "write_disposition": "WRITE_APPEND",
                     "analysis_types": [
                         "HTSeq - FPKM-UQ",
