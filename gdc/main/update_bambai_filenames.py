@@ -71,21 +71,44 @@ def get_bucket_content(project_name, buckets, log):
 def check_for_valid_index_files(bam_data, project_name, log):
 
     # open connection to gcs wrapper
-    wrapper.open_connection({'cloud_projects':{'open': project_name}}, log)
+    # wrapper.open_connection({'cloud_projects':{'open': project_name}}, log)
 
     bucket_contents = {}
+    update_list = {}
 
     # iterate through bam data
     for table in bam_data:
+        update_list[table] = []
         for record in bam_data[table]:
             # get bucket contents if not already retrieved
-            bucket = record['bucket']
-            if bucket not in bucket_contents:
-                bucket_contents[bucket] = list(wrapper.get_bucket_contents(bucket, None, log))
+            # bucket = record['bucket']
+            # if bucket not in bucket_contents:
+            #    bucket_contents[bucket] = list(wrapper.get_bucket_contents(bucket, None, log))
 
-            pprint(bucket_contents[bucket])
-            return True
+            # check if index file exists in bucket
+            if record['bai'].endswith('.bam.bai'):
+                bai_file = record['bai'].replace('.bam.bai', '.bai')
+                # check if bucket file is also .bam.bai
+                # if bucket file ends with .bam.bai
+                #    no need to update?
+                # if bucket file ends with .bai
+                update_list[table].append({
+                    'id' : record['id'],
+                    'bai': bai_file
+                })
+            elif record['bai'].endswith('.bai'):
+                # check if bucket file is also .bai
+                # if bucket file does not match
+                #    update db?
+                continue
+            else:
+                log.warning('invalid index file name: {}'.format(record['bai']))
+
  
+    # wrapper.close_connection()
+
+    return update_list
+
 
 def process_gs_uri(path, log):
 
@@ -107,7 +130,7 @@ def process_gs_uri(path, log):
 def get_bambai_from_database(config, log):
 
     # query cloud sql metadata tables and extract list of bam and associated index files (*.bai)
-    # return list for each table with: bucket, path, bam file name, index filename
+    # return list for each table with: id, bucket, path, bam file name, index filename
 
     log.info('\tbegin get_bambai_from_database()')
     
@@ -124,7 +147,7 @@ def get_bambai_from_database(config, log):
 
         rows = ISBCGC_database_helper.select(
             config,
-            'select file_name_key, index_file_name from {} where data_format = "BAM"'.format(table),
+            'select metadata_data_id, file_name_key, index_file_name from {} where data_format = "BAM"'.format(table),
             log,
             []
         )
@@ -135,20 +158,21 @@ def get_bambai_from_database(config, log):
 
         # check rows for consistency
         for row in rows:
-            if row[0] and row[1]:
+            if row[1] and row[2]:
                 # both fields non-null
 
                 # extract bucket name
-                (bucket, path, filename) = process_gs_uri(row[0], log)
+                (bucket, path, filename) = process_gs_uri(row[1], log)
                 if not bucket:
-                    log.warning('\t\tskipping invalid path: {}'.format(row[0]))
+                    log.warning('\t\tskipping invalid path: {}'.format(row[1]))
                     continue
 
                 bam_data[table].append({
+                    'id'    : row[0],
                     'bucket': bucket,
                     'path'  : path,
                     'bam'   : filename,
-                    'bai'   : row[1]
+                    'bai'   : row[2]
                 })
                 # log.info('\t\t{}, {}, {}, {}'.format(bucket, path, filename, row[1]))
             else: 
@@ -177,6 +201,7 @@ def parse_args():
         args.config
     )
 
+
 def main(config_file_path):
     log_dir = str(date.today()).replace('-', '_') + '_update_bambai_filenames/'
     log_name = create_log(log_dir, 'update_bambai_filenames')
@@ -190,16 +215,19 @@ def main(config_file_path):
     # query database for bam/bai files
     bam_data = get_bambai_from_database(config, log)
     for table in bam_data:
-        log.info('found {} valid entries in table {}'.format(len(bam_data[table]), table))
+        log.info('found {} non-NULL entries in table {}'.format(len(bam_data[table]), table))
 
     # check and update filenames for consistency
-    check_for_valid_index_files(bam_data, 'ISB-CGC', log)
+    update_list = check_for_valid_index_files(bam_data, 'ISB-CGC', log)
+    for table in update_list:
+        log.info('found {} entries (*.bam.bai) that need updating in table {}'.format(len(update_list[table]), table))
 
-        
     log.info('end update_bambai_filenames.py')
+
 
 if __name__ == '__main__':
     (
         config_file_path
     ) = parse_args()
     main(config_file_path)
+
