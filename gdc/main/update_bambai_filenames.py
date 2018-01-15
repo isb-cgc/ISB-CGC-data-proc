@@ -1,5 +1,5 @@
 '''
-Created on Aug 31, 2017
+Created on Jan 12, 2018
 
 # Copyright 2017, Google, Inc.
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,13 +14,14 @@ Created on Aug 31, 2017
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-@author: michael
+@author: John Phan
 '''
 import argparse
 from datetime import date
 import json
 import logging
 import sys
+from pprint import pprint
 
 
 from bq_wrapper import fetch_paged_results, query_bq_table
@@ -67,9 +68,51 @@ def get_bucket_content(project_name, buckets, log):
     return path2contents
 
 
-def query_database(config, log):
-    log.info('\tbegin query database to check index files')
+def check_for_valid_index_files(bam_data, project_name, log):
+
+    # open connection to gcs wrapper
+    wrapper.open_connection({'cloud_projects':{'open': project_name}}, log)
+
+    bucket_contents = {}
+
+    # iterate through bam data
+    for table in bam_data:
+        for record in bam_data[table]:
+            # get bucket contents if not already retrieved
+            bucket = record['bucket']
+            if bucket not in bucket_contents:
+                bucket_contents[bucket] = list(wrapper.get_bucket_contents(bucket, None, log))
+
+            pprint(bucket_contents[bucket])
+            return True
+ 
+
+def process_gs_uri(path, log):
+
+    # given a gs uri, e.g., gs://bucket/path/file.ext
+    # return bucket, path, and filename in separate pieces
+
+    pieces = path.split('/')
+    if len(pieces) < 4:
+        log.warning('invalid path: {}'.format(path))
+        return (False, False, False)
+
+    bucket = pieces[2]
+    path = '/'+'/'.join(pieces[3:-2])
+    filename = pieces[-1]
+
+    return (bucket, path, filename)
+
+
+def get_bambai_from_database(config, log):
+
+    # query cloud sql metadata tables and extract list of bam and associated index files (*.bai)
+    # return list for each table with: bucket, path, bam file name, index filename
+
+    log.info('\tbegin get_bambai_from_database()')
     
+    bam_data = {}
+
     for table in [
         'CCLE_metadata_data_HG19',
         'TARGET_metadata_data_HG19',
@@ -77,6 +120,8 @@ def query_database(config, log):
         'TCGA_metadata_data_HG19',
         'TCGA_metadata_data_HG38'
     ]:
+	bam_data[table] = []
+
         rows = ISBCGC_database_helper.select(
             config,
             'select file_name_key, index_file_name from {} where data_format = "BAM"'.format(table),
@@ -85,16 +130,35 @@ def query_database(config, log):
         )
         log.info('\t\tfound {} rows for {}'.format(len(rows), table))
 
+        # keep track of how many are null
+        num_null = 0
+
         # check rows for consistency
         for row in rows:
             if row[0] and row[1]:
-                if row[1].endswith('bam.bai'):
-                # check if .bam.bai or .bai file exists
-                # if .bai file in bucket, update database
+                # both fields non-null
 
+                # extract bucket name
+                (bucket, path, filename) = process_gs_uri(row[0], log)
+                if not bucket:
+                    log.warning('\t\tskipping invalid path: {}'.format(row[0]))
+                    continue
 
-    log.info('\tend query database')
-    return True      
+                bam_data[table].append({
+                    'bucket': bucket,
+                    'path'  : path,
+                    'bam'   : filename,
+                    'bai'   : row[1]
+                })
+                # log.info('\t\t{}, {}, {}, {}'.format(bucket, path, filename, row[1]))
+            else: 
+                # at least one of the two fields is null
+                num_null += 1
+
+        log.info('\t\t{} records are NULL in either file_name_key or index_file_name'.format(num_null))
+
+    log.info('\tend get_bambai_from_database()')
+    return bam_data
 
 
 def parse_args():
@@ -124,9 +188,15 @@ def main(config_file_path):
         config = json.load(config_file)
 
     # query database for bam/bai files
-    query_database(config, log)
+    bam_data = get_bambai_from_database(config, log)
+    for table in bam_data:
+        log.info('found {} valid entries in table {}'.format(len(bam_data[table]), table))
+
+    # check and update filenames for consistency
+    check_for_valid_index_files(bam_data, 'ISB-CGC', log)
+
         
-    log.info('update_bambai_filenames.py completed')
+    log.info('end update_bambai_filenames.py')
 
 if __name__ == '__main__':
     (
