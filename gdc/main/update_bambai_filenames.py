@@ -45,7 +45,7 @@ def check_for_valid_index_files(bam_data, bai_dict, log):
 
         for record in bam_data[table]:
             # check if index file exists in bucket (i.e., bai_dict)
-            if 'gs://{}{}/{}'.format(
+            if r'gs://{}{}/{}'.format(
                 record['bucket'],
                 record['path'],
                 record['bai']
@@ -56,12 +56,12 @@ def check_for_valid_index_files(bam_data, bai_dict, log):
                 # if the record is a .bam.bai 
                 if record['bai'].endswith('.bam.bai'):
                     bai_file = record['bai'].replace('.bam.bai', '.bai')
-                    bai_path = 'gs://{}{}/{}'.format(
+                    bai_path = r'gs://{}{}/{}'.format(
                         record['bucket'],
                         record['path'],
                         bai_file
                     )
-                    log.info(bai_path)
+                    #log.info(bai_path)
                     # maybe the .bai file exists
                     if bai_path in bai_dict:
                         # update needed !
@@ -77,7 +77,7 @@ def check_for_valid_index_files(bam_data, bai_dict, log):
                 # check for opposite case, record is .bai, but real file is .bam.bai
                 elif record['bai'].endswith('.bai'):
                     bambai_file = record['bai'].replace('.bai', '.bam.bai')
-                    bambai_path = 'gs://{}{}/{}'.format(
+                    bambai_path = r'gs://{}{}/{}'.format(
                         record['bucket'],
                         record['path'],
                         bambai_file
@@ -122,7 +122,9 @@ def load_bai_file_list(bai_file_path):
 
     bai_dict = {}
     with open(bai_file_path, 'r') as f:
-        bai_dict = {line.strip(): True for line in f}
+	for line in f:
+            line = line.strip()
+            bai_dict[line] = True
 
     return bai_dict
 
@@ -228,6 +230,7 @@ def main(config_file_path, bai_file_path):
 
     # load list of bam/bai files into dict
     bai_dict = load_bai_file_list(bai_file_path)
+    log.info('{} elements in bai_dict'.format(len(bai_dict)))
 
     # query database for bam/bai files
     (bam_data, used_buckets) = get_bambai_from_database(config, log)
