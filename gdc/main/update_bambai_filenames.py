@@ -45,23 +45,23 @@ def check_for_valid_index_files(bam_data, bai_dict, log):
 
         for record in bam_data[table]:
             # check if index file exists in bucket (i.e., bai_dict)
-            if r'gs://{}{}/{}'.format(
+            bai_path = 'gs://{}{}/{}'.format(
                 record['bucket'],
                 record['path'],
                 record['bai']
-            ) in bai_dict:
+            )
+            if bai_path in bai_dict:
                 # file already exists in bucket, no update needed
                 continue
             else:
                 # if the record is a .bam.bai 
                 if record['bai'].endswith('.bam.bai'):
                     bai_file = record['bai'].replace('.bam.bai', '.bai')
-                    bai_path = r'gs://{}{}/{}'.format(
+                    bai_path = 'gs://{}{}/{}'.format(
                         record['bucket'],
                         record['path'],
                         bai_file
                     )
-                    #log.info(bai_path)
                     # maybe the .bai file exists
                     if bai_path in bai_dict:
                         # update needed !
@@ -77,7 +77,7 @@ def check_for_valid_index_files(bam_data, bai_dict, log):
                 # check for opposite case, record is .bai, but real file is .bam.bai
                 elif record['bai'].endswith('.bai'):
                     bambai_file = record['bai'].replace('.bai', '.bam.bai')
-                    bambai_path = r'gs://{}{}/{}'.format(
+                    bambai_path = 'gs://{}{}/{}'.format(
                         record['bucket'],
                         record['path'],
                         bambai_file
@@ -110,7 +110,7 @@ def process_gs_uri(path, log):
         return (False, False, False)
 
     bucket = pieces[2]
-    path = '/'+'/'.join(pieces[3:-2])
+    path = '/'+'/'.join(pieces[3:-1])
     filename = pieces[-1]
 
     return (bucket, path, filename)
