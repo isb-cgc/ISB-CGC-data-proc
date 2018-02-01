@@ -210,15 +210,22 @@ def parse_args():
         required=True,
         help='file with list of bam/bai files'
     )
+    parser.add_argument(
+        '-s', '--sql-file',
+        type=str,
+        required=True,
+        help='file to output sql update commands'
+    )
     args = parser.parse_args()
 
     return (
         args.config,
-        args.bai_file
+        args.bai_file,
+        args.sql_file
     )
 
 
-def main(config_file_path, bai_file_path):
+def main(config_file_path, bai_file_path, sql_file_path):
     log_dir = str(date.today()).replace('-', '_') + '_update_bambai_filenames/'
     log_name = create_log(log_dir, 'update_bambai_filenames')
     log = logging.getLogger(log_name)
@@ -245,13 +252,20 @@ def main(config_file_path, bai_file_path):
 
     # check and update filenames for consistency
     (update_list, missing_list) = check_for_valid_index_files(bam_data, bai_dict, log)
-    for table in update_list:
-        log.info('found {} index filenames that need updating in table {}'.format(
-            len(update_list[table]), table
-        ))
-        log.info('{} index files missing (in cloud SQL table {}, but not in bucket)'.format(
-            len(missing_list[table]), table
-        )) 
+
+    # write sql update statements to sql file
+    with open(sql_file_path, 'w') as f:
+        for table in update_list:
+            log.info('found {} index filenames that need updating in table {}'.format(
+                len(update_list[table]), table
+            ))
+            log.info('{} index files missing (in cloud SQL table {}, but not in bucket)'.format(
+                len(missing_list[table]), table
+            ))
+            for update_item in update_list[table]:
+                f.write("update {} set index_file_name = '{}' where metadata_data_id = {};\n".format(
+                    table, update_item['index_file'], update_item['id']
+                ))
 
     log.info('end update_bambai_filenames.py')
 
@@ -259,8 +273,9 @@ def main(config_file_path, bai_file_path):
 if __name__ == '__main__':
     (
         config_file_path,
-        bai_file_path
+        bai_file_path,
+        sql_file_path
     ) = parse_args()
 
-    main(config_file_path, bai_file_path)
+    main(config_file_path, bai_file_path, sql_file_path)
 
