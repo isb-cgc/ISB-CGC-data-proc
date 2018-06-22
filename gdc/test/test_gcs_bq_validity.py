@@ -261,7 +261,7 @@ class GDCTestCloudSQLBQBarcodes(GDCTestSetup):
         return rj
 
     def request_gdc_barcode_info(self, batch, program_name, start, chunk, total):
-        endpt = 'https://gdc-api.nci.nih.gov/legacy/cases?expand=project,samples'
+        endpt = 'https://api.gdc.cancer.gov/legacy/cases?expand=project,samples'
         params = {
             'filters': dumps({
                 "op":"in",
@@ -478,7 +478,7 @@ class GDCTestCloudSQLBQBarcodes(GDCTestSetup):
         return bio_storage2source2barcodes
 
     def get_api_data_type_barcodes(self, program_name, data_type, legacy=True, log = None):
-        endpt = 'https://gdc-api.nci.nih.gov/{}files?expand=cases,cases.project,cases.samples'.format('legacy/' if legacy else '')
+        endpt = 'https://api.gdc.cancer.gov/{}files?expand=cases,cases.project,cases.samples'.format('legacy/' if legacy else '')
         params = {
             'filters': dumps({
                 "op": "and", 
