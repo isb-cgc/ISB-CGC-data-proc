@@ -184,12 +184,12 @@
             "analysis/survival"
         ],
         "endpoint_mapping_templates": [
-            "https://gdc-api.nci.nih.gov/%s/_mapping",
-            "https://gdc-api.nci.nih.gov/legacy/%s/_mapping"
+            "https://api.gdc.cancer.gov/%s/_mapping",
+            "https://api.gdc.cancer.gov/legacy/%s/_mapping"
         ],
         "url_templates": [
-            "https://gdc-api.nci.nih.gov/v0/%s?facets=%s&size=0&pretty=true", 
-            "https://gdc-api.nci.nih.gov/v0/legacy/%s?facets=%s&size=0&pretty=true"
+            "https://api.gdc.cancer.gov/v0/%s?facets=%s&size=0&pretty=true", 
+            "https://api.gdc.cancer.gov/v0/legacy/%s?facets=%s&size=0&pretty=true"
         ],
         "field_file": "Z:/tcga/cgc/dataproc/gdc/doc/2016_06_22_gdc_endpoint_fields.txt",
         "output_path": "Z:/tcga/cgc/dataproc/gdc/doc/",
@@ -201,28 +201,28 @@
         "legacy"
     ],
     "annotations_endpt": {
-        "current endpt": "https://gdc-api.nci.nih.gov/annotations",
-        "legacy endpt": "https://gdc-api.nci.nih.gov/legacy/annotations",
+        "current endpt": "https://api.gdc.cancer.gov/annotations",
+        "legacy endpt": "https://api.gdc.cancer.gov/legacy/annotations",
         "query": "?expand=project,project.program"
     },
     "projects_endpt": {
-        "current endpt": "https://gdc-api.nci.nih.gov/projects",
-        "legacy endpt": "https://gdc-api.nci.nih.gov/legacy/projects",
+        "current endpt": "https://api.gdc.cancer.gov/projects",
+        "legacy endpt": "https://api.gdc.cancer.gov/legacy/projects",
         "query": "?expand=program,summary,summary.experimental_strategies,summary.data_categories&pretty=true"
     },
     "cases_endpt": {
-        "current endpt": "https://gdc-api.nci.nih.gov/cases",
-        "legacy endpt": "https://gdc-api.nci.nih.gov/legacy/cases",
+        "current endpt": "https://api.gdc.cancer.gov/cases",
+        "legacy endpt": "https://api.gdc.cancer.gov/legacy/cases",
         "query": "?expand=project,project.program,samples,summary&pretty=true"
     },
     "files_endpt": {
-        "current endpt": "https://gdc-api.nci.nih.gov/files",
-        "legacy endpt": "https://gdc-api.nci.nih.gov/legacy/files",
+        "current endpt": "https://api.gdc.cancer.gov/files",
+        "legacy endpt": "https://api.gdc.cancer.gov/legacy/files",
         "query": "?expand=archive,cases,cases.project,cases.project.program,cases.samples,cases.samples.portions,cases.samples.portions.analytes,cases.samples.portions.analytes.aliquots,analysis,center,index_files&pretty=true"
     },
     "data_endpt": {
-        "current endpt": "https://gdc-api.nci.nih.gov/data?compress=true",
-        "legacy endpt": "https://gdc-api.nci.nih.gov/legacy/data?compress=true"
+        "current endpt": "https://api.gdc.cancer.gov/data?compress=true",
+        "legacy endpt": "https://api.gdc.cancer.gov/legacy/data?compress=true"
     },
     "facets_query": "?facets=%s&size=%d&pretty=true",
     "database_module": "gdc.model.isbcgc_cloudsql_gdc_model",
