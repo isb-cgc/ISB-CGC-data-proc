@@ -36,6 +36,14 @@ def query_bq_table(query, use_legacy, project, log):
 
 def fetch_paged_results(query_results, fetch_count, project_name, page_token, log):
     log.info('\t\trequesting %d rows %s' % (fetch_count, (' for ' + project_name) if project_name else ''))
+
+    #
+    # Encountered this, which was the only error in a full load. Per the error response,
+    # a retry seems to be in order:
+    #
+    # ServiceUnavailable: 503 GET https://www.googleapis.com/bigquery/v2/projects/isb-cgc/queries/job_blah-?pageToken=blah%3D&maxResults=50:
+    # Error encountered during execution. Retrying may solve the problem.
+    #
     rows = list(query_results.fetch_data(
         max_results=fetch_count, 
         page_token=page_token))
