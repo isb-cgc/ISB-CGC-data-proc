@@ -149,20 +149,24 @@ def pull_from_buckets(manifest_file, indexd_max, indexd_url, local_files_dir):
 
     # Use IndexD to map to Google bucket URIs. Batch up IndexD calls to reduce API load:
 
+    print("Pulling {} files from buckets...".format(len(manifest_vals)))
     max_per_call = indexd_max
     indexd_results = {}
     num_full_calls = len(manifest_vals) // max_per_call  # Python 3: // is classic integer floor!
     num_final_call = len(manifest_vals) % max_per_call
+    all_calls = num_full_calls + (1 if (num_final_call > 0) else 0)
     uuid_list = []
     call_count = 0
     for uuid in manifest_vals:
         uuid_list.append(uuid)
         list_len = len(uuid_list)
-        is_last = (call_count == num_full_calls)
+        is_last = (num_final_call > 0) and (call_count == num_full_calls)
         if list_len == max_per_call or (is_last and list_len == num_final_call):
             print(uuid_list)
             request_url = '{}{}'.format(indexd_url, ','.join(uuid_list))
             resp = requests.request("GET", request_url)
+            call_count += 1
+            print ("completed {} of {} calls to IndexD".format(call_count, all_calls))
             file_dict = json_loads(resp.text)
             for i in range(0, list_len):
                 call_id = uuid_list[i]
@@ -181,7 +185,9 @@ def pull_from_buckets(manifest_file, indexd_max, indexd_url, local_files_dir):
 
     # Use cloud storage client to move the data onto the VM:
 
+    print("Begin {} bucket copies...".format(len(manifest_vals)))
     storage_client = storage.Client()
+    copy_count = 0
     for uid, record in indexd_results.items():
         url_list = record['urls']
         gs_urls = [g for g in url_list if g.startswith('gs://')]
@@ -195,7 +201,9 @@ def pull_from_buckets(manifest_file, indexd_max, indexd_url, local_files_dir):
         blob = bucket.blob(path_pieces.path[1:])  # drop leading / from blob name
         full_file = "{}{}".format(local_files_dir, path_pieces.path)
         blob.download_to_filename(full_file)
-
+        copy_count += 1
+        if (copy_count % indexd_max) == 0:
+            print("Copied {} of {} files".format(copy_count, len(manifest_vals)))
 
 def build_file_list(local_files_dir):
     """
