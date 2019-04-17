@@ -162,7 +162,6 @@ def pull_from_buckets(manifest_file, indexd_max, indexd_url, local_files_dir):
         list_len = len(uuid_list)
         is_last = (num_final_call > 0) and (call_count == num_full_calls)
         if list_len == max_per_call or (is_last and list_len == num_final_call):
-            print(uuid_list)
             request_url = '{}{}'.format(indexd_url, ','.join(uuid_list))
             resp = requests.request("GET", request_url)
             call_count += 1
@@ -174,8 +173,6 @@ def pull_from_buckets(manifest_file, indexd_max, indexd_url, local_files_dir):
                 curr_id = curr_record['did']
                 manifest_record = manifest_vals[curr_id]
                 indexd_results[curr_id] = curr_record
-                print(curr_id, call_id, manifest_record['md5'])
-                # print( curr_record['did'],  curr_id, curr_record['hashes']['md5'], manifest_record['md5'], curr_record['size'], manifest_record['size'], )
                 if curr_record['did'] != curr_id or \
                                 curr_record['hashes']['md5'] != manifest_record['md5'] or \
                                 curr_record['size'] != manifest_record['size']:
