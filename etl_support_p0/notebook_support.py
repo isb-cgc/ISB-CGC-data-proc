@@ -205,6 +205,7 @@ def pull_from_buckets(manifest_file, indexd_max, indexd_url, local_files_dir):
         if (copy_count % indexd_max) == 0:
             print("Copied {} of {} files".format(copy_count, len(manifest_vals)))
 
+
 def build_file_list(local_files_dir):
     """
     Build the File List
