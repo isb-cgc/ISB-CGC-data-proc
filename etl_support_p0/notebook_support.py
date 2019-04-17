@@ -34,11 +34,11 @@ import zipfile
 import gzip
 from json import loads as json_loads
 
-"""
-Build a manifest filter using the list of filter items you can get from a GDC search
-"""
 
 def build_manifest_filter(filter_dict_list):
+    """
+    Build a manifest filter using the list of filter items you can get from a GDC search
+    """
     # Note the need to double up the "{{" to make the format command happy:
     filter_template = '''
     {{
@@ -73,11 +73,11 @@ def build_manifest_filter(filter_dict_list):
     whole_filter = [prefix] + filter_list + [suffix]
     return ''.join(whole_filter)
 
-"""
-Get the manifest for the provided filter set from the GDC
-"""
 
 def get_the_manifest(filter_string, api_url, manifest_file, max_files=None):
+    """
+    This function takes a JSON filter string and uses it to download a manifest from GDC
+    """
 
     #
     # 1) When putting the size and "return_type" : "manifest" args inside a POST document, the result comes
@@ -107,11 +107,11 @@ def get_the_manifest(filter_string, api_url, manifest_file, max_files=None):
         print("HTTP content: {}".format(resp.content))
         return False
 
-"""
-Clean out the target directory tree:
-"""
 
 def create_clean_target(local_files_dir):
+    """
+    GDC download client builds a tree of files in directories. This routine clears the tree out if it exists.
+    """
 
     if os.path.exists(local_files_dir):
         print("deleting {}".format(local_files_dir))
@@ -125,11 +125,11 @@ def create_clean_target(local_files_dir):
     if not os.path.exists(local_files_dir):
         os.makedirs(local_files_dir)
 
-"""
-Run the "Download Client", which now justs hauls stuff out of the cloud buckets
-"""
 
 def pull_from_buckets(manifest_file, indexd_max, indexd_url, local_files_dir):
+    """
+    Run the "Download Client", which now justs hauls stuff out of the cloud buckets
+    """
 
     # Parse the manifest file for uids, pull out other data too as a sanity check:
 
@@ -196,14 +196,14 @@ def pull_from_buckets(manifest_file, indexd_max, indexd_url, local_files_dir):
         full_file = "{}{}".format(local_files_dir, path_pieces.path)
         blob.download_to_filename(full_file)
 
-"""
-Build the File List
-Using the tree of downloaded files, we build a file list. Note that we see the downloads
-(using the GDC download tool) bringing along logs and annotation.txt files, which we
-specifically omit.
-"""
-def build_file_list(local_files_dir):
 
+def build_file_list(local_files_dir):
+    """
+    Build the File List
+    Using the tree of downloaded files, we build a file list. Note that we see the downloads
+    (using the GDC download tool) bringing along logs and annotation.txt files, which we
+    specifically omit.
+    """
     print("building file list from {}".format(local_files_dir))
     all_files = []
     for path, dirs, files in os.walk(local_files_dir):
@@ -216,3 +216,50 @@ def build_file_list(local_files_dir):
 
     print("done building file list from {}".format(local_files_dir))
     return all_files
+
+
+def generic_bq_harness(sql, target_dataset, dest_table, do_batch):
+    """
+    Handles all the boilerplate for running a BQ job
+    """
+
+    client = bigquery.Client()
+    job_config = bigquery.QueryJobConfig()
+    if do_batch:
+        job_config.priority = bigquery.QueryPriority.BATCH
+    target_ref = client.dataset(target_dataset).table(dest_table)
+    job_config.destination = target_ref
+    print(target_ref)
+    location = 'US'
+
+    # API request - starts the query
+    query_job = client.query(sql, location=location, job_config=job_config)
+
+    # Query
+    job_state = 'NOT_STARTED'
+    while job_state != 'DONE':
+        query_job = client.get_job(query_job.job_id, location=location)
+        print('Job {} is currently in state {}'.format(query_job.job_id, query_job.state))
+        job_state = query_job.state
+        print(query_job)
+        time.sleep(5)
+    print('Job {} is done with status'.format(query_job.job_id))
+
+    query_job = client.get_job(query_job.job_id, location=location)
+    print('Job {} is done'.format(query_job.job_id))
+    if query_job.error_result is not None:
+        print('Error result!! {}'.format(query_job.error_result))
+        return False
+    return True
+
+
+def upload_to_bucket(target_tsv_bucket, target_tsv_file, local_tsv_file):
+    """
+    Upload to Google Bucket
+    Large files have to be in a bucket for them to be ingested into Big Query. This does this.
+    """
+    storage_client = storage.Client()
+    bucket = storage_client.get_bucket(target_tsv_bucket)
+    blob = bucket.blob(target_tsv_file)
+    print(blob.name)
+    blob.upload_from_filename(local_tsv_file)
