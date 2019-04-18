@@ -390,3 +390,15 @@ def concat_all_files(all_files, one_big_tsv, program_prefix, extra_cols, unique_
             key_index = hdr_line.index(key)
             counts_for_schema[unique_counts[key]] = len(vals_for_schema[key_index])
     return counts_for_schema
+
+
+def delete_table_bq_job(target_dataset, delete_table):
+    client = bigquery.Client()
+    table_ref = client.dataset(target_dataset).table(delete_table)
+    try:
+        client.delete_table(table_ref)
+        print('Table {}:{} deleted'.format(target_dataset, delete_table))
+    except exceptions.NotFound as ex:
+        print('Table {}:{} was not present'.format(target_dataset, delete_table))
+
+    return True
