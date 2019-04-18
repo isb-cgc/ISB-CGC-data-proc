@@ -269,3 +269,124 @@ def upload_to_bucket(target_tsv_bucket, target_tsv_file, local_tsv_file):
     blob = bucket.blob(target_tsv_file)
     print(blob.name)
     blob.upload_from_filename(local_tsv_file)
+
+
+def csv_to_bq(schema, csv_uri, dataset_id, targ_table, do_batch):
+    client = bigquery.Client()
+
+    dataset_ref = client.dataset(dataset_id)
+    job_config = bigquery.LoadJobConfig()
+    if do_batch:
+        job_config.priority = bigquery.QueryPriority.BATCH
+
+    schema_list = []
+    for tup in schema:
+        schema_list.append(bigquery.SchemaField(tup[0], tup[1].upper(), mode='NULLABLE', description=tup[2]))
+
+    job_config.schema = schema_list
+    job_config.skip_leading_rows = 1
+    job_config.source_format = bigquery.SourceFormat.CSV
+    # Can make the "CSV" file a TSV file using this:
+    job_config.field_delimiter = '\t'
+
+    load_job = client.load_table_from_uri(
+        csv_uri,
+        dataset_ref.table(targ_table),
+        job_config=job_config)  # API request
+    print('Starting job {}'.format(load_job.job_id))
+
+    location = 'US'
+    job_state = 'NOT_STARTED'
+    while job_state != 'DONE':
+        load_job = client.get_job(load_job.job_id, location=location)
+        print('Job {} is currently in state {}'.format(load_job.job_id, load_job.state))
+        job_state = load_job.state
+        time.sleep(5)
+    print('Job {} is done with status'.format(load_job.job_id))
+
+    load_job = client.get_job(load_job.job_id, location=location)
+    print('Job {} is done'.format(load_job.job_id))
+    if load_job.error_result is not None:
+        print('Error result!! {}'.format(load_job.error_result))
+        for err in load_job.errors:
+            print(err)
+        return False
+
+    destination_table = client.get_table(dataset_ref.table(targ_table))
+    print('Loaded {} rows.'.format(destination_table.num_rows))
+    return True
+
+
+def concat_all_files(all_files, one_big_tsv, program_prefix, extra_cols, unique_counts, file_info_func):
+    """
+    Concatenate all Files
+    Gather up all files and glue them into one big one. The file name and path often include features
+    that we want to add into the table. The provided file_info_func returns a list of elements from
+    the file path, and the extra_cols list maps these to extra column names. Note if file is zipped,
+    we unzip it, concat it, then toss the unzipped version.
+    THIS VERSION OF THE FUNCTION USES THE FIRST LINE OF THE FIRST FILE TO BUILD THE HEADER LINE!
+    """
+    print("building {}".format(one_big_tsv))
+    first = True
+    header_id = None
+    hdr_line = None
+    with open(one_big_tsv, 'w') as outfile:
+        for filename in all_files:
+            toss_zip = False
+            if filename.endswith('.zip'):
+                dir_name = os.path.dirname(filename)
+                print("Unzipping {}".format(filename))
+                with zipfile.ZipFile(filename, "r") as zip_ref:
+                    zip_ref.extractall(dir_name)
+                use_file_name = filename[:-4]
+                toss_zip = True
+            elif filename.endswith('.gz'):
+                dir_name = os.path.dirname(filename)
+                use_file_name = filename[:-3]
+                print("Uncompressing {}".format(filename))
+                with gzip.open(filename, "rb") as gzip_in:
+                    with open(use_file_name, "wb") as uncomp_out:
+                        shutil.copyfileobj(gzip_in, uncomp_out)
+                toss_zip = True
+            else:
+                use_file_name = filename
+            if os.path.isfile(use_file_name):
+                with open(use_file_name, 'r') as readfile:
+                    file_info_list = file_info_func(use_file_name, program_prefix)
+                    for line in readfile:
+                        if line.startswith('#'):
+                            continue
+                        split_line = line.rstrip('\n').split("\t")
+                        if first:
+                            for col in extra_cols:
+                                split_line.append(col)
+                            header_id = split_line[0]
+                            hdr_line = split_line
+                            print("Header starts with {}".format(header_id))
+                            vals_for_schema = {}
+                            if unique_counts is not None:
+                                for key in unique_counts:
+                                    key_index = split_line.index(key)
+                                    vals_for_schema[key_index] = set()
+                        else:
+                            for i in range(len(extra_cols)):
+                                split_line.append(file_info_list[i])
+                        if not line.startswith(header_id) or first:
+                            outfile.write('\t'.join(split_line))
+                            outfile.write('\n')
+                            if not first:
+                                for key in vals_for_schema:
+                                    vals_for_schema[key].add(split_line[key])
+                        first = False
+            else:
+                print('{} was not found'.format(use_file_name))
+
+            if toss_zip and os.path.isfile(use_file_name):
+                os.remove(use_file_name)
+
+    counts_for_schema = {}
+    if unique_counts is not None:
+        for key in unique_counts:
+            key_index = hdr_line.index(key)
+            counts_for_schema[unique_counts[key]] = len(vals_for_schema[key_index])
+    return counts_for_schema
