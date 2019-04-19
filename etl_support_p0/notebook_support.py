@@ -213,8 +213,8 @@ def pull_from_buckets(pull_list, local_files_dir):
         full_file = "{}{}".format(local_files_dir, path_pieces.path)
         blob.download_to_filename(full_file)
         copy_count += 1
-        if (copy_count % 100) == 0:
-            print("Copied {} of {} files".format(copy_count, len(pull_list)))
+        if (copy_count % 10) == 0:
+            printProgressBar(copy_count, len(pull_list))
 
 
 def build_file_list(local_files_dir):
@@ -420,3 +420,29 @@ def delete_table_bq_job(target_dataset, delete_table):
         print('Table {}:{} was not present'.format(target_dataset, delete_table))
 
     return True
+
+
+def printProgressBar(iteration, total, prefix = '', suffix = '', decimals = 1, length = 100, fill = '█'):
+    """
+    Ripped from Stack Overflow.
+    https://stackoverflow.com/questions/3173320/text-progress-bar-in-the-console
+    H/T to https://stackoverflow.com/users/2206251/greenstick
+
+    Call in a loop to create terminal progress bar
+    @params:
+        iteration   - Required  : current iteration (Int)
+        total       - Required  : total iterations (Int)
+        prefix      - Optional  : prefix string (Str)
+        suffix      - Optional  : suffix string (Str)
+        decimals    - Optional  : positive number of decimals in percent complete (Int)
+        length      - Optional  : character length of bar (Int)
+        fill        - Optional  : bar fill character (Str)
+    """
+    percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
+    filledLength = int(length * iteration // total)
+    bar = fill * filledLength + '-' * (length - filledLength)
+    print('\r%s |%s| %s%% %s' % (prefix, bar, percent, suffix), end='\r')
+    # Print New Line on Complete
+    if iteration == total:
+        print()
+    return
