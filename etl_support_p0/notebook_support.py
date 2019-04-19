@@ -126,9 +126,9 @@ def create_clean_target(local_files_dir):
         os.makedirs(local_files_dir)
 
 
-def pull_from_buckets(manifest_file, indexd_max, indexd_url, local_files_dir):
+def build_pull_list_with_indexd(manifest_file, indexd_max, indexd_url):
     """
-    Run the "Download Client", which now justs hauls stuff out of the cloud buckets
+    Generate a list of gs:// urls to pull down from a manifest, using indexD
     """
 
     # Parse the manifest file for uids, pull out other data too as a sanity check:
@@ -180,17 +180,31 @@ def pull_from_buckets(manifest_file, indexd_max, indexd_url, local_files_dir):
                         "Expected data mismatch! {} vs. {}".format(str(curr_record), str(manifest_record)))
             uuid_list.clear()
 
-    # Use cloud storage client to move the data onto the VM:
+    # Create a list of URIs to pull:
 
-    print("Begin {} bucket copies...".format(len(manifest_vals)))
-    storage_client = storage.Client()
-    copy_count = 0
+    retval = []
     for uid, record in indexd_results.items():
         url_list = record['urls']
         gs_urls = [g for g in url_list if g.startswith('gs://')]
         if len(gs_urls) != 1:
             raise Exception("More than one gs:// URI! {}".format(str(gs_urls)))
-        path_pieces = up.urlparse(gs_urls[0])
+        retval.add(gs_urls[0])
+
+    return retval
+
+
+def pull_from_buckets(pull_list, local_files_dir):
+    """
+    Run the "Download Client", which now justs hauls stuff out of the cloud buckets
+    """
+
+    # Parse the manifest file for uids, pull out other data too as a sanity check:
+
+    print("Begin {} bucket copies...".format(len(pull_list)))
+    storage_client = storage.Client()
+    copy_count = 0
+    for url in pull_list:
+        path_pieces = up.urlparse(url)
         dir_name = os.path.dirname(path_pieces.path)
         make_dir = "{}{}".format(local_files_dir, dir_name)
         os.makedirs(make_dir, exist_ok=True)
@@ -199,8 +213,8 @@ def pull_from_buckets(manifest_file, indexd_max, indexd_url, local_files_dir):
         full_file = "{}{}".format(local_files_dir, path_pieces.path)
         blob.download_to_filename(full_file)
         copy_count += 1
-        if (copy_count % indexd_max) == 0:
-            print("Copied {} of {} files".format(copy_count, len(manifest_vals)))
+        if (copy_count % 100) == 0:
+            print("Copied {} of {} files".format(copy_count, len(pull_list)))
 
 
 def build_file_list(local_files_dir):
