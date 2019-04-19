@@ -280,8 +280,9 @@ def csv_to_bq(schema, csv_uri, dataset_id, targ_table, do_batch):
         job_config.priority = bigquery.QueryPriority.BATCH
 
     schema_list = []
-    for tup in schema:
-        schema_list.append(bigquery.SchemaField(tup[0], tup[1].upper(), mode='NULLABLE', description=tup[2]))
+    for dict in schema:
+        schema_list.append(bigquery.SchemaField(dict['name'], dict['type'].upper(),
+                                                mode='NULLABLE', description=dict['description']))
 
     job_config.schema = schema_list
     job_config.skip_leading_rows = 1
