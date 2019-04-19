@@ -224,7 +224,7 @@ def build_file_list(local_files_dir):
     return all_files
 
 
-def generic_bq_harness(sql, target_dataset, dest_table, do_batch):
+def generic_bq_harness(sql, target_dataset, dest_table, do_batch, do_replace):
     """
     Handles all the boilerplate for running a BQ job
     """
@@ -233,6 +233,9 @@ def generic_bq_harness(sql, target_dataset, dest_table, do_batch):
     job_config = bigquery.QueryJobConfig()
     if do_batch:
         job_config.priority = bigquery.QueryPriority.BATCH
+    if do_replace:
+        job_config.write_disposition = "WRITE_TRUNCATE"
+
     target_ref = client.dataset(target_dataset).table(dest_table)
     job_config.destination = target_ref
     print(target_ref)
