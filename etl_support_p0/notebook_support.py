@@ -126,7 +126,7 @@ def create_clean_target(local_files_dir):
         os.makedirs(local_files_dir)
 
 
-def build_pull_list_with_indexd(manifest_file, indexd_max, indexd_url):
+def build_pull_list_with_indexd(manifest_file, indexd_max, indexd_url, local_file):
     """
     Generate a list of gs:// urls to pull down from a manifest, using indexD
     """
@@ -180,17 +180,17 @@ def build_pull_list_with_indexd(manifest_file, indexd_max, indexd_url):
                         "Expected data mismatch! {} vs. {}".format(str(curr_record), str(manifest_record)))
             uuid_list.clear()
 
-    # Create a list of URIs to pull:
+    # Create a list of URIs to pull, write to specified file:
 
-    retval = []
-    for uid, record in indexd_results.items():
-        url_list = record['urls']
-        gs_urls = [g for g in url_list if g.startswith('gs://')]
-        if len(gs_urls) != 1:
-            raise Exception("More than one gs:// URI! {}".format(str(gs_urls)))
-        retval.append(gs_urls[0])
+    with open(local_file, mode='w') as pull_list_file:
+        for uid, record in indexd_results.items():
+            url_list = record['urls']
+            gs_urls = [g for g in url_list if g.startswith('gs://')]
+            if len(gs_urls) != 1:
+                raise Exception("More than one gs:// URI! {}".format(str(gs_urls)))
+            pull_list_file.write(gs_urls[0])
 
-    return retval
+    return
 
 
 def pull_from_buckets(pull_list, local_files_dir):
@@ -336,7 +336,7 @@ def csv_to_bq(schema, csv_uri, dataset_id, targ_table, do_batch):
     return True
 
 
-def concat_all_files(all_files, one_big_tsv, program_prefix, extra_cols, unique_counts, file_info_func):
+def concat_all_files(all_files, one_big_tsv, program_prefix, extra_cols, file_info_func):
     """
     Concatenate all Files
     Gather up all files and glue them into one big one. The file name and path often include features
@@ -382,20 +382,12 @@ def concat_all_files(all_files, one_big_tsv, program_prefix, extra_cols, unique_
                             header_id = split_line[0]
                             hdr_line = split_line
                             print("Header starts with {}".format(header_id))
-                            vals_for_schema = {}
-                            if unique_counts is not None:
-                                for key in unique_counts:
-                                    key_index = split_line.index(key)
-                                    vals_for_schema[key_index] = set()
                         else:
                             for i in range(len(extra_cols)):
                                 split_line.append(file_info_list[i])
                         if not line.startswith(header_id) or first:
                             outfile.write('\t'.join(split_line))
                             outfile.write('\n')
-                            if not first:
-                                for key in vals_for_schema:
-                                    vals_for_schema[key].add(split_line[key])
                         first = False
             else:
                 print('{} was not found'.format(use_file_name))
@@ -403,12 +395,7 @@ def concat_all_files(all_files, one_big_tsv, program_prefix, extra_cols, unique_
             if toss_zip and os.path.isfile(use_file_name):
                 os.remove(use_file_name)
 
-    counts_for_schema = {}
-    if unique_counts is not None:
-        for key in unique_counts:
-            key_index = hdr_line.index(key)
-            counts_for_schema[unique_counts[key]] = len(vals_for_schema[key_index])
-    return counts_for_schema
+    return
 
 
 def delete_table_bq_job(target_dataset, delete_table):
