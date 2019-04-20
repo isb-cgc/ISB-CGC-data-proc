@@ -188,7 +188,7 @@ def build_pull_list_with_indexd(manifest_file, indexd_max, indexd_url, local_fil
             gs_urls = [g for g in url_list if g.startswith('gs://')]
             if len(gs_urls) != 1:
                 raise Exception("More than one gs:// URI! {}".format(str(gs_urls)))
-            pull_list_file.write(gs_urls[0])
+            pull_list_file.write(gs_urls[0] + '\n')
 
     return
 
