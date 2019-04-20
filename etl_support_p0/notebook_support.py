@@ -200,7 +200,8 @@ def pull_from_buckets(pull_list, local_files_dir):
 
     # Parse the manifest file for uids, pull out other data too as a sanity check:
 
-    print("Begin {} bucket copies...".format(len(pull_list)))
+    num_files = len(pull_list)
+    print("Begin {} bucket copies...".format(num_files))
     storage_client = storage.Client()
     copy_count = 0
     for url in pull_list:
@@ -214,8 +215,8 @@ def pull_from_buckets(pull_list, local_files_dir):
         blob.download_to_filename(full_file)
         copy_count += 1
         if (copy_count % 10) == 0:
-            printProgressBar(copy_count, len(pull_list))
-
+            print_progress_bar(copy_count, num_files)
+    print_progress_bar(num_files, num_files)
 
 def build_file_list(local_files_dir):
     """
@@ -422,11 +423,11 @@ def delete_table_bq_job(target_dataset, delete_table):
     return True
 
 
-def printProgressBar(iteration, total, prefix = '', suffix = '', decimals = 1, length = 100, fill = '█'):
+def print_progress_bar(iteration, total, prefix = '', suffix = '', decimals = 1, length = 100, fill = '█'):
     """
     Ripped from Stack Overflow.
     https://stackoverflow.com/questions/3173320/text-progress-bar-in-the-console
-    H/T to https://stackoverflow.com/users/2206251/greenstick
+    H/T to Greenstick: https://stackoverflow.com/users/2206251/greenstick
 
     Call in a loop to create terminal progress bar
     @params:
@@ -439,8 +440,8 @@ def printProgressBar(iteration, total, prefix = '', suffix = '', decimals = 1, l
         fill        - Optional  : bar fill character (Str)
     """
     percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
-    filledLength = int(length * iteration // total)
-    bar = fill * filledLength + '-' * (length - filledLength)
+    filled_length = int(length * iteration // total)
+    bar = fill * filled_length + '-' * (length - filled_length)
     print('\r%s |%s| %s%% %s' % (prefix, bar, percent, suffix), end='\r')
     # Print New Line on Complete
     if iteration == total:
