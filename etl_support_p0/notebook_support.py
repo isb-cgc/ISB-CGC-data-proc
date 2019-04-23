@@ -25,6 +25,7 @@ import os
 import yaml
 import zipfile
 import requests
+import copy
 import urllib.parse as up
 import subprocess
 import csv
@@ -32,8 +33,402 @@ import time
 import io
 import zipfile
 import gzip
-from json import loads as json_loads
+from json import loads as json_loads, dumps as json_dumps
 
+
+def checkToken(aToken):
+    """
+    Used by pickColumns, below:
+    """
+    if ( aToken.find(';') >= 0 ):
+        aList = aToken.split(';')
+        aList.sort()
+        newT = ''
+        for bToken in aList:
+            newT += bToken
+            if ( len(newT) > 0 ): newT += ';'
+        if ( newT[-1] == ';' ): newT = newT[:-1]
+        return ( newT )
+
+    elif ( aToken.find(',') >= 0 ):
+        aList = aToken.split(',')
+        aList.sort()
+        newT = ''
+        for bToken in aList:
+            newT += bToken
+            if ( len(newT) > 0 ): newT += ','
+        if ( newT[-1] == ',' ): newT = newT[:-1]
+        return ( newT )
+
+    return ( aToken )
+
+def pickColumns(tokenList):
+    """
+    Sheila's legacy pickColumns() Function
+    For a list of tokens skip some and sort on others. Note that we do not do any pruning
+    anymore. This function is retained for archival reasons.
+    """
+
+    ## original lists from Nov 2016 ...
+    skipCols = [ 14, 17, 18, 21, 22, 23, 24, 26, 27, 29, 30, 43, 44, 57, 88, 89, 90, 91, 107 ]
+    sortCols = [ 2, 28, 31 ]
+
+    ## new lists from May 2017 ...
+    skipCols = [ 17, 18, 21, 22, 23, 24, 25, 26, 27, 29, 30, 43, 44, 57, 88, 89, 90, 91, 96, 108 ]
+    ## maybe we don't skip anything?
+    skipCols = [ ]
+
+    ## information that should be sorted for consistency, eg column #2 = Center,
+    ## #14 = dbSNP_Val_Status, #28 = Validation_Method, #31 = Sequencer, #50 = Consequence, etc...
+    sortCols = [ 2, 14, 28, 31, 50, 75, 85, 87, 109, 115, 116 ]
+    ## new for June MAFs
+    sortCols = [ 2, 14, 28, 31, 50, 51, 76, 86, 88, 110, 116, 117 ]
+    ## new in Jan 2018 ... in some of the fields, the ORDER MATTERS!
+    sortCols = [ ]
+
+    newList = []
+
+    for ii in range(len(tokenList)):
+        if ii not in skipCols:
+            if ii in sortCols:
+                newList += [ checkToken(tokenList[ii]) ]
+            else:
+                newList += [ tokenList[ii] ]
+
+    return newList
+
+def write_MAFs(tumor, mutCalls, hdrPick, mutCallers, do_logging):
+    """
+    Sheila's function to write out MAFs for merging
+    Original MAF table merged identical results from the different callers. This is the function
+    to write out the results from the merged dictionaries.
+    """
+    with open("MAFLOG-WRITE-{}.txt".format(tumor), 'w') as log_file:
+        outFilename = "mergeA." + tumor + ".maf"
+
+        with open(outFilename, 'w') as fhOut:
+
+            outLine = ''
+            for aT in hdrPick:
+                outLine += aT + '\t'
+            fhOut.write("%s\n" % outLine[:-1])
+
+            histCount = [0] * 10
+
+            mutPrints = mutCalls.keys()
+            log_file.write(" --> total # of mutPrints : {}\n".format(len(mutPrints)))
+
+            for aPrint in mutPrints:
+
+                if do_logging: log_file.write(" ")
+                if do_logging: log_file.write(" looping over mutPrints ... {}\n".format(str(aPrint)))
+                numCalls = len(mutCalls[aPrint])
+                if do_logging: log_file.write("     numCalls = {}\n".format(numCalls))
+                histCount[numCalls] += 1
+                outLine = ''
+                if (numCalls > 0):
+                    if do_logging: log_file.write("     # of features = {}\n".format(len(mutCalls[aPrint][0])))
+                    if do_logging: log_file.write("{}\n".format(str(mutCalls[aPrint][0])))
+
+                    ## for each feature we want to see if the different callers
+                    ## came up with different outputs ... so we create a vector
+                    ## of all of the outputs [v], and a vector of only the unique
+                    ## outputs [u]
+                    for kk in range(len(mutCalls[aPrint][0])):
+                        u = []
+                        v = []
+                        for ii in range(len(mutCalls[aPrint])):
+                            if (mutCalls[aPrint][ii][kk] not in u):
+                                u += [mutCalls[aPrint][ii][kk]]
+                            v += [mutCalls[aPrint][ii][kk]]
+                        if (len(u) > 1):
+                            if do_logging: log_file.write(
+                                "{} {} {} {}\n".format(str(kk), str(hdrPick[kk]), len(u), str(v)))
+
+                        ## if we have nothing, then it's a blank field
+                        if (len(v) == 0):
+                            outLine += "\t"
+
+                        ## if we only have one value, then just write that
+                        elif (len(u) == 1 or len(v) == 1):
+                            outLine += "%s\t" % v[0]
+
+                        ## otherwise we need to write out the the values in the
+                        ## order of the callers ...
+                        else:
+                            if do_logging: log_file.write(" looping over {}\n".format(mutCallers))
+                            if do_logging: log_file.write("{}\n".format(str(u)))
+                            if do_logging: log_file.write("{}\n".format(str(v)))
+                            for c in mutCallers:
+                                for ii in range(len(mutCalls[aPrint])):
+                                    ## 3rd from the last feature is the 'caller'
+                                    if (mutCalls[aPrint][ii][-3] == c):
+                                        if do_logging: log_file.write("         found ! {}\n".format(str(c)))
+                                        outLine += "%s|" % v[ii]
+                            outLine = outLine[:-1] + "\t"
+                    fhOut.write("%s\n" % outLine[:-1])
+
+    return histCount
+
+
+def read_MAFs(tumor_type, maf_list, program_prefix, extra_cols, col_count,
+              do_logging, key_fields, first_token, file_info_func):
+    """
+    Sheila's function to read MAFs for merging.
+    Original MAF table merged identical results from the different callers. This is the function to read
+    in results and build merged dictionaries.
+    """
+    hdrPick = None
+    mutCalls = {}
+    with open("MAFLOG-READ-{}.txt".format(tumor_type), 'w') as log_file:
+
+        for aFile in maf_list:
+            file_info_list = file_info_func(aFile, program_prefix)
+            if file_info_list[0] != (program_prefix + tumor_type):
+                continue
+            try:
+                if do_logging: log_file.write(" Next file is <%s> \n" % aFile)
+                toss_zip = False
+                if aFile.endswith('.gz'):
+                    dir_name = os.path.dirname(aFile)
+                    use_file_name = aFile[:-3]
+                    log_file.write("Uncompressing {}\n".format(aFile))
+                    with gzip.open(aFile, "rb") as gzip_in:
+                        with open(use_file_name, "wb") as uncomp_out:
+                            shutil.copyfileobj(gzip_in, uncomp_out)
+                    toss_zip = True
+                else:
+                    use_file_name = aFile
+
+                log_file.write(" opening input file {}\n".format(use_file_name))
+                log_file.write(" fileInfo : {}\n".format(str(file_info_list)))
+
+                if os.path.isfile(use_file_name):
+                    with open(use_file_name, 'r') as fh:
+                        key_indices = []
+                        for aLine in fh:
+                            if aLine.startswith("#"):
+                                continue
+                            if aLine.startswith(first_token):
+                                aLine = aLine.strip()
+                                hdrTokens = aLine.split('\t')
+                                if len(hdrTokens) != col_count:
+                                    print("ERROR: incorrect number of header tokens! {} vs {}".format(col_count,
+                                                                                                      len(hdrTokens)))
+                                    print(hdrTokens)
+                                    raise Exception()
+                                    ## We no longer prune or sort columns, so assignment is now direct:
+                                hdrPick = copy.copy(hdrTokens)
+                                ## hdrPick = pickColumns ( hdrTokens )
+                                ## since we're not skipping any columns, we should have 120 at this point
+                                ## print " --> len(hdrPick) = ", len(hdrPick)
+                                hdrPick += extra_cols
+                                ## and 124 at this point ...
+                                ## print " --> after adding a few more fields ... ", len(hdrPick)
+                                for keef in key_fields:
+                                    key_indices.append(hdrPick.index(keef))
+                                continue
+
+                            if hdrPick is None:
+                                print("ERROR: Header row not found")
+                                raise Exception()
+
+                            aLine = aLine.strip()
+                            tokenList = aLine.split('\t')
+                            if len(tokenList) != len(hdrTokens):
+                                print(
+                                "ERROR: incorrect number of tokens! {} vs {}".format(len(tokenList), len(hdrTokens)))
+                                raise Exception()
+
+                            # This creates a key for a dictionary for each mutation belonging to a tumor sample:
+
+                            mpl = [tokenList[x] for x in key_indices]
+                            mutPrint = tuple(mpl)
+                            if do_logging: log_file.write("{}\n".format(str(mutPrint)))
+
+                            # list for each key:
+                            if mutPrint not in mutCalls:
+                                mutCalls[mutPrint] = []
+
+                            ##infoList = pickColumns(tokenList) + file_info_list
+                            ## Again, no longer pruning columns!
+                            infoList = tokenList + file_info_list
+                            if len(infoList) != len(hdrPick):
+                                print(" ERROR: inconsistent number of tokens!")
+                                raise Exception()
+
+                            if do_logging: log_file.write(" --> infoList : {}\n".format(str(infoList)))
+                            mutCalls[mutPrint] += [infoList]
+                            if do_logging: log_file.write(
+                                " --> len(mutCalls[mutPrint]) = {}\n".format(len(mutCalls[mutPrint])))
+
+                        log_file.write(" --> done with this file ... {}\n".format(len(mutCalls)))
+                else:
+                    # If previous job died a nasty death, following finally statement may not get run, causing
+                    # file manifest to hold onto a previously unzipped file that gets deleted. Catch that
+                    # problem!
+                    print('{} was not found'.format(use_file_name))
+            finally:
+                if toss_zip and os.path.isfile(use_file_name):
+                    os.remove(use_file_name)
+
+        log_file.write("\n")
+        log_file.write(" DONE READING MAFs ... \n")
+        log_file.write("\n")
+    return mutCalls, hdrPick
+
+
+def concat_all_merged_files(all_files, one_big_tsv):
+    """
+    Concatenate all Merged Files
+    Gather up all merged files and glue them into one big one.
+    """
+
+    print("building {}".format(one_big_tsv))
+    first = True
+    header_id = None
+    with open(one_big_tsv, 'w') as outfile:
+        for filename in all_files:
+            with open(filename, 'r') as readfile:
+                for line in readfile:
+                    if line.startswith('#'):
+                        continue
+                    split_line = line.split("\t")
+                    if first:
+                        header_id = split_line[0]
+                        print("Header starts with {}".format(header_id))
+                        first = False
+                    if not line.startswith(header_id) or first:
+                        outfile.write(line)
+
+    print("finished building {}".format(one_big_tsv))
+    return
+
+
+def build_pull_list_with_bq(manifest_table, indexd_table, project, tmp_dataset, tmp_bq,
+                            tmp_bucket, tmp_bucket_file, local_file, do_batch):
+    """
+    IndexD using BQ Tables
+    GDC provides us a file that allows us to not have to pound the IndexD API; we build a BQ table.
+    Use it to resolve URIs
+    """
+    #
+    # If we are using bq to build a manifest, we can use that table to build the pull list too!
+    #
+
+    sql = pull_list_builder_sql(manifest_table, indexd_table)
+    success = generic_bq_harness(sql, tmp_dataset, tmp_bq, do_batch, True)
+    if not success:
+        return False
+    success = bq_to_bucket_tsv(tmp_bq, project, tmp_dataset, tmp_bucket, tmp_bucket_file, do_batch, False)
+    if not success:
+        return False
+    bucket_to_local(tmp_bucket, tmp_bucket_file, local_file)
+    return True
+
+def pull_list_builder_sql(manifest_table, indexd_table):
+    """
+    Generates SQL for above function
+    """
+    return '''
+    SELECT b.gs_url
+    FROM `{0}` as a JOIN `{1}` as b ON a.id = b.id
+    '''.format(manifest_table, indexd_table)
+
+
+def get_the_bq_manifest(file_table, filter_dict, max_files, project, tmp_dataset, tmp_bq,
+                        tmp_bucket, tmp_bucket_file, local_file, do_batch):
+    """
+    Build a Manifest File Using ISB-CGC File Tables. This duplicates the manifest file returned by
+    GDC API, but uses the BQ file table as the data source.
+    """
+
+    sql = manifest_builder_sql(file_table, filter_dict, max_files)
+    success = generic_bq_harness(sql, tmp_dataset, tmp_bq, do_batch, True)
+    if not success:
+        return False
+    success = bq_to_bucket_tsv(tmp_bq, project, tmp_dataset, tmp_bucket, tmp_bucket_file, do_batch, True)
+    if not success:
+        return False
+    bucket_to_local(tmp_bucket, tmp_bucket_file, local_file)
+    return True
+
+
+def manifest_builder_sql(file_table, filter_dict_list, max_files):
+    """
+    Generates SQL for above function
+    """
+    filter_list = []
+    where_clause = "WHERE {} = '{}'"
+    and_clause = "AND {} = '{}'"
+
+    for filter in filter_dict_list:
+        for key, val in filter.items():
+            if len(filter_list) == 0:
+                filter_list.append(where_clause.format(key, val))
+            else:
+                filter_list.append(and_clause.format(key, val))
+    all_filters = ' '.join(filter_list)
+
+    limit_clause = "" if max_files is None else "LIMIT {}".format(max_files)
+
+    return '''
+    SELECT file_gdc_id as id,
+           file_name as filename,
+           md5sum as md5,
+           file_size as size,
+           file_state as state
+    FROM `{0}`
+    {1} {2}
+    '''.format(file_table, all_filters, limit_clause)
+
+
+def bq_to_bucket_tsv(src_table, project, dataset, bucket_name, bucket_file, do_batch, do_header):
+    """
+    Get a BQ Result to a Bucket TSV file
+    Export BQ table to a cloud bucket
+    """
+    client = bigquery.Client()
+    destination_uri = "gs://{}/{}".format(bucket_name, bucket_file)
+    dataset_ref = client.dataset(dataset, project=project)
+    table_ref = dataset_ref.table(src_table)
+
+    job_config = bigquery.ExtractJobConfig()
+    if do_batch:
+        job_config.priority = bigquery.QueryPriority.BATCH
+    location = 'US'
+    job_config.field_delimiter = '\t'
+    job_config.print_header = do_header
+
+    extract_job = client.extract_table(table_ref, destination_uri, location="US", job_config=job_config)
+
+    # Query
+    job_state = 'NOT_STARTED'
+    while job_state != 'DONE':
+        extract_job = client.get_job(extract_job.job_id, location=location)
+        print('Job {} is currently in state {}'.format(extract_job.job_id, extract_job.state))
+        job_state = extract_job.state
+        time.sleep(5)
+    print('Job {} is done with status'.format(extract_job.job_id))
+
+    extract_job = client.get_job(extract_job.job_id, location=location)
+    print('Job {} is done'.format(extract_job.job_id))
+    if extract_job.error_result is not None:
+        print('Error result!! {}'.format(extract_job.error_result))
+        return False
+    return True
+
+
+def bucket_to_local(bucket_name, bucket_file, local_file):
+    """
+    Get a Bucket File to Local
+    Export a cloud bucket file to the local filesystem
+    """
+    storage_client = storage.Client()
+    bucket = storage_client.bucket(bucket_name)
+    blob = bucket.blob(bucket_file)  # no leading / in blob name!!h)
+    blob.download_to_filename(local_file)
+    return
 
 def build_manifest_filter(filter_dict_list):
     """
@@ -396,6 +791,86 @@ def concat_all_files(all_files, one_big_tsv, program_prefix, extra_cols, file_in
                 os.remove(use_file_name)
 
     return
+
+
+def build_combined_schema(scraped, augmented, typing_tups, holding_list, holding_dict):
+    """
+    Merge schema descriptions with ISB-added descriptions with inferred type data
+    """
+    with open(scraped, mode='r') as scraped_hold_list:
+        schema_list = json_loads(scraped_hold_list.read())
+
+    with open(augmented, mode='r') as augment_list:
+        augment_list = json_loads(augment_list.read())
+
+    full_schema_dict = {}
+    for elem in schema_list:
+        full_schema_dict[elem['name']] = elem
+    for elem in augment_list:
+        full_schema_dict[elem['name']] = elem
+
+    #
+    # Need to create two things: A full schema dictionary to update the final
+    # table, and a typed list for the initial TSV import:
+    #
+
+    typed_schema = []
+    for tup in typing_tups:
+        if tup[0] in full_schema_dict:
+            use_type = tup[1]
+            existing = full_schema_dict[tup[0]]
+            existing['type'] = use_type
+            typed_schema.append(existing)
+        else:
+            no_desc = {
+                "name": tup[0],
+                "type": tup[1],
+                "description": "No description"
+            }
+            typed_schema.append(no_desc)
+    with open(holding_list, mode='w') as schema_hold_list:
+        schema_hold_list.write(json_dumps(typed_schema))
+
+    with open(holding_dict, mode='w') as schema_hold_dict:
+        schema_hold_dict.write(json_dumps(full_schema_dict))
+
+    return True
+
+
+def update_schema(target_dataset, dest_table, schema_dict_loc):
+    """
+    Update the Schema of a Table
+    Final derived table needs the schema descriptions to be installed.
+    """
+
+    with open(schema_dict_loc, mode='r') as schema_hold_dict:
+        full_schema = json_loads(schema_hold_dict.read())
+
+    client = bigquery.Client()
+    table_ref = client.dataset(target_dataset).table(dest_table)
+    table = client.get_table(table_ref)
+    orig_schema = table.schema
+    new_schema = []
+    for old_sf in orig_schema:
+        new_desc = full_schema[old_sf.name]['description']
+        new_sf = bigquery.SchemaField(old_sf.name, old_sf.field_type, description=new_desc)
+        new_schema.append(new_sf)
+    table.schema = new_schema
+    table = client.update_table(table, ["schema"])
+    return True
+
+def update_description(target_dataset, dest_table, desc):
+    """
+    Update the Description of a Table¶
+    Final derived table needs a description
+    """
+    client = bigquery.Client()
+    table_ref = client.dataset(target_dataset).table(dest_table)
+    table = client.get_table(table_ref)
+    table.description = desc
+    table = client.update_table(table, ["description"])
+    return True
+
 
 
 def delete_table_bq_job(target_dataset, delete_table):
