@@ -423,10 +423,11 @@ def bucket_to_local(bucket_name, bucket_file, local_file):
     """
     Get a Bucket File to Local
     Export a cloud bucket file to the local filesystem
+    No leading / in bucket_file name!!
     """
     storage_client = storage.Client()
     bucket = storage_client.bucket(bucket_name)
-    blob = bucket.blob(bucket_file)  # no leading / in blob name!!h)
+    blob = bucket.blob(bucket_file)  # no leading / in blob name!!
     blob.download_to_filename(local_file)
     return
 
